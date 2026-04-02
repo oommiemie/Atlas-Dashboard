@@ -1,0 +1,20 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 102.448 73.6582" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Indicator">
+<g id="Dot" filter="url(#filter0_d_0_7)">
+<circle cx="6.8291" cy="6.8291" r="6.8291" transform="matrix(-1 0 0 1 72.4484 22)" fill="var(--fill-0, #1E1B39)"/>
+</g>
+<line id="Line" x1="65.8124" y1="29.5127" x2="0.12941" y2="11.913" stroke="var(--stroke-0, #1E1B39)"/>
+</g>
+<defs>
+<filter id="filter0_d_0_7" x="28.7902" y="0" width="73.6582" height="73.6582" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="8"/>
+<feGaussianBlur stdDeviation="15"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.0509804 0 0 0 0 0.0392157 0 0 0 0 0.172549 0 0 0 0.15 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_7"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_7" result="shape"/>
+</filter>
+</defs>
+</svg>
