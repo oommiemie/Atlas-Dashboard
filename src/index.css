@@ -312,6 +312,27 @@ body {
   box-shadow: 0 8px 24px rgba(30,27,57,0.12);
 }
 
+.hover-visit-card {
+  transition: border-color 0.2s ease;
+}
+.hover-visit-card:hover {
+  border-color: #19A589 !important;
+}
+
+.hover-assess-card {
+  transition: border-color 0.2s ease;
+}
+.hover-assess-card:hover {
+  border-color: #8B5CF6 !important;
+}
+
+.hover-med-card {
+  transition: border-color 0.2s ease;
+}
+.hover-med-card:hover {
+  border-color: #0088FF !important;
+}
+
 .hover-stat {
   transition: transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s ease, filter 0.25s ease;
 }
