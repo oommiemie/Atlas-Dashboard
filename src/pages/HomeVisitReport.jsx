@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { PatientContext } from '../App';
 import {
   BarChart, Bar, PieChart, Pie, Cell, Area, AreaChart,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -13,6 +14,7 @@ import imgIndicatorOrange from '../assets/images/indicator-orange.png';
 import imgIndicatorRed from '../assets/images/indicator-red.png';
 import imgDiseasePie from '../assets/images/disease-pie.png';
 import imgFemale3d from '../assets/images/female-3d.png';
+import { PATIENTS } from '../data/patients';
 import imgMale3d from '../assets/images/male-3d.png';
 import iconGenderFemale from '../assets/icons/gender-female.svg';
 import iconAllergens from '../assets/icons/allergens.svg';
@@ -200,25 +202,14 @@ const QUALITY_GAUGES = [
   { label: 'Med Error', pct: 15 },
 ];
 
-const PATIENT_TABLE = [
-  { hn: 'HN001234', name: 'นายสมชาย แก้วมณี', age: 72, gender: 'ชาย', group: 'NCD', disease: 'DM, HT', team: 'PCU เมือง', visits: 4, adl: 55, lastVisit: '28/03/2569', outcome: 'ดีขึ้น' },
-  { hn: 'HN001235', name: 'นางสาวสุภาพร จันทร์ศรี', age: 65, gender: 'หญิง', group: 'LTC', disease: 'Stroke', team: 'PCU บ้านนา', visits: 6, adl: 35, lastVisit: '27/03/2569', outcome: 'คงที่' },
-  { hn: 'HN001236', name: 'นายประยูร ทองคำ', age: 80, gender: 'ชาย', group: 'Palliative', disease: 'Ca Lung', team: 'PCU ท่าศาลา', visits: 8, adl: 20, lastVisit: '26/03/2569', outcome: 'แย่ลง' },
-  { hn: 'HN001237', name: 'นางบุญมา สุขใจ', age: 58, gender: 'หญิง', group: 'NCD', disease: 'DM', team: 'PCU เมือง', visits: 3, adl: 70, lastVisit: '28/03/2569', outcome: 'ดีขึ้น' },
-  { hn: 'HN001238', name: 'นายวิชัย พงษ์สุวรรณ', age: 45, gender: 'ชาย', group: 'Intermediate', disease: 'Fracture Hip', team: 'PCU หนองนค', visits: 5, adl: 45, lastVisit: '25/03/2569', outcome: 'ดีขึ้น' },
-  { hn: 'HN001239', name: 'นางสุนีย์ รักษาศรี', age: 70, gender: 'หญิง', group: 'LTC', disease: 'HT, CKD', team: 'PCU บายบา', visits: 4, adl: 40, lastVisit: '27/03/2569', outcome: 'คงที่' },
-  { hn: 'HN001240', name: 'นางจันทร์เพ็ญ ดวงแก้ว', age: 32, gender: 'หญิง', group: 'หญิงตั้งครรภ์', disease: 'ANC', team: 'PCU เมือง', visits: 2, adl: 95, lastVisit: '28/03/2569', outcome: 'ดีขึ้น' },
-  { hn: 'HN001241', name: 'นายสมศักดิ์ แสงจันทร์', age: 68, gender: 'ชาย', group: 'NCD', disease: 'DM, HT', team: 'PCU บ้านนา', visits: 3, adl: 60, lastVisit: '26/03/2569', outcome: 'ดีขึ้น' },
-  { hn: 'HN001242', name: 'นางสาวปราณี วงค์เทพ', age: 75, gender: 'หญิง', group: 'Palliative', disease: 'Ca Breast', team: 'PCU ท่าศาลา', visits: 7, adl: 25, lastVisit: '25/03/2569', outcome: 'แย่ลง' },
-  { hn: 'HN001243', name: 'นายอำนวย ชัยชนะ', age: 62, gender: 'ชาย', group: 'Intermediate', disease: 'Stroke', team: 'PCU หนองนค', visits: 5, adl: 50, lastVisit: '27/03/2569', outcome: 'คงที่' },
-];
+const PATIENT_TABLE = PATIENTS;
 
 /* ══════════════════════════════════════════
    STAT CARD COMPONENT
    ══════════════════════════════════════════ */
 function StatCard({ label, value, unit, growth, bg, iconSrc, subValue }) {
   return (
-    <div style={{
+    <div className="hover-stat anim-slide-up" style={{
       background: bg, border: '1px solid rgba(255,255,255,0.7)',
       borderRadius: 24, padding: 16, color: 'white', fontFamily: font,
       position: 'relative', overflow: 'hidden', height: 130,
@@ -262,7 +253,7 @@ function DonutGauge({ pct, label, size = 100, color = '#22C55E' }) {
       <div style={{ width: size, height: size, position: 'relative' }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={size * 0.32} outerRadius={size * 0.45} startAngle={90} endAngle={-270} strokeWidth={0}>
+            <Pie data={data} dataKey="value" cx="50%" cy="50%" innerRadius={size * 0.32} outerRadius={size * 0.45} startAngle={90} endAngle={-270} strokeWidth={0} animationDuration={1200} animationEasing="ease-out">
               {data.map((d, i) => <Cell key={i} fill={d.color} />)}
             </Pie>
           </PieChart>
@@ -504,7 +495,7 @@ function OutcomeDonutCard() {
   const activeData = hoverIdx !== null ? OUTCOME_DONUT[hoverIdx] : null;
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', minHeight: 350 }}>
+    <div className="anim-scale-in delay-4" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', minHeight: 350 }}>
       <ChartTitle title="Outcome ผู้ป่วย" iconColor="#14B8A6" />
 
       {/* Legend */}
@@ -611,7 +602,7 @@ function TabOverview() {
       {/* Charts Row - 2 columns, สูงเท่ากัน */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'stretch' }}>
         {/* Left: Line Chart - แนวโน้มการเยี่ยมรายเดือน */}
-        <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
+        <div className="anim-scale-in delay-3" style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
           <ChartTitle title="แนวโน้มการเยี่ยมรายเดือน" iconColor="#14B8A6" />
           <div style={{ display: 'flex', gap: 16, marginTop: 4, marginBottom: 8 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: GRAY, fontFamily: font }}>
@@ -638,8 +629,8 @@ function TabOverview() {
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: GRAY, fontFamily: font }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: GRAY, fontFamily: font }} axisLine={false} tickLine={false} tickFormatter={v => v >= 1000 ? `${Math.round(v / 1000)}k` : v} />
                 <Tooltip content={<Tip />} />
-                <Area type="monotone" dataKey="visits" name="จำนวนเยี่ยม" stroke="#22C55E" strokeWidth={3} fill="url(#fillVisits)" dot={false} activeDot={{ r: 6, fill: '#22C55E', strokeWidth: 3, stroke: '#fff' }} animationDuration={1200} />
-                <Area type="monotone" dataKey="patients" name="ผู้ป่วย" stroke="#3B82F6" strokeWidth={3} fill="url(#fillPatients)" dot={false} activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 3, stroke: '#fff' }} animationDuration={1200} animationBegin={200} />
+                <Area type="monotone" dataKey="visits" name="จำนวนเยี่ยม" stroke="#22C55E" strokeWidth={3} fill="url(#fillVisits)" dot={false} activeDot={{ r: 6, fill: '#22C55E', strokeWidth: 3, stroke: '#fff' }} animationDuration={1500} animationEasing="ease-out" />
+                <Area type="monotone" dataKey="patients" name="ผู้ป่วย" stroke="#3B82F6" strokeWidth={3} fill="url(#fillPatients)" dot={false} activeDot={{ r: 6, fill: '#3B82F6', strokeWidth: 3, stroke: '#fff' }} animationDuration={1500} animationEasing="ease-out" animationBegin={200} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -652,7 +643,7 @@ function TabOverview() {
       {/* Bottom Row - 2 columns — ตาม Figma */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* Left: กลุ่มเป้าหมาย — ชื่อบน bar, สีต่างกันแต่ละแถว */}
-        <div style={cardStyle}>
+        <div className="anim-slide-up delay-5" style={cardStyle}>
           <ChartTitle title="กลุ่มเป้าหมาย" iconColor="#14B8A6" />
           <div style={{ display: 'flex', gap: 8, marginTop: 4, marginBottom: 12 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: GRAY, fontFamily: font }}>
@@ -726,7 +717,7 @@ function TabOverview() {
         </div>
 
         {/* Right: เยี่ยมตามหน่วยบริการ — ชื่อบน bar, เขียว+เทา */}
-        <div style={cardStyle}>
+        <div className="anim-slide-up delay-6" style={cardStyle}>
           <ChartTitle title="เยี่ยมตามหน่วยบริการ" iconColor="#19A589" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, marginBottom: 12 }}>
             <div style={{ display: 'flex', gap: 16 }}>
@@ -842,7 +833,7 @@ function GenderBubbleCard() {
   };
 
   return (
-    <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 217 }}>
+    <div className="anim-scale-in delay-2" style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 217 }}>
       <ChartTitle title="สัดส่วนเพศ" iconColor="linear-gradient(135deg, #FC9BBA, #DB677E)" />
       <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', position: 'relative', margin: '0 -16px -16px -16px' }}>
         {/* Female 3D */}
@@ -901,7 +892,7 @@ function DiseasePieCard() {
   const activeD = hoverIdx !== null ? DISEASE_DATA[hoverIdx] : null;
 
   return (
-    <div style={{ ...cardStyle, height: 450, display: 'flex', flexDirection: 'column' }}>
+    <div className="anim-scale-in delay-4" style={{ ...cardStyle, height: 450, display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <div style={{ width: 40, height: 40, borderRadius: 14, background: '#6658E1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img src={iconAllergens} alt="" style={{ width: 20, height: 20 }} />
@@ -1216,7 +1207,7 @@ function InteractiveHBarCard({ title, iconColor, data, colors }) {
   const total = data.reduce((a, d) => a + d.value, 0);
 
   return (
-    <div style={cardStyle}>
+    <div className="anim-slide-up delay-6" style={cardStyle}>
       <ChartTitle title={title} iconColor={iconColor} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
         {data.map((d, i) => {
@@ -1326,7 +1317,7 @@ function TabPopulation() {
           <GenderBubbleCard />
 
           {/* จำนวนตามช่วงอายุ — Bar เขียว teal rounded-top-100px */}
-          <div style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div className="anim-scale-in delay-3" style={{ ...cardStyle, flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 40, height: 40, borderRadius: 14, background: 'linear-gradient(135deg, #19A589, #0D7C66)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img src={iconBirthdayCake} alt="" style={{ width: 20, height: 20 }} />
@@ -1363,7 +1354,7 @@ function TabPopulation() {
       {/* Row: ADL Score + ภาวะแทรกซ้อน */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* ADL Score — Line chart สีม่วง + จุด */}
-        <div style={cardStyle}>
+        <div className="anim-slide-up delay-5" style={cardStyle}>
           <ChartTitle title="แนวโน้ม ADL Score รายเดือน" iconColor="#8B5CF6" />
           <div style={{ marginTop: 12, height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -1420,7 +1411,7 @@ function Outcome3DBarCard() {
   ];
 
   return (
-    <div style={cardStyle}>
+    <div className="anim-slide-up delay-7" style={cardStyle}>
       <ChartTitle title="Outcome ตามกลุ่มเป้าหมาย (%)" iconColor="#14B8A6" />
       <div style={{ display: 'flex', marginTop: 16 }}>
         {/* Y axis */}
@@ -1535,7 +1526,7 @@ function TabOutcome() {
       </div>
 
       {/* ตัวชี้วัดคุณภาพ — 6 donuts สีตามเกณฑ์ + hover */}
-      <div style={cardStyle}>
+      <div className="anim-slide-up delay-2" style={cardStyle}>
         <ChartTitle title="ตัวชี้วัดคุณภาพการดูแล" iconColor="#22C55E" />
         <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: 16 }}>
           {QUALITY_GAUGES.map((g, i) => (
@@ -1549,7 +1540,7 @@ function TabOutcome() {
         <OutcomeDonutCard />
 
         {/* แนวโน้ม Outcome — สวย */}
-        <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
+        <div className="anim-scale-in delay-4" style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
           <ChartTitle title="แนวโน้ม Outcome รายเดือน" iconColor="#14B8A6" />
           {/* Legend with lines */}
           <div style={{ display: 'flex', gap: 20, marginTop: 4, marginBottom: 4 }}>
@@ -1631,6 +1622,7 @@ function TabOutcome() {
    TAB 4: รายละเอียดผู้ป่วย
    ══════════════════════════════════════════ */
 function TabPatients() {
+  const { openPatient } = useContext(PatientContext);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const perPage = 10;
@@ -1694,10 +1686,11 @@ function TabPatients() {
         ) : rows.map((p, i) => {
           const om = outcomeMeta[p.outcome] || outcomeMeta['คงที่'];
           return (
-            <div key={p.hn + i} style={{
+            <div key={p.hn + i} className="hover-row" style={{
               display: 'grid', gridTemplateColumns: gridCols, gap: 10, padding: 16,
               alignItems: 'center', cursor: 'pointer', transition: 'background 0.15s ease',
             }}
+              onClick={() => openPatient(p)}
               onMouseEnter={e => e.currentTarget.style.background = '#F5F3FF'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
@@ -1813,7 +1806,7 @@ export default function HomeVisitReport() {
   return (
     <div style={{ fontFamily: font, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Hero / Header — ตาม Figma เป๊ะ */}
-      <div style={{
+      <div className="anim-slide-up" style={{
         borderRadius: 24, position: 'relative',
         boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
         minHeight: 130,
@@ -1845,7 +1838,7 @@ export default function HomeVisitReport() {
               fontSize: 24, fontWeight: 700, fontFamily: font, margin: '2px 0 0',
               background: 'linear-gradient(90deg, #245ADE, #8B5CF6)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            }}>รายงายเยี่ยมบ้าน</p>
+            }}>รายงานเยี่ยมบ้าน</p>
           </div>
 
           {/* Tabs + buttons */}
@@ -1857,7 +1850,7 @@ export default function HomeVisitReport() {
               boxShadow: '0 4px 4px rgba(0,0,0,0.05)',
             }}>
               {TABS.map((t, i) => (
-                <button key={t} onClick={() => setActiveTab(i)} style={{
+                <button key={t} className="hover-btn" onClick={() => setActiveTab(i)} style={{
                   border: 'none', borderRadius: 100, cursor: 'pointer',
                   padding: '4px 10px', minWidth: i === activeTab ? 80 : undefined,
                   fontSize: 12, fontFamily: font, whiteSpace: 'nowrap',
@@ -1872,7 +1865,7 @@ export default function HomeVisitReport() {
             </div>
 
             {/* ตัวกรอง */}
-            <button onClick={() => setShowFilter(f => !f)} style={{
+            <button className="hover-btn" onClick={() => setShowFilter(f => !f)} style={{
               backdropFilter: 'blur(2px)', background: showFilter ? 'linear-gradient(135deg, #8B5CF6, #6658E1)' : 'rgba(255,255,255,0.8)',
               border: showFilter ? '1px solid rgba(139,92,246,0.3)' : '1px solid white', borderRadius: 100,
               padding: '4px 16px', height: 36,
@@ -1887,6 +1880,7 @@ export default function HomeVisitReport() {
 
             {/* Export */}
             <button
+              className="hover-btn"
               onMouseEnter={e => {
                 e.currentTarget.style.background = 'linear-gradient(135deg, #8B5CF6, #6658E1)';
                 e.currentTarget.style.color = 'white';

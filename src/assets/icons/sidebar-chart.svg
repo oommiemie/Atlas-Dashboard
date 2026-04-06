@@ -1,3 +1,3 @@
-<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path id="Vector" opacity="0" d="M12 0H0V11.7804H12V0Z" fill="var(--fill-0, black)"/>
+<svg preserveAspectRatio="xMidYMid meet" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 11.7862 11.7804" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path id="Vector" d="M5.89312 11.7804C7.27974 11.7804 8.62012 11.2836 9.689 10.3765L5.52913 6.29753C5.41358 6.19358 5.39047 6.09531 5.39047 5.93936V0.0173327C2.39191 0.277323 0 2.83678 0 5.88734C0 9.11123 2.67501 11.7804 5.89312 11.7804ZM11.7862 5.88734C11.7862 5.0207 11.5724 4.11362 11.2085 3.3741L6.48821 6.08957L10.261 9.81609C11.2085 8.78193 11.7862 7.36061 11.7862 5.88734ZM6.16465 5.37891L10.8272 2.69812C9.82188 1.12085 8.00193 0.0751083 6.16465 0V5.37891Z" fill="white"/>
 </svg>

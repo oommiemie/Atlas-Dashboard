@@ -1,8 +1,15 @@
-import { useState } from 'react'
+import { useState, createContext } from 'react'
 import './index.css'
 import Dashboard from './pages/Dashboard'
 import VitalSign from './pages/VitalSign'
+import HomeVisit from './pages/HomeVisit'
 import HomeVisitReport from './pages/HomeVisitReport'
+import Medication from './pages/Medication'
+import VideoCall from './pages/VideoCall'
+import PatientProfile from './pages/PatientProfile'
+
+export const CallContext = createContext(null);
+export const PatientContext = createContext(null);
 
 import imgSidebarBg from './assets/images/sidebar-bg.jpg'
 import imgProfile from './assets/images/profile.png'
@@ -10,20 +17,28 @@ import iconSidebarChart from './assets/icons/sidebar-chart.svg'
 import iconSidebarHeart from './assets/icons/sidebar-heart.svg'
 import iconSidebarHouse from './assets/icons/sidebar-house.svg'
 import iconSidebarLogout from './assets/icons/sidebar-logout.svg'
+import iconSidebarClipboard from './assets/icons/sidebar-clipboard.svg'
+import iconSidebarPills from './assets/icons/sidebar-pills-figma.svg'
 
 const font = "'IBM Plex Sans Thai Looped', sans-serif";
 
 function App() {
   const [activePage, setActivePage] = useState('dashboard')
+  const [callPatient, setCallPatient] = useState(null)
 
   const navItems = [
     { id: 'dashboard', icon: iconSidebarChart, label: 'ภาพรวม' },
     { id: 'vitalsign', icon: iconSidebarHeart, label: 'Vitalsign' },
     { id: 'homevisit', icon: iconSidebarHouse, label: 'เยี่ยมบ้าน' },
-    { id: 'report', icon: iconSidebarHouse, label: 'รายงานเยี่ยมบ้าน' },
+    { id: 'report', icon: iconSidebarClipboard, label: 'รายงานเยี่ยมบ้าน' },
+    { id: 'medication', icon: iconSidebarPills, label: 'ส่งยาที่บ้าน' },
   ]
 
+  const [selectedPatient, setSelectedPatient] = useState(null)
+
   return (
+    <CallContext.Provider value={{ callPatient, startCall: setCallPatient }}>
+    <PatientContext.Provider value={{ openPatient: setSelectedPatient }}>
     <div className="app">
       {/* ── Sidebar — Figma-accurate ── */}
       <aside style={{ width: 250, flexShrink: 0, padding: 16 }}>
@@ -79,7 +94,7 @@ function App() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       padding: 6, overflow: 'hidden', flexShrink: 0,
                     }}>
-                      <img src={item.icon} alt="" style={{ width: '100%', height: '100%', filter: isActive ? 'brightness(10)' : 'brightness(10)' }} />
+                      <img src={item.icon} alt="" style={{ width: '100%', height: '100%' }} />
                     </div>
                     <span>{item.label}</span>
                   </button>
@@ -128,14 +143,24 @@ function App() {
       <div className="main">
         <div className="main-inner">
           <div className="page">
-            {activePage === 'dashboard' && <Dashboard />}
-            {activePage === 'vitalsign' && <VitalSign />}
-            {activePage === 'homevisit' && <div style={{ padding: 60, textAlign: 'center', color: '#B2BEC3', fontSize: 16 }}>หน้าเยี่ยมบ้าน (Coming soon)</div>}
-            {activePage === 'report' && <HomeVisitReport />}
+            {selectedPatient ? (
+              <PatientProfile patient={selectedPatient} onClose={() => setSelectedPatient(null)} />
+            ) : (
+              <>
+                {activePage === 'dashboard' && <Dashboard />}
+                {activePage === 'vitalsign' && <VitalSign />}
+                {activePage === 'homevisit' && <HomeVisit />}
+                {activePage === 'report' && <HomeVisitReport />}
+                {activePage === 'medication' && <Medication />}
+              </>
+            )}
           </div>
         </div>
       </div>
     </div>
+    {callPatient && <VideoCall patient={callPatient} onClose={() => setCallPatient(null)} />}
+    </PatientContext.Provider>
+    </CallContext.Provider>
   )
 }
 

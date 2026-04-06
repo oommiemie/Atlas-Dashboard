@@ -1,4 +1,4 @@
-<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 7 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg preserveAspectRatio="xMidYMid meet" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 7 10" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="Group">
 <path id="Vector" opacity="0" d="M7 0H0V10H7V0Z" fill="var(--fill-0, black)"/>
 <path id="Vector_2" d="M7 4.99712C7 4.85319 6.94149 4.72078 6.83035 4.61715L2.19882 0.149683C2.09356 0.0518134 1.9649 0 1.81286 0C1.51462 0 1.2807 0.224525 1.2807 0.523892C1.2807 0.667816 1.33918 0.800229 1.43274 0.898101L5.69003 4.99712L1.43274 9.09614C1.33918 9.19401 1.2807 9.32064 1.2807 9.47037C1.2807 9.76973 1.51462 9.99422 1.81286 9.99422C1.9649 9.99422 2.09356 9.9424 2.19882 9.83882L6.83035 5.37708C6.94149 5.2677 7 5.14104 7 4.99712Z" fill="var(--fill-0, #8E8E93)"/>

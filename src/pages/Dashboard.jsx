@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { PatientContext } from '../App';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {
@@ -10,6 +11,7 @@ import {
   DISEASE_GROUPS, CRITICAL_CASES, CGM_PATIENTS,
   PROVINCES_TOP10, FEATURE_USAGE,
 } from '../data/mockData';
+import { getAvatar, getStatusBadge } from '../data/patients';
 
 import iconPatients from '../assets/icons/patients.svg';
 import iconHouseCircle from '../assets/icons/house-circle.svg';
@@ -31,9 +33,6 @@ import iconHouseSmall from '../assets/icons/house-small.svg';
 import imgGrid from '../assets/images/grid-bg.png';
 import imgHero3d from '../assets/images/hero-3d.png';
 import imgAvatarBlur from '../assets/images/avatar-blur.png';
-import imgAvatarPatient from '../assets/images/avatar-patient.png';
-import imgAvatarPatient2 from '../assets/images/avatar-patient2.png';
-import imgAvatarCgm from '../assets/images/avatar-cgm.png';
 
 /* ── shared styles ── */
 const font = "'IBM Plex Sans Thai Looped', sans-serif";
@@ -90,10 +89,10 @@ function Hero() {
   const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
-    <div style={{
-      borderRadius: 24, position: 'relative',
+    <div className="anim-slide-up" style={{
+      borderRadius: 24, position: 'relative', overflow: 'visible',
       boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
-      minHeight: 150, zIndex: 10,
+      minHeight: 150, zIndex: monthOpen ? 50 : 10,
     }}>
       {/* Background layer — overflow hidden เฉพาะส่วนนี้ */}
       <div style={{ position: 'absolute', inset: 0, borderRadius: 24, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -124,14 +123,15 @@ function Hero() {
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{ position: 'relative', zIndex: monthOpen ? 100 : 1 }}>
-            <div className={`dropdown-trigger${monthOpen ? ' open' : ''}`}
-              onClick={() => setMonthOpen(!monthOpen)}
-              style={{ background: 'rgba(255,255,255,0.8)', borderColor: 'white' }}>
-              <span style={{ whiteSpace: 'nowrap' }}>
-                {THAI_MONTHS[selectedMonth]}
-              </span>
-              <svg className="dropdown-chevron" viewBox="0 0 10 6" fill="none">
-                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <div onClick={() => setMonthOpen(!monthOpen)} style={{
+              width: 100, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '4px 16px', borderRadius: 100, cursor: 'pointer',
+              backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
+              border: '1px solid white', boxSizing: 'border-box',
+            }}>
+              <span style={{ fontSize: 12, color: 'black', fontFamily: font, letterSpacing: -0.23, lineHeight: '20px' }}>เดือน</span>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ transform: monthOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             {monthOpen && (
@@ -143,9 +143,7 @@ function Hero() {
                       className={`dropdown-item${selectedMonth === i ? ' active' : ''}`}
                       onClick={() => { setSelectedMonth(i); setMonthOpen(false); }}
                       style={{ justifyContent: 'center', textAlign: 'center', fontSize: 11 }}
-                    >
-                      {m}
-                    </div>
+                    >{m}</div>
                   ))}
                 </div>
               </>
@@ -185,7 +183,7 @@ function StatCards() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
       {cards.map((c, i) => (
-        <div key={c.label} style={{
+        <div key={c.label} className="hover-stat" style={{
           background: c.bg, borderRadius: 24, padding: 16, color: 'white',
           overflow: 'hidden', position: 'relative', boxShadow: c.shadow,
           display: 'flex', flexDirection: 'column', gap: 8,
@@ -219,7 +217,7 @@ function StatCards() {
    ═══════════════════════════════════ */
 function UsageChart() {
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 350 }}>
+    <div className="hover-card anim-slide-up delay-3" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 350 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={iconBoxStyle('#6658E1')}>
           <img src={iconChart} alt="" style={{ width: 20, height: 20 }} />
@@ -370,7 +368,7 @@ function HospitalComparison() {
   ];
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 350 }}>
+    <div className="hover-card anim-slide-up delay-4" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 350 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={iconBoxStyle('linear-gradient(135deg, #19A589 0%, #0D7C66 100%)')}>
@@ -653,8 +651,8 @@ function ThailandMap({ statusFilter, heatFilter, isHeatmap }) {
   }
 
   return (
-    <div style={{ position: 'relative', height: 724, borderRadius: 24, overflow: 'hidden', background: 'white' }}>
-      <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
+    <div style={{ position: 'relative', borderRadius: 24, overflow: 'hidden', background: 'white', minHeight: 400 }}>
+      <div ref={mapContainer} style={{ position: 'absolute', inset: 0 }} />
       {/* Map style selector */}
       <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 2 }}>
         <div style={{
@@ -840,7 +838,7 @@ function MapSection() {
   const isHeatmap = mapMode === 'heatmap';
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="hover-card anim-scale-in delay-5" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -878,7 +876,7 @@ function MapSection() {
         : <FilterBar items={FILTER_POS} active={statusFilter} onChange={setStatusFilter} />
       }
       {/* Map + Top 10 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'stretch' }}>
         <ThailandMap
           statusFilter={isHeatmap ? undefined : statusFilter}
           heatFilter={isHeatmap ? heatFilter : undefined}
@@ -934,7 +932,7 @@ function DiseaseDonut() {
   };
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 500 }}>
+    <div className="hover-card anim-slide-up delay-5" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 500 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={iconBoxStyle('linear-gradient(135deg, #3B82F6, #1D4ED8)')}>
           <img src={iconGaugeChart} alt="" style={{ width: 20, height: 17 }} />
@@ -1022,6 +1020,7 @@ function DiseaseDonut() {
    7. CASES TO MONITOR
    ═══════════════════════════════════ */
 function CasesMonitor() {
+  const { openPatient } = useContext(PatientContext);
   const [filter, setFilter] = useState('ทั้งหมด');
   const filters = ['ทั้งหมด', 'ผิดปกติ', 'ยังไม่เยี่ยม'];
 
@@ -1039,7 +1038,7 @@ function CasesMonitor() {
   };
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 500 }}>
+    <div className="hover-card anim-slide-up delay-5" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16, height: 500 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={iconBoxStyle('linear-gradient(135deg, #FC9BBA, #DB677E)')}>
@@ -1094,6 +1093,7 @@ function CasesMonitor() {
           const borderColor = c.severity === 'critical' ? '#FF383C' : c.severity === 'high' ? '#E8802A' : '#19A589';
           return (
             <div key={c.id}
+              onClick={() => openPatient({ name: c.name, age: 45, gender: c.name.startsWith('นาย') ? 'ชาย' : 'หญิง', hn: '', phone: '', address: '', group: c.group || '', disease: '', team: '', adl: 0, visits: 0, lastVisit: '', outcome: '' })}
               onMouseEnter={e => { e.currentTarget.style.border = `1.5px solid ${borderColor}`; e.currentTarget.style.boxShadow = `0 0 0 2px ${borderColor}20`; }}
               onMouseLeave={e => { e.currentTarget.style.border = '1.5px solid transparent'; e.currentTarget.style.boxShadow = 'none'; }}
               style={{
@@ -1104,14 +1104,14 @@ function CasesMonitor() {
                 transition: 'border 0.15s ease, box-shadow 0.15s ease',
               }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', position: 'relative', flexShrink: 0 }}>
-                <img src={isHomeVisit ? imgAvatarPatient2 : imgAvatarPatient} alt="" style={{ width: 40, height: 40, borderRadius: '50%' }} />
+                <img src={getAvatar(45, c.name.startsWith('นาย') ? 'ชาย' : 'หญิง')} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
                 <div style={{
                   position: 'absolute', bottom: 0, right: 0, width: 16, height: 16,
                   borderRadius: '50%', border: '0.5px solid white',
-                  background: isHomeVisit ? 'linear-gradient(135deg, rgba(25,165,137,0.2), rgba(13,124,102,0.2)), white' : 'linear-gradient(135deg, rgba(232,67,42,0.2), rgba(208,56,26,0.2)), white',
+                  background: isHomeVisit ? 'linear-gradient(135deg, #34C759, #15B03C)' : 'linear-gradient(135deg, #E8432A, #D0381A)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <img src={isHomeVisit ? iconHouseSmall : iconEcgSmall} alt="" style={{ width: 8, height: isHomeVisit ? 7 : 9 }} />
+                  <img src={isHomeVisit ? iconHouseSmall : iconEcgSmall} alt="" style={{ width: 8, height: isHomeVisit ? 7 : 9, filter: 'brightness(10)' }} />
                 </div>
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'center', alignSelf: 'stretch' }}>
@@ -1181,6 +1181,7 @@ function CgmGauge({ normal = 70, total = 90 }) {
 }
 
 function CgmSection() {
+  const { openPatient } = useContext(PatientContext);
   const total = CGM_PATIENTS.length;
   const normal = CGM_PATIENTS.filter(p => p.status === 'normal').length;
   const abnormal = total - normal;
@@ -1188,7 +1189,7 @@ function CgmSection() {
   const abnormalPct = 100 - normalPct;
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="hover-card anim-slide-up delay-6" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={iconBoxStyle('linear-gradient(135deg, #E8802A, #D06A1A)')}>
@@ -1267,6 +1268,7 @@ function CgmSection() {
               : { bg: 'linear-gradient(135deg, #F0FFF4, #DCFCE7)', border: '#34C75930' };
             return (
               <div key={idx}
+                onClick={() => openPatient({ name: p.name, age: 45, gender: p.name.startsWith('นาย') ? 'ชาย' : 'หญิง', hn: '', phone: '', address: '', group: '', disease: '', team: '', adl: 0, visits: 0, lastVisit: '', outcome: '' })}
                 onMouseEnter={e => { e.currentTarget.style.border = `1.5px solid ${sc}`; e.currentTarget.style.boxShadow = `0 0 0 2px ${sc}20`; e.currentTarget.style.transform = 'translateX(4px)'; }}
                 onMouseLeave={e => { e.currentTarget.style.border = '1.5px solid transparent'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateX(0)'; }}
                 style={{
@@ -1276,7 +1278,7 @@ function CgmSection() {
                   transition: 'all 0.2s ease',
                 }}>
                 <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }}>
-                  <img src={imgAvatarCgm} alt="" style={{ width: 40, height: 40, borderRadius: '50%' }} />
+                  <img src={getAvatar(45, p.name.startsWith('นาย') ? 'ชาย' : 'หญิง')} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'center', alignSelf: 'stretch' }}>
                   <span style={{ fontSize: 12, color: 'black', fontFamily: font }}>{p.name}</span>
@@ -1313,7 +1315,7 @@ function FeatureTable() {
   const headers = ['Vital Signs', 'เยี่ยมบ้าน', 'นัดหมาย', 'แบบประเมิน', 'CGM'];
 
   return (
-    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="hover-card anim-slide-up delay-7" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={iconBoxStyle('#6658E1')}>
           <img src={iconFeature} alt="" style={{ width: 20, height: 20 }} />
