@@ -717,7 +717,7 @@ export default function PatientProfile({ patient, onClose }) {
                     const ds = chartDataSets[chartFilter] || chartDataSets[0];
                     const isMultiLine = ds.lines.length > 1;
                     return (
-                      <ResponsiveContainer width="100%" height={200}>
+                      <ResponsiveContainer className="anim-chart-fade" width="100%" height={200}>
                         <ComposedChart data={ds.data} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                           <defs>
                             {ds.lines.map(l => (
@@ -1107,11 +1107,10 @@ export default function PatientProfile({ patient, onClose }) {
 
           {/* ── Visit Detail Popup ── */}
           {visitDetail && (
-            <div style={{
+            <div className="anim-backdrop" style={{
               position: 'fixed', inset: 0, zIndex: 9999,
               background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              animation: 'anim-scale-in 0.2s ease-out',
             }} onClick={() => setVisitDetail(null)}>
             <div className="anim-slide-up" onClick={e => e.stopPropagation()} style={{
               backdropFilter: 'blur(50px)', background: 'rgba(255,255,255,0.95)',
@@ -1669,11 +1668,10 @@ export default function PatientProfile({ patient, onClose }) {
       </div>{/* end 2-column flex */}
       {/* ── Assessment Detail Popup ── */}
       {assessDetail && (
-        <div style={{
+        <div className="anim-backdrop" style={{
           position: 'fixed', inset: 0, zIndex: 9999,
           background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: 'anim-scale-in 0.2s ease-out',
         }} onClick={() => setAssessDetail(null)}>
           <div className="anim-slide-up" onClick={e => e.stopPropagation()} style={{
             background: 'white', borderRadius: 24, padding: 16, width: 450, maxWidth: '90%',
@@ -1786,7 +1784,7 @@ function MedCard({ med, defaultOpen = false }) {
 
       {/* Schedule grid (expanded) */}
       {open && med.schedule && (
-        <div style={{ background: 'rgba(0,136,255,0.05)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="anim-expand" style={{ background: 'rgba(0,136,255,0.05)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 8, transformOrigin: 'top' }}>
           {/* Date label */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 0, height: 14, borderLeft: '3px solid #0088FF' }} />

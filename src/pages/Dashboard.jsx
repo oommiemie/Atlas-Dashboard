@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { PatientContext } from '../App';
+import { PatientContext, UserContext } from '../App';
+import CountUp from '../components/CountUp';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {
@@ -80,6 +81,8 @@ const THAI_MONTHS = [
 ];
 
 function Hero() {
+  const user = useContext(UserContext);
+  const isHospital = user?.role === 'hospital';
   const [now, setNow] = useState(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [monthOpen, setMonthOpen] = useState(false);
@@ -172,6 +175,7 @@ function Hero() {
    2. STAT CARDS
    ═══════════════════════════════════ */
 function StatCards() {
+  const user = useContext(UserContext);
   const cards = [
     { icon: iconPatients, label: 'จำนวนผู้ป่วย', value: DASHBOARD_STATS.totalPatients, growth: DASHBOARD_STATS.growthPatients, bg: 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', shadow: '0 4px 14px rgba(59,130,246,0.3)' },
     { icon: iconHouseCircle, label: 'เคสส่งเยี่ยมบ้าน', value: DASHBOARD_STATS.totalVisits, growth: DASHBOARD_STATS.growthVisits, bg: 'linear-gradient(149deg, #19A589 0%, #0D7C66 100%)', shadow: '0 4px 14px rgba(25,165,137,0.3)' },
@@ -203,9 +207,7 @@ function StatCards() {
             </div>
           </div>
           <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.6)', fontFamily: font, letterSpacing: 0.22 }}>{c.label}</span>
-          <span style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font, lineHeight: '26px' }}>
-            {typeof c.value === 'number' ? c.value.toLocaleString() : c.value}
-          </span>
+          <CountUp end={c.value} delay={i * 100} style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font, lineHeight: '26px' }} />
         </div>
       ))}
     </div>
@@ -237,7 +239,7 @@ function UsageChart() {
           <span style={labelStyle}>เยี่ยมบ้าน</span>
         </div>
       </div>
-      <div style={{ flex: 1 }}>
+      <div className="anim-chart-fade delay-2" style={{ flex: 1 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={USAGE_CHART_DATA} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" vertical={false} />
@@ -806,20 +808,21 @@ function Top10Ranking({ isHeatmap, heatFilter }) {
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, justifyContent: 'center', alignSelf: 'stretch' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 12, color: 'black', fontFamily: font }}>{p.name}</span>
-                <span style={{ fontSize: 12, fontWeight: i < 3 ? 700 : 500, color: i < 3 ? accentColor : GRAY, fontFamily: font }}>{total}</span>
+                <CountUp end={total} delay={i * 60} duration={800} style={{ fontSize: 12, fontWeight: i < 3 ? 700 : 500, color: i < 3 ? accentColor : GRAY, fontFamily: font }} />
               </div>
               {isHeatmap ? (
                 <div style={{ display: 'flex', height: 10, borderRadius: 100, overflow: 'hidden', background: 'rgba(116,116,128,0.08)' }}>
                   <div style={{
                     width: `${barPct}%`, borderRadius: '0 100px 100px 0',
                     background: `linear-gradient(179deg, ${activeHeatColor} 0%, ${activeHeatColor}CC 100%)`,
+                    animation: `rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) ${i * 0.06}s both`,
                   }} />
                 </div>
               ) : (
                 <div style={{ display: 'flex', height: 10, borderRadius: 100, overflow: 'hidden', background: 'rgba(116,116,128,0.08)' }}>
-                  <div style={{ width: `${(p.visited / p.total) * 100}%`, background: 'linear-gradient(180deg, #19A589, #0D7C66)' }} />
-                  <div style={{ width: `${(p.notVisited / p.total) * 100}%`, background: 'linear-gradient(180deg, #FF383C, #992224)' }} />
-                  <div style={{ width: `${(p.pending / p.total) * 100}%`, borderRadius: '0 100px 100px 0', background: 'linear-gradient(168deg, #E8802A, #D06A1A)' }} />
+                  <div style={{ width: `${(p.visited / p.total) * 100}%`, background: 'linear-gradient(180deg, #19A589, #0D7C66)', animation: `rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) ${i * 0.06}s both` }} />
+                  <div style={{ width: `${(p.notVisited / p.total) * 100}%`, background: 'linear-gradient(180deg, #FF383C, #992224)', animation: `rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) ${i * 0.06 + 0.1}s both` }} />
+                  <div style={{ width: `${(p.pending / p.total) * 100}%`, borderRadius: '0 100px 100px 0', background: 'linear-gradient(168deg, #E8802A, #D06A1A)', animation: `rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) ${i * 0.06 + 0.2}s both` }} />
                 </div>
               )}
             </div>
@@ -925,7 +928,7 @@ function DiseaseDonut() {
           <span style={{ fontSize: 14, fontWeight: 700, color: BLACK, fontFamily: font }}>{pct}%</span>
         </div>
         <div style={{ marginTop: 8, height: 4, borderRadius: 100, background: 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 100, background: d.color }} />
+          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 100, background: d.color, animation: 'rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) 0.3s both' }} />
         </div>
       </div>
     );
@@ -943,7 +946,7 @@ function DiseaseDonut() {
         </div>
       </div>
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, overflow: 'hidden' }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="anim-donut delay-3" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
@@ -971,9 +974,7 @@ function DiseaseDonut() {
             </PieChart>
           </ResponsiveContainer>
           <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, pointerEvents: 'none' }}>
-            <span style={{ fontSize: 48, fontWeight: 700, color: 'black', fontFamily: font, lineHeight: '48px' }}>
-              {activeIdx !== null ? DISEASE_GROUPS[activeIdx].count : totalCount}
-            </span>
+            <CountUp end={activeIdx !== null ? DISEASE_GROUPS[activeIdx].count : totalCount} duration={800} style={{ fontSize: 48, fontWeight: 700, color: 'black', fontFamily: font, lineHeight: '48px' }} />
             <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(0,0,0,0.7)', fontFamily: font }}>
               {activeIdx !== null ? DISEASE_GROUPS[activeIdx].name : 'ทั้งหมด'}
             </span>
@@ -1461,6 +1462,29 @@ function AnimateIn({ children, delay = 0, style }) {
     <div ref={ref} className={`anim-in${visible ? ' visible' : ''}`}
       style={{ transitionDelay: `${delay}ms`, ...style }}>
       {children}
+    </div>
+  );
+}
+
+function HospitalBanner() {
+  const user = useContext(UserContext);
+  if (!user || user.role !== 'hospital') return null;
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #19A589, #0D7C66)', borderRadius: 16, padding: '14px 20px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      boxShadow: '0 4px 16px rgba(25,165,137,0.25)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏥</div>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'white', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>{user.name}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>ข้อมูลเฉพาะโรงพยาบาล — จ.ขอนแก่น</div>
+        </div>
+      </div>
+      <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 100, padding: '6px 14px', fontSize: 11, color: 'white', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif", backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+        Hospital Mode
+      </div>
     </div>
   );
 }

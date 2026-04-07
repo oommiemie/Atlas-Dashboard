@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { PatientContext } from '../App';
+import CountUp from '../components/CountUp';
 import { HOME_VISITS, getPatient, getAvatar } from '../data/patients';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -245,7 +246,7 @@ function StatCards() {
           {/* Bottom: label + value */}
           <div style={{ marginTop: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.6)', fontFamily: font }}>{c.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font }}>{c.value}</div>
+            <CountUp end={c.value} delay={i * 100} style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font, display: 'block' }} />
           </div>
         </div>
       ))}

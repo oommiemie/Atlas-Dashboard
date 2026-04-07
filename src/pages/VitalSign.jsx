@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { PatientContext } from '../App';
+import { PatientContext, UserContext } from '../App';
+import CountUp from '../components/CountUp';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -200,7 +201,7 @@ function StatCards() {
           {/* Bottom: label + value */}
           <div>
             <p style={{ fontSize: 11, fontWeight: 500, color: 'white', margin: 0, opacity: 0.9 }}>{c.label}</p>
-            <p style={{ fontSize: 26, fontWeight: 700, color: 'white', margin: '2px 0 0' }}>{c.value}</p>
+            <CountUp end={parseFloat(c.value)} suffix={String(c.value).includes('%') ? '%' : ''} delay={i * 100} style={{ fontSize: 26, fontWeight: 700, color: 'white', margin: '2px 0 0', display: 'block' }} />
           </div>
         </div>
       ))}
@@ -353,7 +354,7 @@ function ChartsRow() {
               { label: 'วิกฤต', value: 25, color: '#D0381A', borderColor: 'rgba(208,56,26,0.5)', dotGradient: 'linear-gradient(135deg, #FB6D51, #D0381A)', desc: 'ต้องดูแลทันที' },
               { label: 'เฝ้าระวัง', value: 20, color: '#D06A1A', borderColor: 'rgba(208,106,26,0.5)', dotGradient: 'linear-gradient(135deg, #E8802A, #D06A1A)', desc: 'ติดตามใกล้ชิด' },
               { label: 'ปกติ', value: 70, color: '#19A589', borderColor: 'rgba(25,165,137,0.5)', dotGradient: 'linear-gradient(184deg, #26C1A2, #0D7C66)', desc: 'ค่าอยู่ในเกณฑ์' },
-            ].map(s => (
+            ].map((s, si) => (
               <div key={s.label} className="hover-card" style={{
                 backdropFilter: 'blur(5px)', background: 'rgba(255,255,255,0.5)',
                 border: `1px solid ${s.borderColor}`, borderRadius: 16,
@@ -364,7 +365,7 @@ function ChartsRow() {
                   <span style={{ fontSize: 12, fontWeight: 500, color: 'black', fontFamily: font, letterSpacing: 0.22 }}>{s.label}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 26, fontWeight: 700, color: s.color, lineHeight: '26px', fontFamily: font }}>{s.value}</span>
+                  <CountUp end={s.value} delay={si * 150} style={{ fontSize: 26, fontWeight: 700, color: s.color, lineHeight: '26px', fontFamily: font }} />
                   <span style={{ fontSize: 8, color: '#8E8E93', fontFamily: font, lineHeight: '16.5px' }}>{s.desc}</span>
                 </div>
               </div>

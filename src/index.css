@@ -127,7 +127,14 @@ body {
   overflow: hidden;
 }
 
-.page { flex: 1; overflow-y: auto; padding: 24px; }
+.page {
+  flex: 1; overflow-y: auto; padding: 24px;
+  animation: pageEnter 0.4s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ═══ HERO ═══ */
 .hero {
@@ -362,11 +369,23 @@ body {
 }
 
 .hover-nav {
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(.4,0,.2,1);
 }
 .hover-nav:hover {
-  background: rgba(139,92,246,0.06);
-  transform: translateX(2px);
+  background: rgba(255,255,255,0.08);
+  transform: translateX(4px);
+}
+.hover-nav:active {
+  transform: scale(0.95);
+}
+
+.sidebar-nav-active {
+  animation: sidebar-pop 0.35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes sidebar-pop {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .hover-badge {
@@ -441,7 +460,7 @@ body {
 /* Chart animations */
 .anim-bar {
   animation: barGrowUp 0.8s cubic-bezier(.22,1,.36,1) both;
-  transform-origin: bottom;
+  transform-origin: bottom center;
 }
 .anim-bubble {
   animation: bubblePop 0.6s cubic-bezier(.22,1,.36,1) both;
@@ -451,6 +470,43 @@ body {
 }
 .anim-progress {
   animation: progressGrow 1s cubic-bezier(.22,1,.36,1) both;
+}
+.anim-donut {
+  animation: donutSpin 1.2s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes donutSpin {
+  from { opacity: 0; transform: rotate(-90deg) scale(0.7); }
+  to { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+.anim-bar-3d {
+  animation: bar3dGrow 0.7s cubic-bezier(.22,1,.36,1) both;
+  transform-origin: bottom center;
+}
+@keyframes bar3dGrow {
+  from { opacity: 0; transform: scaleY(0) translateY(10px); }
+  to { opacity: 1; transform: scaleY(1) translateY(0); }
+}
+.anim-progress-bar {
+  animation: progressSlide 1s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes progressSlide {
+  from { width: 0 !important; opacity: 0.5; }
+  to { opacity: 1; }
+}
+.anim-chart-fade {
+  animation: chartFadeIn 0.8s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes chartFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anim-number-pop {
+  animation: numPop 0.5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes numPop {
+  0% { opacity: 0; transform: scale(0.5) translateY(8px); }
+  70% { transform: scale(1.08) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* ═══ ANIMATIONS ═══ */
@@ -488,6 +544,54 @@ body {
 @keyframes countUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger extra delays */
+.delay-9 { animation-delay: 0.45s; }
+.delay-10 { animation-delay: 0.5s; }
+.delay-11 { animation-delay: 0.55s; }
+.delay-12 { animation-delay: 0.6s; }
+
+/* Smooth hero entrance */
+.anim-hero {
+  animation: heroSlide 0.6s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes heroSlide {
+  from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Smooth tab content switch */
+.anim-tab-enter {
+  animation: tabEnter 0.35s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes tabEnter {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Popup backdrop entrance */
+.anim-backdrop {
+  animation: backdropIn 0.25s ease both;
+}
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Smooth expand/collapse */
+.anim-expand {
+  animation: expandIn 0.3s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes expandIn {
+  from { opacity: 0; max-height: 0; transform: scaleY(0.9); }
+  to { opacity: 1; max-height: 500px; transform: scaleY(1); }
+}
+
+/* Rank bar grow animation */
+@keyframes rankBarGrow {
+  from { max-width: 0; opacity: 0; }
+  to { max-width: 100%; opacity: 1; }
 }
 
 /* ═══ TABLE ROW HOVER TOOLTIP ═══ */

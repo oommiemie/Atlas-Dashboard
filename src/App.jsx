@@ -1,5 +1,6 @@
 import { useState, createContext } from 'react'
 import './index.css'
+import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import VitalSign from './pages/VitalSign'
 import HomeVisit from './pages/HomeVisit'
@@ -10,6 +11,7 @@ import PatientProfile from './pages/PatientProfile'
 
 export const CallContext = createContext(null);
 export const PatientContext = createContext(null);
+export const UserContext = createContext(null);
 
 import imgSidebarBg from './assets/images/sidebar-bg.jpg'
 import imgProfile from './assets/images/profile.png'
@@ -23,6 +25,7 @@ import iconSidebarPills from './assets/icons/sidebar-pills-figma.svg'
 const font = "'IBM Plex Sans Thai Looped', sans-serif";
 
 function App() {
+  const [user, setUser] = useState(null)
   const [activePage, setActivePage] = useState('dashboard')
   const [callPatient, setCallPatient] = useState(null)
 
@@ -36,7 +39,10 @@ function App() {
 
   const [selectedPatient, setSelectedPatient] = useState(null)
 
+  if (!user) return <Login onLogin={setUser} />;
+
   return (
+    <UserContext.Provider value={user}>
     <CallContext.Provider value={{ callPatient, startCall: setCallPatient }}>
     <PatientContext.Provider value={{ openPatient: setSelectedPatient }}>
     <div className="app">
@@ -77,6 +83,7 @@ function App() {
                 return (
                   <button
                     key={item.id}
+                    className={`hover-nav${isActive ? ' sidebar-nav-active' : ''}`}
                     onClick={() => setActivePage(item.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
@@ -105,33 +112,49 @@ function App() {
             {/* User card at bottom */}
             <div style={{ padding: 12 }}>
               <div style={{
-                backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16,
-                padding: 16, boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+                backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)', borderRadius: 18,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
                 position: 'relative', overflow: 'hidden',
               }}>
                 {/* Decorative blurs */}
-                <div style={{ position: 'absolute', left: -21, top: -21, width: 74, height: 74, borderRadius: '50%', background: 'rgba(143,134,251,0.3)', filter: 'blur(20px)' }} />
-                <div style={{ position: 'absolute', left: 69, top: 55, width: 74, height: 74, borderRadius: '50%', background: 'rgba(143,134,251,0.3)', filter: 'blur(20px)' }} />
+                <div style={{ position: 'absolute', left: -21, top: -21, width: 74, height: 74, borderRadius: '50%', background: 'rgba(143,134,251,0.25)', filter: 'blur(20px)' }} />
+                <div style={{ position: 'absolute', right: -10, bottom: -10, width: 60, height: 60, borderRadius: '50%', background: 'rgba(116,185,255,0.2)', filter: 'blur(18px)' }} />
 
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative' }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'white', position: 'relative', flexShrink: 0 }}>
-                    <img src={imgProfile} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                    <div style={{ position: 'absolute', bottom: 2, right: 2, width: 7, height: 7, borderRadius: '50%', background: '#34C759' }} />
+                {/* Profile row */}
+                <div style={{ padding: '14px 14px 10px', display: 'flex', gap: 10, alignItems: 'center', position: 'relative' }}>
+                  <div style={{ width: 42, height: 42, borderRadius: '50%', position: 'relative', flexShrink: 0, border: '2px solid rgba(255,255,255,0.2)' }}>
+                    <img src={imgProfile} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', bottom: 1, right: 1, width: 8, height: 8, borderRadius: '50%', background: '#34C759', border: '2px solid rgba(28,23,71,0.8)' }} />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 68 }}>
-                    <span style={{ fontSize: 12, fontWeight: 500, color: 'white', fontFamily: "'Inter', 'Noto Sans Thai', sans-serif" }}>สมชาย ใจดี</span>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', fontFamily: "'Inter', 'Noto Sans Thai', sans-serif" }}>ผู้ดูแลระบบ</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'white', fontFamily: font, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', fontFamily: font, marginTop: 2 }}>{user.title}</div>
                   </div>
                 </div>
 
-                <div style={{
-                  width: 24, height: 24, borderRadius: 8,
-                  background: 'rgba(255,255,255,0.1)', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: 'pointer',
-                }}>
-                  <img src={iconSidebarLogout} alt="" style={{ width: 12, height: 12 }} />
+                {/* Divider */}
+                <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '0 14px' }} />
+
+                {/* Logout button */}
+                <div
+                  onClick={() => setUser(null)}
+                  style={{
+                    padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8,
+                    cursor: 'pointer', transition: 'all 0.2s ease',
+                    position: 'relative',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,80,80,0.15)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 10,
+                    background: 'rgba(255,255,255,0.08)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <img src={iconSidebarLogout} alt="" style={{ width: 13, height: 13, opacity: 0.8 }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontFamily: font }}>ออกจากระบบ</span>
                 </div>
               </div>
             </div>
@@ -142,7 +165,7 @@ function App() {
       {/* ── Main — fills remaining width ── */}
       <div className="main">
         <div className="main-inner">
-          <div className="page">
+          <div className="page" key={selectedPatient ? 'patient' : activePage}>
             {selectedPatient ? (
               <PatientProfile patient={selectedPatient} onClose={() => setSelectedPatient(null)} />
             ) : (
@@ -161,6 +184,7 @@ function App() {
     {callPatient && <VideoCall patient={callPatient} onClose={() => setCallPatient(null)} />}
     </PatientContext.Provider>
     </CallContext.Provider>
+    </UserContext.Provider>
   )
 }
 

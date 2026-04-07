@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react';
 import { PatientContext } from '../App';
+import CountUp from '../components/CountUp';
 import {
   BarChart, Bar, PieChart, Pie, Cell, Area, AreaChart,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -227,12 +228,12 @@ function StatCard({ label, value, unit, growth, bg, iconSrc, subValue }) {
       <span style={{ fontSize: 11, fontWeight: 500, color: 'white', letterSpacing: 0.22 }}>{label}</span>
       {subValue ? (
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ fontSize: 20, fontWeight: 700, lineHeight: '20px' }}>{value}</span>
+          <CountUp end={value} style={{ fontSize: 20, fontWeight: 700, lineHeight: '20px' }} />
           <span style={{ fontSize: 12, fontWeight: 700, lineHeight: '12px' }}>{subValue}</span>
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-          <span style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }}>{value}</span>
+          <CountUp end={value} style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }} />
           {unit && <span style={{ fontSize: 12, lineHeight: '12px' }}>{unit}</span>}
         </div>
       )}
@@ -366,7 +367,7 @@ function HorizontalBars({ data, maxValue, color = '#14B8A6', showPct = true }) {
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: font }}>
           <span style={{ fontSize: 12, color: GRAY, minWidth: 120, textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
           <div style={{ flex: 1, height: 20, background: '#F1F5F9', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ width: `${(d.value / mx) * 100}%`, height: '100%', background: color, borderRadius: 10, transition: 'width 0.5s ease' }} />
+            <div style={{ width: `${(d.value / mx) * 100}%`, height: '100%', background: color, borderRadius: 10, animation: `rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) ${i * 0.08}s both` }} />
           </div>
           <span style={{ fontSize: 12, fontWeight: 600, color: BLACK, minWidth: 70 }}>{d.value}{showPct && d.pct ? ` (${d.pct})` : ''}</span>
         </div>
@@ -400,7 +401,7 @@ function FloatingCard({ label, pct, count, color, style: posStyle }) {
           <span style={{ fontSize: 10, fontWeight: 700, color: s.textColor, fontFamily: font }}>{pct}%</span>
         </div>
       </div>
-      <span style={{ fontSize: 28, fontWeight: 700, color: s.textColor, fontFamily: font, lineHeight: 1 }}>{count}</span>
+      <CountUp end={count} style={{ fontSize: 28, fontWeight: 700, color: s.textColor, fontFamily: font, lineHeight: 1 }} />
     </div>
   );
 }
@@ -468,10 +469,10 @@ function OutcomeStatusCard({ d, idx, hoverIdx, setHoverIdx }) {
       </div>
 
       {/* Big number */}
-      <span style={{
+      <CountUp end={d.count} style={{
         fontSize: 30, fontWeight: 700, color: d.dark, fontFamily: font, lineHeight: 1,
         position: 'relative', display: 'block',
-      }}>{d.count}</span>
+      }} />
 
       {/* Mini progress bar */}
       <div style={{
@@ -547,13 +548,11 @@ function OutcomeDonutCard() {
             </ResponsiveContainer>
             {/* Center */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <span style={{
+              <CountUp end={activeData ? activeData.count : total} duration={800} style={{
                 fontSize: 40, fontWeight: 700, fontFamily: font, lineHeight: 1,
                 color: activeData ? activeData.dark : BLACK,
                 transition: 'color 0.3s ease',
-              }}>
-                {activeData ? activeData.count : total}
-              </span>
+              }} />
               <span style={{
                 fontSize: 11, fontWeight: 500, fontFamily: font, marginTop: 6,
                 color: activeData ? activeData.color : GRAY,
@@ -705,7 +704,7 @@ function TabOverview() {
                         <span style={{ fontSize: 13, fontWeight: 700, color: BLACK, fontFamily: font }}>{d.pct}</span>
                       </div>
                       <div style={{ height: 4, borderRadius: 100, background: '#F1F5F9', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: 100, background: color, width: `${(d.value / totalVal) * 100}%` }} />
+                        <div style={{ height: '100%', borderRadius: 100, background: color, width: `${(d.value / totalVal) * 100}%`, animation: 'rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) 0.3s both' }} />
                       </div>
                       <div style={{ position: 'absolute', bottom: -5, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 10, height: 10, background: 'rgba(255,255,255,0.97)', borderRight: '1px solid rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.8)' }} />
                     </div>
@@ -791,7 +790,7 @@ function TabOverview() {
                       <span style={{ fontSize: 13, fontWeight: 600, color: '#E8802A', fontFamily: font }}>{remaining}</span>
                     </div>
                     <div style={{ height: 4, borderRadius: 100, background: '#E5E7EB', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', borderRadius: 100, background: 'linear-gradient(90deg, #4ACDB3, #19A589)', width: `${pct}%` }} />
+                      <div style={{ height: '100%', borderRadius: 100, background: 'linear-gradient(90deg, #4ACDB3, #19A589)', width: `${pct}%`, animation: 'rankBarGrow 0.8s cubic-bezier(.22,1,.36,1) 0.3s both' }} />
                     </div>
                     <div style={{ position: 'absolute', bottom: -5, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 10, height: 10, background: 'rgba(255,255,255,0.97)', borderRight: '1px solid rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.8)' }} />
                   </div>
@@ -847,14 +846,14 @@ function GenderBubbleCard() {
         <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', paddingRight: 10 }}>
             {/* หญิง */}
-            <div onMouseEnter={() => setHover('female')} onMouseLeave={() => setHover(null)}
+            <div className="anim-bubble delay-1" onMouseEnter={() => setHover('female')} onMouseLeave={() => setHover(null)}
               style={{ ...bStyle(bubbles[0], 0), marginRight: -10 }}>
               <span style={{ fontSize: 12, color: 'white', fontFamily: font, fontWeight: 500 }}>{bubbles[0].label}</span>
               <span style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font, lineHeight: '26px' }}>{bubbles[0].pct}</span>
               {hover === 'female' && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontFamily: font, marginTop: 2 }}>{bubbles[0].count}</span>}
             </div>
             {/* ชาย */}
-            <div onMouseEnter={() => setHover('male')} onMouseLeave={() => setHover(null)}
+            <div className="anim-bubble delay-2" onMouseEnter={() => setHover('male')} onMouseLeave={() => setHover(null)}
               style={{ ...bStyle(bubbles[1], 1), marginRight: -10 }}>
               <span style={{ fontSize: 12, color: 'white', fontFamily: font, fontWeight: 500 }}>{bubbles[1].label}</span>
               <span style={{ fontSize: 16, fontWeight: 700, color: 'white', fontFamily: font, lineHeight: '16px' }}>{bubbles[1].pct}</span>
@@ -871,7 +870,7 @@ function GenderBubbleCard() {
         }} />
 
         {/* อื่นๆ — ซ้อนบนวงชมพู+ฟ้า ตรงรอยต่อ */}
-        <div onMouseEnter={() => setHover('other')} onMouseLeave={() => setHover(null)}
+        <div className="anim-bubble delay-3" onMouseEnter={() => setHover('other')} onMouseLeave={() => setHover(null)}
           style={{
             position: 'absolute', bottom: 95, left: '50%',
             transform: `translateX(-40%) ${hover === 'other' ? 'scale(1.2)' : hover !== null ? 'scale(0.9)' : 'scale(1)'}`,
@@ -1445,12 +1444,13 @@ function Outcome3DBarCard() {
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}
                   onMouseEnter={() => setHover(item.name)} onMouseLeave={() => setHover(null)}>
                   {/* 3D bar */}
-                  <div style={{
+                  <div className="anim-bar-3d" style={{
                     position: 'relative', width: BAR_W + DEPTH, height: barH + DEPTH,
                     transition: 'transform 0.25s ease, filter 0.25s ease',
                     transform: isActive ? 'translateY(-4px)' : 'translateY(0)',
                     filter: isActive ? 'drop-shadow(0 8px 16px rgba(3,105,161,0.3))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.06))',
                     cursor: 'default',
+                    animationDelay: `${i * 0.1}s`,
                   }}>
                     <div style={{ position: 'absolute', bottom: 0, left: 0, width: BAR_W, height: barH, background: 'linear-gradient(180deg, #7DD3FC 0%, #38BDF8 40%, #0284C7 100%)', borderRadius: '4px 4px 0 0' }} />
                     <div style={{ position: 'absolute', bottom: 0, left: BAR_W, width: DEPTH, height: barH, background: '#0369A1', transform: 'skewY(-40deg)', transformOrigin: 'bottom left', borderRadius: '0 2px 0 0' }} />

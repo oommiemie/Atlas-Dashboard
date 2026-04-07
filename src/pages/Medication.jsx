@@ -1,5 +1,6 @@
 import { useState, useContext } from 'react';
 import { CallContext, PatientContext } from '../App';
+import CountUp from '../components/CountUp';
 import { MED_JOBS, MED_TELEPHARMACY, enrichWithPatient, getPatient, getAvatar } from '../data/patients';
 
 import imgMedicine3d from '../assets/images/medicine-3d.png';
@@ -185,7 +186,7 @@ function StatCard({ label, value, gradient, icon }) {
         {icon}
       </div>
       <span style={{ fontSize: 11, fontWeight: 500, color: 'white', letterSpacing: 0.22 }}>{label}</span>
-      <span style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }}>{value}</span>
+      <CountUp end={value} style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }} />
     </div>
   );
 }
