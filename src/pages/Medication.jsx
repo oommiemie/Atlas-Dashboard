@@ -256,9 +256,9 @@ function PhotoLightbox({ src, onClose: closeLb }) {
 }
 
 function JobDetailModal({ job, onClose }) {
-  if (!job) return null;
   const { openPatient } = useContext(PatientContext);
   const [lightboxIdx, setLightboxIdx] = useState(null);
+  if (!job) return null;
 
   // Dynamic timeline based on status
   const STATUS_TO_STEP = {
@@ -541,11 +541,10 @@ function TeleDropdown({ value, options, onChange, icon, label }) {
 }
 
 function TelepharmacyModal({ item, onClose }) {
-  if (!item) return null;
-
   const [contactMethod, setContactMethod] = useState('โทรศัพท์');
   const [contactResult, setContactResult] = useState('ติดต่อได้');
   const [followUpDate, setFollowUpDate] = useState('');
+  if (!item) return null;
 
   return (
     <div
@@ -1117,8 +1116,8 @@ function TabTelepharmacy() {
           key={i}
           item={item}
           onCall={() => startCall({ name: item.patient, hn: item.hn, phone: item.phone })}
-          onCounsel={() => setCounselingItem(TELEPHARMACY_ITEMS[0])}
-          onDetail={() => setSelectedJob(JOBS[0])}
+          onCounsel={() => setCounselingItem(TELEPHARMACY_ITEMS.find(t => t.id === item.id) || TELEPHARMACY_ITEMS[0])}
+          onDetail={() => setSelectedJob(JOBS.find(j => j.id === item.id) || JOBS[0])}
         />
       ))}
 

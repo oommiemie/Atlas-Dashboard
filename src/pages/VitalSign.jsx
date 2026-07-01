@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { PatientContext, UserContext } from '../App';
 import CountUp from '../components/CountUp';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { PATIENTS, VITALSIGN_PATIENTS, getPatient, getAvatar, getStatusBadge } from '../data/patients';
+import { pageWindow } from '../utils/pagination';
 
 import vsIconPerson from '../assets/icons/vs-icon-person.svg';
 import vsIconEcg from '../assets/icons/vs-icon-ecg.svg';
@@ -164,12 +164,19 @@ function Hero() {
    2. STAT CARDS - 5 cards
    ============================================= */
 function StatCards() {
+  // Derive counts from real vital-sign data using the same severity thresholds as the table
+  // (วิกฤต >= 80, เฝ้าระวัง >= 50). Keeps the cards consistent with the patient list below.
+  const total = VITALSIGN_PATIENTS.length;
+  const abnormal = VITALSIGN_PATIENTS.filter(p => p.severity >= 50).length;
+  const critical = VITALSIGN_PATIENTS.filter(p => p.severity >= 80).length;
+  const nearCritical = VITALSIGN_PATIENTS.filter(p => p.severity >= 50 && p.severity < 80).length;
+  const referredPct = total ? Math.round((critical / total) * 100) : 0;
   const cards = [
-    { label: 'ผู้ป่วยทั้งหมด', value: '200', growth: '+4.3%', icon: vsIconPerson, bg: 'linear-gradient(148deg, #3B82F6, #1D4ED8)', shadow: '0 4px 14px rgba(59,130,246,0.3)' },
-    { label: 'ค่าผิดปกติ', value: '190', growth: '+6.3%', icon: vsIconEcg, bg: 'linear-gradient(148deg, #FC9BBA, #DB677E)', shadow: '0 4px 14px rgba(252,155,186,0.3)' },
-    { label: 'ค่าผิดปกติวิกฤต', value: '50', growth: null, icon: vsIconWarning, bg: 'linear-gradient(148deg, #E8802A, #D06A1A)', shadow: '0 4px 14px rgba(232,128,42,0.3)' },
-    { label: 'ใกล้วิกฤต', value: '25', growth: '+7.8%', icon: vsIconStar, bg: 'linear-gradient(148deg, #E8432A, #D0381A)', shadow: '0 4px 14px rgba(208,56,26,0.3)' },
-    { label: 'ส่งรพ', value: '15%', growth: '+9.2%', icon: vsIconHeart, bg: 'linear-gradient(148deg, #8B5CF6, #7C3AED)', shadow: '0 4px 14px rgba(139,92,246,0.3)' },
+    { label: 'ผู้ป่วยทั้งหมด', value: String(total), growth: '+4.3%', icon: vsIconPerson, bg: 'linear-gradient(148deg, #3B82F6, #1D4ED8)', shadow: '0 4px 14px rgba(59,130,246,0.3)' },
+    { label: 'ค่าผิดปกติ', value: String(abnormal), growth: '+6.3%', icon: vsIconEcg, bg: 'linear-gradient(148deg, #FC9BBA, #DB677E)', shadow: '0 4px 14px rgba(252,155,186,0.3)' },
+    { label: 'ค่าผิดปกติวิกฤต', value: String(critical), growth: null, icon: vsIconWarning, bg: 'linear-gradient(148deg, #E8802A, #D06A1A)', shadow: '0 4px 14px rgba(232,128,42,0.3)' },
+    { label: 'ใกล้วิกฤต', value: String(nearCritical), growth: '+7.8%', icon: vsIconStar, bg: 'linear-gradient(148deg, #E8432A, #D0381A)', shadow: '0 4px 14px rgba(208,56,26,0.3)' },
+    { label: 'ส่งรพ', value: `${referredPct}%`, growth: '+9.2%', icon: vsIconHeart, bg: 'linear-gradient(148deg, #8B5CF6, #7C3AED)', shadow: '0 4px 14px rgba(139,92,246,0.3)' },
   ];
 
   return (
@@ -221,16 +228,6 @@ function ChartsRow() {
     { name: 'อุณหภูมิ', count: '175 ครั้ง', img: imgVitalTemp, normal: 100, abnormal: 35, unit: '°C', range: '36.1 - 37.2', avg: '36.8', critical: 3, warning: 7 },
     { name: 'ออกซิเจน', count: '193 ครั้ง', img: imgVitalOxygen, normal: 100, abnormal: 35, unit: '%SpO2', range: '95 - 100', avg: '97', critical: 4, warning: 8 },
     { name: 'น้ำตาล', count: '193 ครั้ง', img: imgVitalSugar, normal: 100, abnormal: 35, unit: 'mg/dL', range: '70 - 130', avg: '118', critical: 6, warning: 9 },
-  ];
-
-  const weeklyData = [
-    { day: '17 มี.ค.', critical: 5, normal: 45 },
-    { day: '18 มี.ค.', critical: 8, normal: 50 },
-    { day: '19 มี.ค.', critical: 3, normal: 55 },
-    { day: '20 มี.ค.', critical: 10, normal: 48 },
-    { day: '21 มี.ค.', critical: 6, normal: 52 },
-    { day: '22 มี.ค.', critical: 4, normal: 58 },
-    { day: '23 มี.ค.', critical: 7, normal: 60 },
   ];
 
   return (
@@ -322,7 +319,7 @@ function ChartsRow() {
                   </div>
                   {/* Arrow */}
                   <div style={{
-                    position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%)',
+                    position: 'absolute', bottom: -6, left: '50%',
                     width: 12, height: 12, background: 'rgba(255,255,255,0.97)',
                     borderRadius: 2, transform: 'translateX(-50%) rotate(45deg)',
                     boxShadow: '2px 2px 4px rgba(0,0,0,0.04)',
@@ -525,6 +522,7 @@ function ChartsRow() {
    4. MAP SECTION + PATIENT LIST
    ============================================= */
 function MapSection() {
+  const { openPatient } = useContext(PatientContext);
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const [activeFilter, setActiveFilter] = useState(0);
@@ -976,15 +974,15 @@ function MapSection() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 opacity: mapListPage <= 1 ? 0.3 : 1, fontSize: 12, color: GRAY,
               }}>‹</span>
-              {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
-                <span key={i} onClick={() => setMapListPage(i + 1)} style={{
+              {pageWindow(mapListPage, totalPages).map((n) => (
+                <span key={n} onClick={() => setMapListPage(n)} style={{
                   width: 24, height: 24, borderRadius: 100, cursor: 'pointer',
-                  background: mapListPage === i + 1 ? '#7C3AED' : undefined,
-                  backgroundImage: mapListPage === i + 1 ? 'none' : 'linear-gradient(90deg, rgba(116,116,128,0.08), rgba(116,116,128,0.08)), linear-gradient(90deg, #fff, #fff)',
-                  color: mapListPage === i + 1 ? 'white' : '#8E8E93',
+                  background: mapListPage === n ? '#7C3AED' : undefined,
+                  backgroundImage: mapListPage === n ? 'none' : 'linear-gradient(90deg, rgba(116,116,128,0.08), rgba(116,116,128,0.08)), linear-gradient(90deg, #fff, #fff)',
+                  color: mapListPage === n ? 'white' : '#8E8E93',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 14, fontWeight: 500, fontFamily: font,
-                }}>{i + 1}</span>
+                }}>{n}</span>
               ))}
               <span onClick={() => setMapListPage(Math.min(totalPages, mapListPage + 1))} style={{
                 width: 24, height: 24, borderRadius: 100, cursor: 'pointer',
@@ -1199,15 +1197,15 @@ function PatientTable() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: page <= 1 ? 0.3 : 1, fontSize: 12, color: GRAY,
           }}>‹</span>
-          {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
-            <span key={i} onClick={() => setPage(i + 1)} style={{
+          {pageWindow(page, totalPages).map((n) => (
+            <span key={n} onClick={() => setPage(n)} style={{
               width: 24, height: 24, borderRadius: 100, cursor: 'pointer',
-              background: page === i + 1 ? '#7C3AED' : undefined,
-              backgroundImage: page === i + 1 ? 'none' : 'linear-gradient(90deg, rgba(116,116,128,0.08), rgba(116,116,128,0.08)), linear-gradient(90deg, #fff, #fff)',
-              color: page === i + 1 ? 'white' : '#8E8E93',
+              background: page === n ? '#7C3AED' : undefined,
+              backgroundImage: page === n ? 'none' : 'linear-gradient(90deg, rgba(116,116,128,0.08), rgba(116,116,128,0.08)), linear-gradient(90deg, #fff, #fff)',
+              color: page === n ? 'white' : '#8E8E93',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 14, fontWeight: 500, fontFamily: font,
-            }}>{i + 1}</span>
+            }}>{n}</span>
           ))}
           <span onClick={() => setPage(p => Math.min(totalPages, p + 1))} style={{
             width: 24, height: 24, borderRadius: 100, cursor: 'pointer',

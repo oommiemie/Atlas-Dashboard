@@ -1116,7 +1116,7 @@ function CasesMonitor() {
                 </div>
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'center', alignSelf: 'stretch' }}>
-                <span style={{ fontSize: 12, color: 'black', fontFamily: font }}>นางมงลักษณ์มานะพล</span>
+                <span style={{ fontSize: 12, color: 'black', fontFamily: font }}>{c.name}</span>
                 <div style={{ display: 'flex', gap: 10, fontSize: 10, color: '#8E8E93', fontFamily: font }}>
                   <span>{isHomeVisit ? `กลุ่ม: ${c.group}` : c.detail}</span>
                   <span>{c.hospital}</span>

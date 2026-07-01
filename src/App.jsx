@@ -68,7 +68,7 @@ function App() {
               <div style={{ width: 48, height: 48, borderRadius: 16, background: 'white', boxShadow: '0 0 24px 4px rgba(143,134,251,0.35)', flexShrink: 0 }} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, color: 'white', width: 91 }}>
                 <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>ATLAS</span>
-                <span style={{ fontSize: 14, fontFamily: "'Inter', sans-serif", letterSpacing: 2.24 }}>Dashboad</span>
+                <span style={{ fontSize: 14, fontFamily: "'Inter', sans-serif", letterSpacing: 2.24 }}>Dashboard</span>
               </div>
             </div>
 

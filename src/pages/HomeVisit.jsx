@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import { PatientContext } from '../App';
 import CountUp from '../components/CountUp';
 import { HOME_VISITS, getPatient, getAvatar } from '../data/patients';
+import { pageWindow } from '../utils/pagination';
+import PlanVisitPage from './PlanVisitPage';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -107,10 +110,11 @@ const MAP_STATUS_META = {
   pending:    { color: '#E8802A', label: 'รอรับงาน', icon: '\u23F3' },
 };
 
+
 /* ═══════════════════════════════════════════
    1. HERO SECTION
    ═══════════════════════════════════════════ */
-function Hero() {
+function Hero({ onPlanVisit }) {
   const [now, setNow] = useState(new Date());
   const [monthOpen, setMonthOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -201,6 +205,21 @@ function Hero() {
               <img src={iconRefresh} alt="" style={{ width: 16, height: 19 }} />
             </button>
           </div>
+
+          {/* Plan visit CTA */}
+          <button className="hover-btn" onClick={onPlanVisit} style={{
+            height: 36, display: 'flex', alignItems: 'center', gap: 8,
+            padding: '0 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
+            background: 'linear-gradient(135deg, #6658E1, #0088FF)', color: 'white',
+            fontFamily: font, fontSize: 13, fontWeight: 600,
+            boxShadow: '0 4px 14px rgba(102,88,225,0.35)', whiteSpace: 'nowrap',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4.5" width="18" height="16" rx="3" stroke="white" strokeWidth="1.8"/>
+              <path d="M3 9h18M8 2.5v4M16 2.5v4M12 12.5v4M10 14.5h4" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+            วางแผนเยี่ยมบ้าน
+          </button>
         </div>
       </div>
     </div>
@@ -210,15 +229,21 @@ function Hero() {
 /* ═══════════════════════════════════════════
    2. STAT CARDS
    ═══════════════════════════════════════════ */
-function StatCards() {
+function StatCards({ plannedVisits = [] }) {
+  // Derive counts from the actual map data so cards stay in sync with the map legend.
+  // Newly planned visits count toward the total and the "not visited yet" bucket.
+  const total = MAP_POINTS.length + plannedVisits.length;
+  const notVisited = MAP_POINTS.filter(p => p.status === 'notVisited').length + plannedVisits.length;
+  const visited = MAP_POINTS.filter(p => p.status === 'visited').length;
+  const pending = MAP_POINTS.filter(p => p.status === 'pending').length;
   const cards = [
-    { label: 'เคสส่งเยี่ยมทั้งหมด', value: '200', growth: '+4.1%', bg: 'linear-gradient(154deg, #19A589 0%, #0D7C66 100%)', shadow: '0 4px 14px rgba(59,130,246,0.3)', iconBg: 'rgba(255,255,255,0.2)',
+    { label: 'เคสส่งเยี่ยมทั้งหมด', value: String(total), growth: '+4.1%', bg: 'linear-gradient(154deg, #19A589 0%, #0D7C66 100%)', shadow: '0 4px 14px rgba(59,130,246,0.3)', iconBg: 'rgba(255,255,255,0.2)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5a1 1 0 00-1-1h-4a1 1 0 00-1 1v5a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="18" cy="6" r="4" fill="white" fillOpacity="0.3"/></svg> },
-    { label: 'ยังไม่ไปเยี่ยม', value: '190', growth: '+6.3%', bg: 'linear-gradient(154deg, #E8432A 0%, #D0381A 100%)', shadow: '0 4px 14px rgba(25,165,137,0.3)', iconBg: 'rgba(255,255,255,0.2)',
+    { label: 'ยังไม่ไปเยี่ยม', value: String(notVisited), growth: '+6.3%', bg: 'linear-gradient(154deg, #E8432A 0%, #D0381A 100%)', shadow: '0 4px 14px rgba(25,165,137,0.3)', iconBg: 'rgba(255,255,255,0.2)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.5"/><path d="M12 7v5l3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-    { label: 'เยี่ยมแล้ว', value: '50', growth: '+7.8%', bg: 'linear-gradient(154deg, #34D65D 0%, #21AB44 100%)', shadow: '0 4px 14px rgba(52,199,89,0.3)', iconBg: 'rgba(255,255,255,0.2)',
+    { label: 'เยี่ยมแล้ว', value: String(visited), growth: '+7.8%', bg: 'linear-gradient(154deg, #34D65D 0%, #21AB44 100%)', shadow: '0 4px 14px rgba(52,199,89,0.3)', iconBg: 'rgba(255,255,255,0.2)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.5"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-    { label: 'รอรับงาน', value: '25', growth: '+7.8%', bg: 'linear-gradient(154deg, #E8802A 0%, #D06A1A 100%)', shadow: '0 4px 14px rgba(232,128,42,0.3)', iconBg: 'rgba(255,255,255,0.2)',
+    { label: 'รอรับงาน', value: String(pending), growth: '+7.8%', bg: 'linear-gradient(154deg, #E8802A 0%, #D06A1A 100%)', shadow: '0 4px 14px rgba(232,128,42,0.3)', iconBg: 'rgba(255,255,255,0.2)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3.5" stroke="white" strokeWidth="1.5"/><circle cx="16" cy="7" r="3.5" stroke="white" strokeWidth="1.5"/><path d="M2 19c0-3.3 2.7-6 6-6h2c3.3 0 6 2.7 6 6" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg> },
   ];
 
@@ -257,7 +282,7 @@ function StatCards() {
 /* ═══════════════════════════════════════════
    3. MAP SECTION
    ═══════════════════════════════════════════ */
-function MapSection() {
+function MapSection({ plannedVisits = [] }) {
   const { openPatient } = useContext(PatientContext);
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
@@ -357,6 +382,7 @@ function MapSection() {
   // Init map - simple direct approach
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
+    let cancelled = false; // guards against React StrictMode double-mount teardown race
     const map = new maplibregl.Map({
       container: mapContainer.current,
       style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -369,6 +395,7 @@ function MapSection() {
 
     // Add markers directly after map is ready
     map.on('load', function() {
+      if (cancelled) return;
       MAP_POINTS.forEach(function(pt, i) {
         var pc = PIN_COLORS[pt.status] || PIN_COLORS.pending;
         var meta = MAP_STATUS_META[pt.status] || MAP_STATUS_META.pending;
@@ -414,7 +441,13 @@ function MapSection() {
           .addTo(map);
       });
     });
-    return () => { if (mapRef.current) { markersRef.current.forEach(m => m.remove()); mapRef.current.remove(); mapRef.current = null; } };
+    return () => {
+      cancelled = true;
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      try { map.remove(); } catch { /* ignore StrictMode teardown race */ }
+      mapRef.current = null;
+    };
   }, []);
 
   const handleMapStyleChange = (idx) => {
@@ -426,8 +459,8 @@ function MapSection() {
     });
   };
 
-  /* Patient list data */
-  const patientList = VISITS.map(v => ({
+  /* Patient list data — newly planned visits appear first */
+  const patientList = [...plannedVisits, ...VISITS].map(v => ({
     ...v,
     displayStatus: displayStatus(v.status),
     cfg: getStatusCfg(v.status),
@@ -632,15 +665,15 @@ function MapSection() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 opacity: listPage <= 1 ? 0.3 : 1, fontSize: 12, color: GRAY,
               }}>&lsaquo;</span>
-              {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
-                <span key={i} onClick={() => setListPage(i + 1)} style={{
+              {pageWindow(listPage, totalPages).map((n) => (
+                <span key={n} onClick={() => setListPage(n)} style={{
                   width: 24, height: 24, borderRadius: 100, cursor: 'pointer',
-                  background: listPage === i + 1 ? '#7C3AED' : undefined,
-                  backgroundImage: listPage === i + 1 ? 'none' : 'linear-gradient(90deg, rgba(116,116,128,0.08), rgba(116,116,128,0.08)), linear-gradient(90deg, #fff, #fff)',
-                  color: listPage === i + 1 ? 'white' : '#8E8E93',
+                  background: listPage === n ? '#7C3AED' : undefined,
+                  backgroundImage: listPage === n ? 'none' : 'linear-gradient(90deg, rgba(116,116,128,0.08), rgba(116,116,128,0.08)), linear-gradient(90deg, #fff, #fff)',
+                  color: listPage === n ? 'white' : '#8E8E93',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 14, fontWeight: 500, fontFamily: font,
-                }}>{i + 1}</span>
+                }}>{n}</span>
               ))}
               <span onClick={() => setListPage(Math.min(totalPages, listPage + 1))} style={{
                 width: 24, height: 24, borderRadius: 100, cursor: 'pointer',
@@ -660,11 +693,49 @@ function MapSection() {
    MAIN PAGE
    ═══════════════════════════════════════════ */
 export default function HomeVisit() {
+  const [plannedVisits, setPlannedVisits] = useState([]);
+  const [toast, setToast] = useState(null);
+  const [planning, setPlanning] = useState(false);
+
+  const handlePlanVisit = (visit) => {
+    setPlannedVisits(prev => [visit, ...prev]);
+    setToast(`เพิ่มแผนเยี่ยมบ้าน "${visit.name}" วันที่ ${visit.visitDate} แล้ว`);
+    setPlanning(false);
+  };
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  if (planning) {
+    return <PlanVisitPage onCancel={() => setPlanning(false)} onSave={handlePlanVisit} />;
+  }
+
   return (
     <div style={{ fontFamily: font }}>
-      <Hero />
-      <StatCards />
-      <MapSection />
+      <Hero onPlanVisit={() => setPlanning(true)} />
+      <StatCards plannedVisits={plannedVisits} />
+      <MapSection plannedVisits={plannedVisits} />
+
+      {/* Success toast — portaled to body so it sits at the true viewport bottom */}
+      {toast && createPortal(
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 2000, display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 18px', borderRadius: 100, fontFamily: font, fontSize: 13, fontWeight: 500,
+          background: 'linear-gradient(135deg, #34D65D, #21AB44)', color: 'white',
+          boxShadow: '0 8px 28px rgba(33,171,68,0.4)',
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="1.8"/>
+            <path d="M7.5 12.5l3 3 6-6.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          {toast}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

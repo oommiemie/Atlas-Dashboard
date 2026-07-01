@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { CallContext } from '../App';
 import { getAvatar } from '../data/patients';
 import { LineChart, Line, Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
 import logoHomeCare from '../assets/images/logo-atlas-homecare.png';
@@ -479,6 +480,7 @@ const tabLabels = ['Vital Signs', 'ประวัติการเยี่ย
    MAIN COMPONENT
    ═══════════════════════════════════════ */
 export default function PatientProfile({ patient, onClose }) {
+  const { startCall } = useContext(CallContext);
   const [activeTab, setActiveTab] = useState(0);
   const [chartFilter, setChartFilter] = useState(0);
   const [historyPage, setHistoryPage] = useState(1);
@@ -551,7 +553,7 @@ export default function PatientProfile({ patient, onClose }) {
 
             {/* Phone + Video call buttons */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 12 }}>
-              <button className="hover-btn" style={{
+              <button className="hover-btn" title="โทรติดต่อผู้ป่วย" onClick={() => startCall(patient)} style={{
                 width: 32, height: 32, borderRadius: '50%',
                 background: 'rgba(255,255,255,0.15)', border: 'none',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -560,7 +562,7 @@ export default function PatientProfile({ patient, onClose }) {
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
-              <button className="hover-btn" style={{
+              <button className="hover-btn" title="วิดีโอคอล" onClick={() => startCall(patient)} style={{
                 width: 32, height: 32, borderRadius: '50%',
                 background: 'rgba(255,255,255,0.15)', border: 'none',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
