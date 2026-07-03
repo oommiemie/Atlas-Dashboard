@@ -7,7 +7,7 @@ import {
 } from '../../data/smartVillage';
 import {
   font, BLACK, GRAY, GRAY2, RED, GREEN, ORANGE, PURPLE,
-  card, btnPrimary, btnGhost, PageHead, SectionTitle, Pill, LivePill, SVMap, ElapsedSince,
+  card, btnPrimary, btnGhost, PageHead, SectionTitle, Pill, LivePill, SVMap, ElapsedSince, EmptyState,
 } from './shared';
 
 /* ── แถบเหตุ active — เด่นสุดของหน้า ── */
@@ -80,6 +80,29 @@ function KpiCard({ icon, label, value, sub, grad, delay = 0, subColor }) {
 }
 
 export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, onOpenGuard }) {
+  /* Empty state ระดับหน้า — ยังไม่มีหมู่บ้านเลย → CTA เพิ่มหมู่บ้านแรก (spec 5.1) */
+  if (SV_VILLAGES.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="anim-slide-up">
+          <PageHead
+            title="Smart Village — ภาพรวม"
+            sub="ระบบเฝ้าระวังและแจ้งเหตุประจำหมู่บ้าน · สุขภาพทั้งระบบในหน้าเดียว"
+            right={<LivePill />}
+          />
+        </div>
+        <div className="anim-slide-up delay-1">
+          <EmptyState
+            icon="🏘️"
+            title="ยังไม่มีหมู่บ้านในระบบ"
+            sub="เริ่มจากเพิ่มหมู่บ้านแรก แล้วทำตาม flow ติดตั้ง: สร้างบัญชี รปภ. → เพิ่มบ้าน → ติดตั้งอุปกรณ์ → เชื่อม Family"
+            cta={<button className="hover-btn" style={btnPrimary} onClick={() => onGoSection('sv-villages')}>+ เพิ่มหมู่บ้านแรก</button>}
+          />
+        </div>
+      </div>
+    );
+  }
+
   const actives = activeAlerts();
   const attention = buildAttention();
   const totalDevices = SV_DEVICES.length;

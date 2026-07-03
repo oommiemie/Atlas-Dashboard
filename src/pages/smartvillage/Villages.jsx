@@ -94,11 +94,13 @@ function AddVillageModal({ onClose }) {
 export default function Villages({ onDrillVillage }) {
   const [q, setQ] = useState('');
   const [typeFilter, setTypeFilter] = useState('ทั้งหมด');
+  const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
   const [view, setView] = useState('table');
   const [adding, setAdding] = useState(false);
 
   const rows = SV_VILLAGES.filter(v =>
     (typeFilter === 'ทั้งหมด' || v.type === typeFilter) &&
+    (statusFilter === 'ทั้งหมด' || v.status === statusFilter) &&
     (v.name + v.province).toLowerCase().includes(q.toLowerCase())
   );
 
@@ -119,6 +121,13 @@ export default function Villages({ onDrillVillage }) {
         <div className="seg">
           {['ทั้งหมด', ...TYPES].map(t => (
             <button key={t} className={`seg-btn${typeFilter === t ? ' active' : ''}`} onClick={() => setTypeFilter(t)}>{t}</button>
+          ))}
+        </div>
+        <div className="seg">
+          {['ทั้งหมด', 'ใช้งาน', 'ระงับ'].map(s => (
+            <button key={s} className={`seg-btn${statusFilter === s ? ' active' : ''}`} onClick={() => setStatusFilter(s)}>
+              {s === 'ทั้งหมด' ? 'สถานะ: ทั้งหมด' : s}
+            </button>
           ))}
         </div>
         <div className="seg" style={{ marginLeft: 'auto' }}>

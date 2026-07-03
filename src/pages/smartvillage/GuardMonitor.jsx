@@ -1,19 +1,29 @@
 /* ═══ Smart Village — Guard Portal (demo overlay) — spec 5.6 login + 5.7 จอมอนิเตอร์ ═══
    จอเฝ้าระวังจอเดียวจบ: ตัวหนังสือใหญ่ contrast สูง เปิดทิ้งไว้ทั้งกะ */
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
-  getVillage, housesOf, devicesOfHouse, getHouse, getDevice, alertsOfVillage,
+  SV_GUARDS, getVillage, housesOf, devicesOfHouse, getHouse, getDevice, alertsOfVillage,
 } from '../../data/smartVillage';
-import { font, GREEN, RED, ORANGE, ElapsedSince } from './shared';
+import { font, GREEN, RED, ORANGE, ElapsedSince, SVMap } from './shared';
 
 const DARK = '#12102E';
 const CARD_DARK = 'rgba(255,255,255,0.06)';
 const BORDER_DARK = '1px solid rgba(255,255,255,0.1)';
 
 /* ── หน้า login รปภ. (spec 5.6) ── */
-function GuardLogin({ village, onLogin }) {
+function GuardLogin({ onLogin }) {
   const [u, setU] = useState('vlg001-somsak');
   const [p, setP] = useState('••••••••••');
+  const [error, setError] = useState(null);
+
+  const submit = () => {
+    const guard = SV_GUARDS.find(g => g.username === u.trim());
+    if (!guard || !p) { setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'); return; }
+    if (guard.status === 'ระงับ') { setError('บัญชีถูกระงับ กรุณาติดต่อนิติบุคคล/ผู้ดูแลระบบ'); return; }
+    onLogin(guard);
+  };
+
   return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div className="anim-scale-in" style={{ width: 400, maxWidth: '92vw', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(30px)', border: BORDER_DARK, borderRadius: 28, padding: '36px 32px', textAlign: 'center' }}>
@@ -23,23 +33,35 @@ function GuardLogin({ village, onLogin }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>🛡️</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: 'white', fontFamily: font }}>Smart Village — จอเฝ้าระวัง</div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontFamily: font, marginTop: 4 }}>{village.name}</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontFamily: font, marginTop: 4 }}>ระบบเฝ้าระวังและแจ้งเหตุประจำหมู่บ้าน</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24, textAlign: 'left' }}>
           <div>
             <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', fontFamily: font, marginBottom: 6 }}>ชื่อผู้ใช้</div>
-            <input value={u} onChange={e => setU(e.target.value)} style={{ width: '100%', height: 48, borderRadius: 14, border: '1.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: 'white', fontSize: 15, fontFamily: 'Inter', padding: '0 16px', outline: 'none' }} />
+            <input value={u} onChange={e => { setU(e.target.value); setError(null); }} style={{ width: '100%', height: 48, borderRadius: 14, border: `1.5px solid ${error ? 'rgba(255,56,60,0.55)' : 'rgba(255,255,255,0.15)'}`, background: 'rgba(255,255,255,0.08)', color: 'white', fontSize: 15, fontFamily: 'Inter', padding: '0 16px', outline: 'none' }} />
           </div>
           <div>
             <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.6)', fontFamily: font, marginBottom: 6 }}>รหัสผ่าน</div>
-            <input type="password" value={p} onChange={e => setP(e.target.value)} style={{ width: '100%', height: 48, borderRadius: 14, border: '1.5px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.08)', color: 'white', fontSize: 15, padding: '0 16px', outline: 'none' }} />
+            <input type="password" value={p} onChange={e => { setP(e.target.value); setError(null); }} onKeyDown={e => e.key === 'Enter' && submit()} style={{ width: '100%', height: 48, borderRadius: 14, border: `1.5px solid ${error ? 'rgba(255,56,60,0.55)' : 'rgba(255,255,255,0.15)'}`, background: 'rgba(255,255,255,0.08)', color: 'white', fontSize: 15, padding: '0 16px', outline: 'none' }} />
           </div>
-          <button className="hover-btn" onClick={onLogin} style={{
+          {error && (
+            <div role="alert" className="anim-slide-up" style={{
+              display: 'flex', gap: 8, alignItems: 'flex-start', background: 'rgba(255,56,60,0.14)',
+              border: '1px solid rgba(255,56,60,0.4)', borderRadius: 12, padding: '10px 14px',
+              fontSize: 12.5, color: '#FF8A80', fontFamily: font, lineHeight: 1.55,
+            }}>
+              <span>⚠</span><span>{error}</span>
+            </div>
+          )}
+          <button className="hover-btn" onClick={submit} style={{
             height: 52, borderRadius: 100, border: 'none', cursor: 'pointer', marginTop: 6,
             background: 'linear-gradient(135deg,#4438AD,#6658E1 50%,#8B5CF6)', color: 'white',
             fontSize: 16, fontWeight: 700, fontFamily: font, boxShadow: '0 8px 24px rgba(102,88,225,0.45)',
           }}>เข้าสู่ระบบ</button>
           <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', fontFamily: font, textAlign: 'center', lineHeight: 1.7, marginTop: 4 }}>
             ลืมรหัสผ่าน? ติดต่อนิติบุคคล/ผู้ดูแลระบบ Atlas เท่านั้น<br />(ไม่มีการรีเซ็ตด้วยตนเอง)
+          </div>
+          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.3)', fontFamily: font, textAlign: 'center', lineHeight: 1.7, borderTop: BORDER_DARK, paddingTop: 10 }}>
+            demo: <span style={{ fontFamily: 'Inter' }}>vlg001-somsak</span> (ใช้งาน) · <span style={{ fontFamily: 'Inter' }}>vlg003-prayut</span> (ถูกระงับ) · username อื่น = รหัสผิด
           </div>
         </div>
       </div>
@@ -74,7 +96,7 @@ function AlertPanel({ alert, house, device, phase, onAck, onClose }) {
   const [closing, setClosing] = useState(false);
   return (
     <div style={{
-      borderRadius: 26, overflow: 'hidden', position: 'relative',
+      borderRadius: 26, overflow: 'hidden', position: 'relative', flexShrink: 0,
       background: phase === 'new' ? 'linear-gradient(125deg,#B71C1C,#E0262B 45%,#FF5A3C)' : 'linear-gradient(125deg,#8A4A0B,#C96A12 45%,#E8802A)',
       animation: phase === 'new' ? 'svSirenGlow 1.2s ease-in-out infinite' : 'none',
       border: '1.5px solid rgba(255,255,255,0.25)',
@@ -126,6 +148,11 @@ function AlertPanel({ alert, house, device, phase, onAck, onClose }) {
           <div style={{ background: 'rgba(0,0,0,0.18)', borderRadius: 18, padding: '14px 16px' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.7)', fontFamily: font, marginBottom: 8 }}>📞 ผู้ติดต่อ (เรียงลำดับ) — กดโทรได้ทันที</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {house.contacts.length === 0 && (
+                <div style={{ fontSize: 13, color: '#FFD54F', fontFamily: font, lineHeight: 1.6 }}>
+                  ⚠ บ้านนี้ไม่มีผู้ติดต่อในระบบ — ติดต่อนิติบุคคล/ทีม central แทน
+                </div>
+              )}
               {house.contacts.map((c, i) => (
                 <a key={c.id} href={`tel:${c.phone}`} className="hover-btn" style={{
                   display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none',
@@ -177,24 +204,62 @@ function AlertPanel({ alert, house, device, phase, onAck, onClose }) {
 }
 
 export default function GuardMonitor({ onExit }) {
-  const village = getVillage('vlg-001');
-  const houses = housesOf('vlg-001');
-  const guard = { name: 'สมศักดิ์ เข้มแข็ง' };
+  const [guard, setGuard] = useState(null);
   const [screen, setScreen] = useState('login'); // login → shift → monitor
   const [muted, setMuted] = useState(false);
-  const [alertPhase, setAlertPhase] = useState('new'); // new → acked → closed
-  const [closedResult, setClosedResult] = useState(null);
+  const [view, setView] = useState('map'); // map | cards — spec แนะนำ: แผนที่หลักบน desktop
+  /* วงจรเหตุรายตัว: ใหม่ → รับทราบแล้ว → ปิดแล้ว — เก็บ override เป็น map ต่อ alert id */
+  const [alertStates, setAlertStates] = useState({});
+  const [closedResults, setClosedResults] = useState({});
 
-  const alert = alertsOfVillage('vlg-001').find(a => a.status !== 'ปิดแล้ว');
-  const alertHouse = alert ? getHouse(alert.houseId) : null;
-  const alertDevice = alert ? getDevice(alert.deviceId) : null;
-  const showAlert = alert && alertPhase !== 'closed';
+  const villageId = guard ? guard.villageId : 'vlg-001';
+  const village = getVillage(villageId);
+  const houses = housesOf(villageId);
+  const monitored = houses.filter(h => devicesOfHouse(h.id).length > 0);
 
-  const devTotal = houses.flatMap(h => devicesOfHouse(h.id));
+  const allAlerts = alertsOfVillage(villageId);
+  const phaseOf = (a) => alertStates[a.id] || (a.status === 'ใหม่' ? 'new' : a.status === 'รับทราบแล้ว' ? 'acked' : 'closed');
+  /* หลายเหตุพร้อมกัน: ซ้อนเป็นรายการ เหตุใหม่สุดอยู่บน */
+  const actives = allAlerts.filter(a => a.status !== 'ปิดแล้ว').sort((x, y) => (x.minAgo ?? 0) - (y.minAgo ?? 0));
+  const openAlerts = actives.filter(a => phaseOf(a) !== 'closed');
+  const closedNow = actives.filter(a => phaseOf(a) === 'closed');
+  const unacked = openAlerts.filter(a => phaseOf(a) === 'new').length;
+
+  const devTotal = monitored.flatMap(h => devicesOfHouse(h.id));
   const online = devTotal.filter(d => d.online).length;
-  const history = alertsOfVillage('vlg-001').filter(a => a.status === 'ปิดแล้ว');
+  const todayCount = allAlerts.filter(a => a.date === 'วันนี้').length;
+  const history = allAlerts.filter(a => a.status === 'ปิดแล้ว');
 
-  return (
+  const ack = (id) => setAlertStates(s => ({ ...s, [id]: 'acked' }));
+  const close = (id, result) => {
+    setAlertStates(s => ({ ...s, [id]: 'closed' }));
+    setClosedResults(r => ({ ...r, [id]: result }));
+  };
+
+  const houseAlertOf = (houseId) => openAlerts.find(a => a.houseId === houseId);
+
+  const mapPoints = monitored.map(h => {
+    const devs = devicesOfHouse(h.id);
+    const al = houseAlertOf(h.id);
+    const hasOffline = devs.some(d => !d.online);
+    const color = al ? RED : hasOffline ? ORANGE : GREEN;
+    return {
+      lat: h.lat, lng: h.lng, color, big: !!al, status: al ? 'alert' : 'ok',
+      name: `บ้าน ${h.no}${h.nickname ? ' · ' + h.nickname : ''}`,
+      subHtml: `<div style="font-size:11.5px;color:#615E83;">${al ? (phaseOf(al) === 'new' ? '⚠ ตรวจพบการล้ม!' : 'กำลังช่วยเหลือ…') : hasOffline ? 'อุปกรณ์ offline' : 'ปกติ'} · อุปกรณ์ ${devs.filter(d => d.online).length}/${devs.length} online</div>`,
+    };
+  });
+
+  const segBtn = (active) => ({
+    height: 32, padding: '0 14px', borderRadius: 100, cursor: 'pointer',
+    fontSize: 12, fontWeight: 700, fontFamily: font,
+    border: '1px solid rgba(255,255,255,0.15)',
+    background: active ? 'rgba(255,255,255,0.16)' : 'transparent',
+    color: active ? 'white' : 'rgba(255,255,255,0.55)',
+  });
+
+  /* portal ไป document.body — จอเฝ้าระวังต้องเต็ม viewport จริง ไม่โดน .main-inner clip */
+  return createPortal(
     <div className="anim-backdrop" style={{
       position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', flexDirection: 'column',
       background: `linear-gradient(160deg, #1A1340 0%, ${DARK} 55%, #0D0B24 100%)`,
@@ -203,7 +268,7 @@ export default function GuardMonitor({ onExit }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 22px', borderBottom: BORDER_DARK, flexWrap: 'wrap' }}>
         <div style={{ width: 36, height: 36, borderRadius: 12, background: 'linear-gradient(180deg,#8B81F2,#6658E1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
         <div>
-          <div style={{ fontSize: 14.5, fontWeight: 800, color: 'white', fontFamily: font }}>Guard Portal — {village.name}</div>
+          <div style={{ fontSize: 14.5, fontWeight: 800, color: 'white', fontFamily: font }}>Guard Portal{guard ? ` — ${village.name}` : ''}</div>
           <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)', fontFamily: font }}>/guard · portal แยกจาก dashboard (login คนละระบบ) · ตัวอย่างจอ Desktop ป้อมยาม</div>
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -212,6 +277,11 @@ export default function GuardMonitor({ onExit }) {
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontFamily: font, color: '#7CF5A4', background: 'rgba(52,199,89,0.15)', border: '1px solid rgba(52,199,89,0.3)', borderRadius: 100, padding: '5px 12px' }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: GREEN, animation: 'svBlink 1.6s infinite' }} />เชื่อมต่อแล้ว
               </span>
+              {unacked > 0 && !muted && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 700, fontFamily: font, color: '#FF8A80', background: 'rgba(255,56,60,0.15)', border: '1px solid rgba(255,56,60,0.35)', borderRadius: 100, padding: '5px 12px', animation: 'svBlink 1.2s infinite' }}>
+                  🔔 siren ดังจนกว่ารับทราบครบ — รออีก {unacked} เหตุ
+                </span>
+              )}
               <button className="hover-btn" onClick={() => setMuted(m => !m)} style={{
                 height: 34, padding: '0 14px', borderRadius: 100, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: font,
                 border: '1px solid rgba(255,255,255,0.2)', background: muted ? 'rgba(255,56,60,0.15)' : 'rgba(255,255,255,0.08)',
@@ -227,35 +297,35 @@ export default function GuardMonitor({ onExit }) {
         </div>
       </div>
 
-      {screen === 'login' && <GuardLogin village={village} onLogin={() => setScreen('shift')} />}
+      {screen === 'login' && <GuardLogin onLogin={(g) => { setGuard(g); setScreen('shift'); }} />}
       {screen === 'shift' && <StartShift guardName={guard.name} onStart={() => setScreen('monitor')} />}
 
       {screen === 'monitor' && (
         <div style={{ flex: 1, overflowY: 'auto', padding: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* เหตุ active */}
-          {showAlert && (
+          {/* เหตุ active — ซ้อนเป็นรายการ ใหม่สุดอยู่บน */}
+          {openAlerts.map(a => (
             <AlertPanel
-              alert={alert} house={alertHouse} device={alertDevice} phase={alertPhase}
-              onAck={() => setAlertPhase('acked')}
-              onClose={(r) => { setAlertPhase('closed'); setClosedResult(r); }}
+              key={a.id} alert={a} house={getHouse(a.houseId)} device={getDevice(a.deviceId)} phase={phaseOf(a)}
+              onAck={() => ack(a.id)}
+              onClose={(r) => close(a.id, r)}
             />
-          )}
-          {alertPhase === 'closed' && (
-            <div className="anim-slide-up" style={{ borderRadius: 20, padding: '16px 20px', background: 'rgba(52,199,89,0.12)', border: '1.5px solid rgba(52,199,89,0.35)', display: 'flex', gap: 12, alignItems: 'center' }}>
+          ))}
+          {closedNow.map(a => (
+            <div key={a.id} className="anim-slide-up" style={{ borderRadius: 20, padding: '16px 20px', background: 'rgba(52,199,89,0.12)', border: '1.5px solid rgba(52,199,89,0.35)', display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
               <span style={{ fontSize: 24 }}>✅</span>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: '#7CF5A4', fontFamily: font }}>ปิดเหตุแล้ว — ผล: {closedResult}</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: '#7CF5A4', fontFamily: font }}>ปิดเหตุแล้ว — บ้าน {getHouse(a.houseId).no} · ผล: {closedResults[a.id]}</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontFamily: font, marginTop: 2 }}>บันทึกผู้ปิดเหตุ: {guard.name} · ครอบครัวในแอป MyAtlas เห็นผลนี้ทันที (realtime)</div>
               </div>
             </div>
-          )}
+          ))}
 
           {/* แถบสรุป */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', flexShrink: 0 }}>
             {[
-              ['🏠 บ้านที่เฝ้าระวัง', houses.filter(h => devicesOfHouse(h.id).length > 0).length + ' หลัง'],
+              ['🏠 บ้านที่เฝ้าระวัง', monitored.length + ' หลัง'],
               ['📡 อุปกรณ์ online', `${online}/${devTotal.length}`],
-              ['🚨 เหตุวันนี้', showAlert || alertPhase === 'closed' ? '1 เหตุ' : '0 เหตุ'],
+              ['🚨 เหตุวันนี้', `${todayCount} เหตุ`],
             ].map(([l, v]) => (
               <div key={l} style={{ background: CARD_DARK, border: BORDER_DARK, borderRadius: 16, padding: '12px 20px' }}>
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: font }}>{l}</div>
@@ -264,42 +334,63 @@ export default function GuardMonitor({ onExit }) {
             ))}
           </div>
 
-          {/* ผังบ้าน */}
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.65)', fontFamily: font, marginBottom: 10 }}>ผังบ้านที่มีอุปกรณ์ ({houses.filter(h => devicesOfHouse(h.id).length > 0).length} หลัง)</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
-              {houses.filter(h => devicesOfHouse(h.id).length > 0).map(h => {
-                const devs = devicesOfHouse(h.id);
-                const isAlertHouse = showAlert && alertHouse.id === h.id;
-                const hasOffline = devs.some(d => !d.online);
-                return (
-                  <div key={h.id} style={{
-                    background: isAlertHouse ? 'rgba(255,56,60,0.18)' : CARD_DARK,
-                    border: isAlertHouse ? '2px solid #FF5A3C' : hasOffline ? '1.5px solid rgba(232,128,42,0.45)' : BORDER_DARK,
-                    borderRadius: 18, padding: '14px 16px',
-                    animation: isAlertHouse && alertPhase === 'new' ? 'svSirenGlow 1.2s infinite' : 'none',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 17 }}>{isAlertHouse ? '🚨' : '🏠'}</span>
-                      <span style={{ fontSize: 16, fontWeight: 800, color: 'white', fontFamily: font }}>{h.no}</span>
-                      <span style={{
-                        marginLeft: 'auto', width: 10, height: 10, borderRadius: '50%',
-                        background: isAlertHouse ? RED : hasOffline ? ORANGE : GREEN,
-                        animation: isAlertHouse ? 'svBlink 0.8s infinite' : 'none',
-                      }} />
-                    </div>
-                    {h.nickname && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontFamily: font, marginTop: 3 }}>{h.nickname}</div>}
-                    <div style={{ fontSize: 11.5, fontWeight: 600, fontFamily: font, marginTop: 6, color: isAlertHouse ? '#FF8A80' : hasOffline ? '#FFB74D' : 'rgba(255,255,255,0.7)' }}>
-                      {isAlertHouse ? (alertPhase === 'new' ? '⚠ ตรวจพบการล้ม!' : 'กำลังช่วยเหลือ…') : hasOffline ? `อุปกรณ์ offline ${devs.filter(d => !d.online).length} เครื่อง` : 'ปกติ'}
-                    </div>
-                  </div>
-                );
-              })}
+          {/* ผังบ้าน — แผนที่ (หลักบน desktop) / การ์ด (หลักบนมือถือ) */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.65)', fontFamily: font }}>ผังบ้านที่มีอุปกรณ์ ({monitored.length} หลัง)</div>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <button className="hover-btn" style={segBtn(view === 'map')} onClick={() => setView('map')}>🗺 แผนที่</button>
+                <button className="hover-btn" style={segBtn(view === 'cards')} onClick={() => setView('cards')}>▦ การ์ด</button>
+              </div>
             </div>
+
+            {view === 'map' ? (
+              <div style={{ background: CARD_DARK, border: BORDER_DARK, borderRadius: 20, padding: 10 }}>
+                <SVMap points={mapPoints} center={[village.lng, village.lat]} zoom={15.4} height={380} radius={14} />
+                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 6px 2px' }}>
+                  {[[RED, 'มีเหตุ active'], [ORANGE, 'มีอุปกรณ์ offline'], [GREEN, 'ปกติ']].map(([c, l]) => (
+                    <span key={l} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'rgba(255,255,255,0.6)', fontFamily: font }}>
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: c }} />{l}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
+                {monitored.map(h => {
+                  const devs = devicesOfHouse(h.id);
+                  const al = houseAlertOf(h.id);
+                  const alPhase = al ? phaseOf(al) : null;
+                  const hasOffline = devs.some(d => !d.online);
+                  return (
+                    <div key={h.id} style={{
+                      background: al ? 'rgba(255,56,60,0.18)' : CARD_DARK,
+                      border: al ? '2px solid #FF5A3C' : hasOffline ? '1.5px solid rgba(232,128,42,0.45)' : BORDER_DARK,
+                      borderRadius: 18, padding: '14px 16px',
+                      animation: alPhase === 'new' ? 'svSirenGlow 1.2s infinite' : 'none',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 17 }}>{al ? '🚨' : '🏠'}</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: 'white', fontFamily: font }}>{h.no}</span>
+                        <span style={{
+                          marginLeft: 'auto', width: 10, height: 10, borderRadius: '50%',
+                          background: al ? RED : hasOffline ? ORANGE : GREEN,
+                          animation: al ? 'svBlink 0.8s infinite' : 'none',
+                        }} />
+                      </div>
+                      {h.nickname && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontFamily: font, marginTop: 3 }}>{h.nickname}</div>}
+                      <div style={{ fontSize: 11.5, fontWeight: 600, fontFamily: font, marginTop: 6, color: al ? '#FF8A80' : hasOffline ? '#FFB74D' : 'rgba(255,255,255,0.7)' }}>
+                        {al ? (alPhase === 'new' ? '⚠ ตรวจพบการล้ม!' : 'กำลังช่วยเหลือ…') : hasOffline ? `อุปกรณ์ offline ${devs.filter(d => !d.online).length} เครื่อง` : 'ปกติ'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* ประวัติเหตุการณ์ */}
-          <div>
+          <div style={{ flexShrink: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.65)', fontFamily: font, marginBottom: 10 }}>ประวัติเหตุการณ์ของหมู่บ้าน</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {history.map(a => {
@@ -322,6 +413,7 @@ export default function GuardMonitor({ onExit }) {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

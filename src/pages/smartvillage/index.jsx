@@ -67,7 +67,7 @@ export default function SmartVillage({ section, onNavigate }) {
           { label: village.name, onClick: () => setDrill({ villageId: village.id }) },
           { label: `บ้าน ${house.no}` },
         ]} />
-        <HouseDetail villageId={village.id} houseId={house.id} onAddDevice={() => setQuickAdd(true)} />
+        <HouseDetail key={house.id} villageId={village.id} houseId={house.id} onAddDevice={() => setQuickAdd(true)} />
       </>
     );
   } else if (village) {

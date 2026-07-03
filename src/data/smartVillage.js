@@ -212,7 +212,7 @@ export const SV_DEVICES = [
   { id: 'dev-03', imei: '861230051234702', type: 'radar', typeName: 'เรดาร์ตรวจล้ม RT-W03', villageId: 'vlg-001', houseId: 'h-102', attach: { kind: 'house', location: 'ห้องนั่งเล่น' }, online: true, presence: 'มีคน', lastSeen: '1 นาทีที่แล้ว', installedAt: '11 มิ.ย. 2569' },
   { id: 'dev-04', imei: '861230058800154', type: 'sos', typeName: 'ปุ่ม SOS พกพา', villageId: 'vlg-001', houseId: 'h-102', attach: { kind: 'person', residentId: 'r-3', residentName: 'ประเสริฐ ศรีสุข' }, online: true, presence: null, lastSeen: '5 นาทีที่แล้ว', installedAt: '11 มิ.ย. 2569' },
   { id: 'dev-05', imei: '861230051234718', type: 'radar', typeName: 'เรดาร์ตรวจล้ม RT-W03', villageId: 'vlg-001', houseId: 'h-103', attach: { kind: 'house', location: 'ห้องนอน' }, online: false, presence: null, lastSeen: '14 ชม.ที่แล้ว', installedAt: '12 มิ.ย. 2569' },
-  { id: 'dev-06', imei: '861230051234733', type: 'radar', typeName: 'เรดาร์ตรวจล้ม RT-W03', villageId: 'vlg-001', houseId: 'h-104', attach: { kind: 'house', location: 'ห้องน้ำ' }, online: true, presence: 'ไม่มีคน', lastSeen: 'เมื่อสักครู่', installedAt: '18 มิ.ย. 2569' },
+  { id: 'dev-06', imei: '861230051234733', type: 'radar', typeName: 'เรดาร์ตรวจล้ม RT-W03', villageId: 'vlg-001', houseId: 'h-104', attach: { kind: 'house', location: 'ห้องน้ำ' }, online: true, presence: 'มีคน', lastSeen: 'เมื่อสักครู่', installedAt: '18 มิ.ย. 2569' },
   { id: 'dev-07', imei: '861230051234749', type: 'radar', typeName: 'เรดาร์ตรวจล้ม RT-W03', villageId: 'vlg-001', houseId: 'h-105', attach: { kind: 'house', location: 'ห้องนอน' }, online: true, presence: 'ไม่มีคน', lastSeen: '2 นาทีที่แล้ว', installedAt: '28 มิ.ย. 2569' },
   { id: 'dev-08', imei: '861230051234755', type: 'radar', typeName: 'เรดาร์ตรวจล้ม RT-W03', villageId: 'vlg-001', houseId: 'h-106', attach: { kind: 'house', location: 'ห้องนอน' }, online: true, presence: 'มีคน', lastSeen: 'เมื่อสักครู่', installedAt: '10 มิ.ย. 2569' },
   /* vlg-002 */
@@ -240,6 +240,11 @@ export const SV_GUARDS = [
 
 /* วงจรเหตุ: ใหม่ → รับทราบแล้ว → ปิดแล้ว (ผล: ช่วยเหลือแล้ว / แจ้งเตือนผิดพลาด / เหตุทดสอบ) */
 export const SV_ALERTS = [
+  {
+    id: 'al-000', no: 'AC-260703-003', villageId: 'vlg-001', houseId: 'h-104', deviceId: 'dev-06',
+    date: 'วันนี้', time: '09:43', minAgo: 1, status: 'ใหม่',
+    detectType: 'ตรวจพบการล้ม', location: 'ห้องน้ำ', recovered: false,
+  },
   {
     id: 'al-001', no: 'AC-260703-002', villageId: 'vlg-001', houseId: 'h-101', deviceId: 'dev-01',
     date: 'วันนี้', time: '09:41', minAgo: 3, status: 'ใหม่',

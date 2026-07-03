@@ -9,6 +9,7 @@ import Medication from './pages/Medication'
 import VideoCall from './pages/VideoCall'
 import PatientProfile from './pages/PatientProfile'
 import ComingSoon from './components/ComingSoon'
+import ChatWidget from './components/ChatWidget'
 import SmartVillage from './pages/smartvillage'
 
 export const CallContext = createContext(null);
@@ -253,6 +254,7 @@ function App() {
       </div>
     </div>
     {callPatient && <VideoCall patient={callPatient} onClose={() => setCallPatient(null)} />}
+    <ChatWidget />
     </PatientContext.Provider>
     </CallContext.Provider>
     </UserContext.Provider>

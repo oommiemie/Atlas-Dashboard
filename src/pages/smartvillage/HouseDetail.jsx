@@ -78,6 +78,21 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
   const activeAlert = alerts.find(a => a.status !== 'ปิดแล้ว');
   const [modal, setModal] = useState(null);
 
+  /* ลากจัดลำดับผู้ติดต่อ — ลำดับนี้คือลำดับที่ รปภ. เห็นตอนเกิดเหตุ */
+  const [contacts, setContacts] = useState(house.contacts);
+  const [dragIdx, setDragIdx] = useState(null);
+  const onDragOverContact = (e, i) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === i) return;
+    setContacts(cs => {
+      const next = [...cs];
+      const [moved] = next.splice(dragIdx, 1);
+      next.splice(i, 0, moved);
+      return next;
+    });
+    setDragIdx(i);
+  };
+
   const linked = house.familyLinks.filter(f => f.status === 'เชื่อมแล้ว');
 
   return (
@@ -209,14 +224,28 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
         <div className="anim-slide-up delay-2" style={{ ...card }}>
           <SectionTitle icon="📞" title="ผู้ติดต่อเมื่อเกิดเหตุ" sub="ลากจัดลำดับได้ — ลำดับนี้คือลำดับที่ รปภ. เห็นตอนเกิดเหตุ"
             right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 12px', fontSize: 11.5 }} onClick={() => setModal('contact')}>+ เพิ่มผู้ติดต่อ</button>} />
-          {house.contacts.length === 0 ? (
+          {contacts.length === 0 ? (
             <EmptyState icon="📵" warn title="ยังไม่มีผู้ติดต่อ" sub="เมื่อเกิดเหตุ รปภ. จะไม่รู้ว่าต้องโทรหาใคร — ควรเพิ่มอย่างน้อย 1 รายการ"
               cta={<button className="hover-btn" style={btnPrimary} onClick={() => setModal('contact')}>+ เพิ่มผู้ติดต่อแรก</button>} />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {house.contacts.map((c, i) => (
-                <div key={c.id} style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.7)', borderRadius: 16, padding: '10px 12px' }}>
-                  <span style={{ cursor: 'grab', color: GRAY2, fontSize: 13 }}>⠿</span>
+              {contacts.map((c, i) => (
+                <div
+                  key={c.id}
+                  draggable
+                  onDragStart={() => setDragIdx(i)}
+                  onDragOver={(e) => onDragOverContact(e, i)}
+                  onDragEnd={() => setDragIdx(null)}
+                  style={{
+                    display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(255,255,255,0.55)',
+                    border: `1px solid ${dragIdx === i ? 'rgba(102,88,225,0.5)' : 'rgba(255,255,255,0.7)'}`,
+                    borderRadius: 16, padding: '10px 12px',
+                    opacity: dragIdx === i ? 0.65 : 1,
+                    boxShadow: dragIdx === i ? '0 6px 18px rgba(102,88,225,0.25)' : 'none',
+                    cursor: 'grab',
+                  }}
+                >
+                  <span title="ลากเพื่อจัดลำดับ" style={{ cursor: 'grab', color: GRAY2, fontSize: 13 }}>⠿</span>
                   <span style={{
                     width: 22, height: 22, borderRadius: '50%', flexShrink: 0, fontSize: 11, fontWeight: 700, fontFamily: font,
                     background: i === 0 ? 'linear-gradient(180deg,#8B81F2,#6658E1)' : 'rgba(102,88,225,0.12)',
