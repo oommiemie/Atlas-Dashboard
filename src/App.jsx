@@ -1,4 +1,4 @@
-import { useState, createContext } from 'react'
+import { useState, createContext, Fragment } from 'react'
 import './index.css'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -8,6 +8,8 @@ import HomeVisitReport from './pages/HomeVisitReport'
 import Medication from './pages/Medication'
 import VideoCall from './pages/VideoCall'
 import PatientProfile from './pages/PatientProfile'
+import ComingSoon from './components/ComingSoon'
+import SmartVillage from './pages/smartvillage'
 
 export const CallContext = createContext(null);
 export const PatientContext = createContext(null);
@@ -21,6 +23,8 @@ import iconSidebarHouse from './assets/icons/sidebar-house.svg'
 import iconSidebarLogout from './assets/icons/sidebar-logout.svg'
 import iconSidebarClipboard from './assets/icons/sidebar-clipboard.svg'
 import iconSidebarPills from './assets/icons/sidebar-pills-figma.svg'
+import iconSidebarVillage from './assets/icons/sidebar-village.svg'
+import iconSidebarFamily from './assets/icons/sidebar-family.svg'
 
 const font = "'IBM Plex Sans Thai Looped', sans-serif";
 
@@ -29,12 +33,32 @@ function App() {
   const [activePage, setActivePage] = useState('dashboard')
   const [callPatient, setCallPatient] = useState(null)
 
-  const navItems = [
-    { id: 'dashboard', icon: iconSidebarChart, label: 'ภาพรวม' },
-    { id: 'vitalsign', icon: iconSidebarHeart, label: 'Vitalsign' },
-    { id: 'homevisit', icon: iconSidebarHouse, label: 'เยี่ยมบ้าน' },
-    { id: 'report', icon: iconSidebarClipboard, label: 'รายงานเยี่ยมบ้าน' },
-    { id: 'medication', icon: iconSidebarPills, label: 'ส่งยาที่บ้าน' },
+  const navGroups = [
+    {
+      label: 'Menu',
+      items: [
+        { id: 'dashboard', icon: iconSidebarChart, label: 'ภาพรวม' },
+        { id: 'vitalsign', icon: iconSidebarHeart, label: 'Vitalsign' },
+        { id: 'homevisit', icon: iconSidebarHouse, label: 'เยี่ยมบ้าน' },
+        { id: 'report', icon: iconSidebarClipboard, label: 'รายงานเยี่ยมบ้าน' },
+        { id: 'medication', icon: iconSidebarPills, label: 'ส่งยาที่บ้าน' },
+      ],
+    },
+    {
+      label: 'Smart',
+      items: [
+        { id: 'smartfamily', icon: iconSidebarFamily, label: 'Smart Family' },
+        {
+          id: 'smartvillage', icon: iconSidebarVillage, label: 'Smart Village',
+          children: [
+            { id: 'sv-overview', label: 'ภาพรวม' },
+            { id: 'sv-villages', label: 'หมู่บ้าน' },
+            { id: 'sv-devices', label: 'อุปกรณ์' },
+            { id: 'sv-alerts', label: 'เหตุการณ์' },
+          ],
+        },
+      ],
+    },
   ]
 
   const [selectedPatient, setSelectedPatient] = useState(null)
@@ -77,22 +101,28 @@ function App() {
 
             {/* Navigation */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, padding: '0 16px' }}>
-              <span style={{ fontSize: 10, color: 'white', fontFamily: font }}>Menu</span>
-              {navItems.map((item) => {
-                const isActive = activePage === item.id;
+              {navGroups.map((group, gi) => (
+                <Fragment key={group.label}>
+                  {gi > 0 && <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', marginTop: 8 }} />}
+                  <span style={{ fontSize: 10, color: 'white', fontFamily: font }}>{group.label}</span>
+                  {group.items.map((item) => {
+                const isParent = !!item.children;
+                const parentOpen = isParent && activePage.startsWith('sv-');
+                const isActive = isParent ? parentOpen : activePage === item.id;
                 return (
+                  <Fragment key={item.id}>
                   <button
-                    key={item.id}
-                    className={`hover-nav${isActive ? ' sidebar-nav-active' : ''}`}
-                    onClick={() => setActivePage(item.id)}
+                    className={`hover-nav${isActive && !isParent ? ' sidebar-nav-active' : ''}`}
+                    onClick={() => setActivePage(isParent ? item.children[0].id : item.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: 8, borderRadius: 100, border: 'none',
                       cursor: 'pointer', width: '100%', textAlign: 'left',
-                      fontFamily: font, fontSize: 14, color: isActive ? '#4438AD' : 'white',
-                      background: isActive ? 'white' : 'transparent',
-                      boxShadow: isActive ? '0 4px 4px rgba(0,0,0,0.1)' : 'none',
-                      ...(isActive ? { border: '1px solid rgba(255,255,255,0.6)' } : {}),
+                      fontFamily: font, fontSize: 14,
+                      color: isActive && !isParent ? '#4438AD' : 'white',
+                      background: isActive && !isParent ? 'white' : parentOpen ? 'rgba(255,255,255,0.12)' : 'transparent',
+                      boxShadow: isActive && !isParent ? '0 4px 4px rgba(0,0,0,0.1)' : 'none',
+                      ...(isActive && !isParent ? { border: '1px solid rgba(255,255,255,0.6)' } : {}),
                     }}
                   >
                     <div style={{
@@ -103,10 +133,49 @@ function App() {
                     }}>
                       <img src={item.icon} alt="" style={{ width: '100%', height: '100%' }} />
                     </div>
-                    <span>{item.label}</span>
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {isParent && (
+                      <svg width="9" height="6" viewBox="0 0 9 6" fill="none" style={{ marginRight: 6, transition: 'transform 0.25s ease', transform: parentOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                        <path d="M1 1L4.5 4.5L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
                   </button>
+                  {isParent && parentOpen && (
+                    <div className="anim-expand" style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingLeft: 20, position: 'relative' }}>
+                      <div style={{ position: 'absolute', left: 19, top: 4, bottom: 4, width: 1.5, background: 'rgba(255,255,255,0.15)', borderRadius: 2 }} />
+                      {item.children.map((c) => {
+                        const subActive = activePage === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            className={`hover-nav${subActive ? ' sidebar-nav-active' : ''}`}
+                            onClick={() => setActivePage(c.id)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              padding: '6px 10px 6px 14px', borderRadius: 100, border: 'none',
+                              cursor: 'pointer', width: '100%', textAlign: 'left',
+                              fontFamily: font, fontSize: 12.5,
+                              color: subActive ? '#4438AD' : 'rgba(255,255,255,0.75)',
+                              background: subActive ? 'white' : 'transparent',
+                              boxShadow: subActive ? '0 4px 4px rgba(0,0,0,0.1)' : 'none',
+                              position: 'relative',
+                            }}
+                          >
+                            <span style={{
+                              width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                              background: subActive ? 'linear-gradient(180deg, #8B81F2, #6658E1)' : 'rgba(255,255,255,0.35)',
+                            }} />
+                            <span>{c.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  </Fragment>
                 );
-              })}
+                  })}
+                </Fragment>
+              ))}
             </div>
 
             {/* User card at bottom */}
@@ -175,6 +244,8 @@ function App() {
                 {activePage === 'homevisit' && <HomeVisit />}
                 {activePage === 'report' && <HomeVisitReport />}
                 {activePage === 'medication' && <Medication />}
+                {activePage.startsWith('sv-') && <SmartVillage section={activePage} onNavigate={setActivePage} />}
+                {activePage === 'smartfamily' && <ComingSoon icon={iconSidebarFamily} title="Smart Family" />}
               </>
             )}
           </div>
