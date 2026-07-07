@@ -119,7 +119,7 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
   );
 }
 
-export default function Devices({ onDrillHouse, autoOpenAdd = false }) {
+export default function Devices({ onDrillHouse, autoOpenAdd = false, onGoSection }) {
   const [q, setQ] = useState('');
   const [villageFilter, setVillageFilter] = useState('ทั้งหมด');
   const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
@@ -137,7 +137,7 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
-        <PageHead thai="อุปกรณ์" right={<LivePill />} />
+        <PageHead thai="อุปกรณ์" right={<LivePill />} section="sv-devices" onGoSection={onGoSection} />
       </div>
 
       <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>

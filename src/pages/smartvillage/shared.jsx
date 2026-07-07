@@ -6,6 +6,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import imgAvatarBlur from '../../assets/images/avatar-blur.png';
 import imgGrid from '../../assets/images/grid-bg.png';
+import imgHero3d from '../../assets/images/homevisit-hero-3d.png';
 
 export const font = "'IBM Plex Sans Thai Looped', sans-serif";
 export const BLACK = '#1E1B39';
@@ -48,7 +49,15 @@ export const btnDanger = {
 
 /* ── หัวข้อ page — hero banner ตาม design language หน้าหลัก (blur circles + grid + gradient title)
       wording ตาม pattern หน้าอื่น: คำนำสั้น + ชื่อหน้า (วงเล็บไทย) + แถว control — ไม่มีประโยคอธิบาย ── */
-export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เฝ้าระวัง', image }) {
+/* tabs ของโมดูล — pill group ใน hero แบบเดียวกับหน้ารายงานเยี่ยมบ้าน */
+export const SV_TABS = [
+  ['sv-overview', 'ภาพรวม'],
+  ['sv-villages', 'หมู่บ้าน'],
+  ['sv-devices', 'อุปกรณ์'],
+  ['sv-alerts', 'เหตุการณ์'],
+];
+
+export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เฝ้าระวัง', image = imgHero3d, section, onGoSection, topRight }) {
   const now = new Date();
   const date = now.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   return (
@@ -68,11 +77,17 @@ export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เ
           <img src={imgGrid} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />
         </div>
         {image && (
-          <div style={{ position: 'absolute', right: 0, top: 30, width: 200, height: 200 }}>
+          <div style={{ position: 'absolute', right: 0, top: -14, width: 200, height: 200 }}>
             <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         )}
       </div>
+      {/* action มุมขวาบน */}
+      {topRight && (
+        <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {topRight}
+        </div>
+      )}
       {/* Content */}
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 8, padding: 16 }}>
         <span style={{ fontSize: 16, fontWeight: 500, color: 'black', fontFamily: font }}>{greeting}</span>
@@ -85,6 +100,29 @@ export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เ
           {thai && <span style={{ fontSize: 16, fontWeight: 500, color: 'black', fontFamily: font }}>({thai})</span>}
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {onGoSection && (
+            <div style={{
+              backdropFilter: 'blur(10px)', background: 'rgba(255,255,255,0.5)',
+              borderRadius: 100, padding: 4, display: 'flex',
+              boxShadow: '0 4px 4px rgba(0,0,0,0.05)',
+            }}>
+              {SV_TABS.map(([key, label]) => {
+                const active = section === key;
+                return (
+                  <button key={key} className="hover-btn" onClick={() => onGoSection(key)} style={{
+                    border: 'none', borderRadius: 100, cursor: 'pointer',
+                    padding: '4px 10px', minWidth: active ? 80 : undefined,
+                    fontSize: 12, fontFamily: font, whiteSpace: 'nowrap',
+                    fontWeight: active ? 600 : 400, letterSpacing: -0.23,
+                    background: active ? '#0088FF' : 'transparent',
+                    color: active ? 'white' : 'black',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                  }}>{label}</button>
+                );
+              })}
+            </div>
+          )}
           <div style={{
             backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
             border: '1px solid white', borderRadius: 100, padding: '8px 14px', height: 36,

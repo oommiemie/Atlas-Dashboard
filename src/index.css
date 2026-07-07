@@ -217,20 +217,23 @@ body {
 .sc .val { font-size: 36px; font-weight: 900; line-height: 1; letter-spacing: -0.04em; font-family: var(--mono); }
 
 /* ═══ SEGMENTED TOGGLE ═══ */
+/* tab pills แบบเดียวกับ hero หน้ารายงานเยี่ยมบ้าน */
 .seg {
-  display: inline-flex; gap: 2px; padding: 3px;
-  background: rgba(108,92,231,0.05); border-radius: 10px;
+  display: inline-flex; padding: 4px;
+  background: rgba(255,255,255,0.5); backdrop-filter: blur(10px);
+  border-radius: 100px; box-shadow: 0 4px 4px rgba(0,0,0,0.05);
 }
 
 .seg-btn {
-  padding: 6px 14px; border-radius: 8px;
-  font-size: 12px; font-weight: 600; color: #B2BEC3;
-  background: transparent; border: none; cursor: pointer;
+  padding: 5px 10px; border-radius: 100px;
+  font-size: 12px; font-weight: 400; letter-spacing: -0.23px; color: black;
+  background: transparent; border: none; cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center;
   transition: all 0.2s ease; font-family: var(--font);
 }
 
 .seg-btn:hover { color: #636E72; }
-.seg-btn.active { background: white; color: #6C5CE7; box-shadow: 0 2px 8px rgba(108,92,231,0.1); }
+.seg-btn.active { background: #0088FF; color: white; font-weight: 600; min-width: 80px; }
 
 /* ═══ DATA TABLE ═══ */
 .dt { width: 100%; border-collapse: collapse; font-size: 13px; }

@@ -117,7 +117,7 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="anim-slide-up">
-          <PageHead thai="ภาพรวม" image={imgHero3d} right={<LivePill />} />
+          <PageHead thai="ภาพรวม" image={imgHero3d} right={<LivePill />} section="sv-overview" onGoSection={onGoSection} />
         </div>
         <div className="anim-slide-up delay-1">
           <EmptyState
@@ -159,13 +159,13 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
-        <PageHead thai="ภาพรวม" image={imgHero3d} right={<LivePill />} />
-      </div>
-
-      {/* Toolbar — action หลักอยู่นอก hero ตาม pattern หน้าอื่น */}
-      <div className="anim-slide-up" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <button className="hover-btn" style={btnGhost} onClick={onOpenGuard}><IconDeviceDesktop size={14} style={{ verticalAlign: '-2px' }} /> จอ รปภ. (ตัวอย่าง)</button>
-        <button className="hover-btn" style={btnPrimary} onClick={() => onGoSection('sv-devices', { addDevice: true })}>+ เพิ่มอุปกรณ์</button>
+        <PageHead
+          thai="ภาพรวม" image={imgHero3d} right={<LivePill />} section="sv-overview" onGoSection={onGoSection}
+          topRight={<>
+            <button className="hover-btn" style={btnGhost} onClick={onOpenGuard}><IconDeviceDesktop size={14} style={{ verticalAlign: '-2px' }} /> จอ รปภ. (ตัวอย่าง)</button>
+            <button className="hover-btn" style={btnPrimary} onClick={() => onGoSection('sv-devices', { addDevice: true })}>+ เพิ่มอุปกรณ์</button>
+          </>}
+        />
       </div>
 
       {/* แถบเหตุ active — การ์ดเดียวรวมทุกเหตุ */}

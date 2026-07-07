@@ -82,11 +82,11 @@ export default function SmartVillage({ section, onNavigate }) {
       </>
     );
   } else if (section === 'sv-villages') {
-    body = <Villages onDrillVillage={goVillage} />;
+    body = <Villages onDrillVillage={goVillage} onGoSection={goSection} />;
   } else if (section === 'sv-devices') {
-    body = <Devices onDrillHouse={goHouse} />;
+    body = <Devices onDrillHouse={goHouse} onGoSection={goSection} />;
   } else if (section === 'sv-alerts') {
-    body = <Alerts onDrillHouse={goHouse} />;
+    body = <Alerts onDrillHouse={goHouse} onGoSection={goSection} />;
   } else {
     body = (
       <Overview

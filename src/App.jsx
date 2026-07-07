@@ -51,15 +51,8 @@ function App() {
       label: 'Smart',
       items: [
         { id: 'smartfamily', icon: iconSidebarFamily, label: 'Smart Family' },
-        {
-          id: 'smartvillage', icon: iconSidebarVillage, label: 'Smart Village',
-          children: [
-            { id: 'sv-overview', label: 'ภาพรวม' },
-            { id: 'sv-villages', label: 'หมู่บ้าน' },
-            { id: 'sv-devices', label: 'อุปกรณ์' },
-            { id: 'sv-alerts', label: 'เหตุการณ์' },
-          ],
-        },
+        /* ไม่มี submenu — สลับ section ภายในโมดูลผ่าน tabs ใน hero */
+        { id: 'smartvillage', icon: iconSidebarVillage, label: 'Smart Village', target: 'sv-overview', match: 'sv-' },
       ],
     },
   ]
@@ -112,12 +105,12 @@ function App() {
                   {group.items.map((item) => {
                 const isParent = !!item.children;
                 const parentOpen = isParent && activePage.startsWith('sv-');
-                const isActive = isParent ? parentOpen : activePage === item.id;
+                const isActive = isParent ? parentOpen : item.match ? activePage.startsWith(item.match) : activePage === item.id;
                 return (
                   <Fragment key={item.id}>
                   <button
                     className={`hover-nav${isActive && !isParent ? ' sidebar-nav-active' : ''}`}
-                    onClick={() => setActivePage(isParent ? item.children[0].id : item.id)}
+                    onClick={() => setActivePage(isParent ? item.children[0].id : item.target || item.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: 8, borderRadius: 100, border: 'none',

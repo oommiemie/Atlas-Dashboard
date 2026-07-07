@@ -92,7 +92,7 @@ function AddVillageModal({ onClose }) {
   );
 }
 
-export default function Villages({ onDrillVillage }) {
+export default function Villages({ onDrillVillage, onGoSection }) {
   const [q, setQ] = useState('');
   const [typeFilter, setTypeFilter] = useState('ทั้งหมด');
   const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
@@ -110,7 +110,7 @@ export default function Villages({ onDrillVillage }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
-        <PageHead thai="หมู่บ้าน" />
+        <PageHead thai="หมู่บ้าน" section="sv-villages" onGoSection={onGoSection} />
       </div>
 
       <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>

@@ -14,7 +14,7 @@ import {
 
 const STATUS_TABS = ['ทั้งหมด', 'ใหม่', 'รับทราบแล้ว', 'ปิดแล้ว'];
 
-export default function Alerts({ onDrillHouse }) {
+export default function Alerts({ onDrillHouse, onGoSection }) {
   const [q, setQ] = useState('');
   const [tab, setTab] = useState('ทั้งหมด');
   const [villageFilter, setVillageFilter] = useState('ทั้งหมด');
@@ -37,7 +37,7 @@ export default function Alerts({ onDrillHouse }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
-        <PageHead thai="เหตุการณ์" right={<LivePill />} />
+        <PageHead thai="เหตุการณ์" right={<LivePill />} section="sv-alerts" onGoSection={onGoSection} />
       </div>
 
       {/* สรุปสถานะ — anatomy เดียวกับ StatCards หน้า Dashboard */}
