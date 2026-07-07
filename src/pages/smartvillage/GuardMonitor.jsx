@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import {
   SV_GUARDS, getVillage, housesOf, devicesOfHouse, getHouse, getDevice, alertsOfVillage,
 } from '../../data/smartVillage';
-import { font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED, ORANGE, ElapsedSince, SVMap, SVMap3D } from './shared';
+import { font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED, ORANGE, ElapsedSince, SVMap, SVMap3D, Modal } from './shared';
 import {
   IconShield, IconMoon, IconPlayerPlayFilled, IconAlertTriangleFilled, IconMapPin, IconInfoCircle,
   IconAntennaBars5, IconCheck, IconPlayerStopFilled, IconUsers, IconNavigation, IconPhone,
@@ -556,51 +556,13 @@ export default function GuardMonitor({ onExit, standalone = false }) {
               )}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {openAlerts.length === 0 && closedNow.length === 0 && !selHouse && (
+              {openAlerts.length === 0 && closedNow.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px 20px' }}>
                   <IconCircleCheck size={30} color={GREEN} style={{ flexShrink: 0 }} />
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: BLACK, fontFamily: font, marginTop: 8 }}>ไม่มีเหตุ active</div>
                   <div style={{ fontSize: 11.5, color: GRAY2, fontFamily: font, marginTop: 3, lineHeight: 1.7 }}>ระบบเฝ้าระวังทำงานปกติ<br />เหตุใหม่จะเด้งขึ้นที่นี่พร้อมเสียง siren</div>
                 </div>
               )}
-                {selHouse && (
-              <div className="anim-scale-in" style={{ flexShrink: 0, pointerEvents: 'auto', ...GLASS, background: 'rgba(255,255,255,0.82)', borderRadius: 20, boxShadow: '0 12px 36px rgba(108,92,231,0.25)', padding: '16px 18px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(180deg,#8B81F2,#6658E1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconHome size={18} color="white" style={{ flexShrink: 0 }} /></div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15.5, fontWeight: 800, color: BLACK, fontFamily: font }}>บ้าน {selHouse.no}
-                      {(() => { const al = houseAlertOf(selHouse.id); const off = devicesOfHouse(selHouse.id).some(d => !d.online);
-                        return <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 700, verticalAlign: '2px', borderRadius: 100, padding: '2.5px 10px', color: al ? '#D0342C' : off ? '#C96A12' : GREEN_DARK, background: al ? 'rgba(255,56,60,0.1)' : off ? 'rgba(232,128,42,0.12)' : 'rgba(52,199,89,0.12)' }}>{al ? 'มีเหตุ active' : off ? 'อุปกรณ์ offline' : 'ปกติ'}</span>; })()}
-                    </div>
-                    {selHouse.nickname && <div style={{ fontSize: 11.5, color: GRAY2, fontFamily: font }}>{selHouse.nickname}</div>}
-                  </div>
-                  <button className="hover-btn" onClick={() => setSelected(null)} style={{ border: 'none', background: BG, borderRadius: 100, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconX size={14} color={GRAY} style={{ flexShrink: 0 }} /></button>
-                </div>
-                <div style={{ marginTop: 10, fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.7 }}>
-                  <div><IconUsers size={12} color={GRAY} style={{ verticalAlign: '-2px' }} /> คนในบ้าน: {selHouse.residents.map(r => `${r.name} (${r.age})`).join(', ') || '—'}</div>
-                  {selHouse.note && <div><IconMapPin size={12} color={GRAY} style={{ verticalAlign: '-2px' }} /> จุดสังเกต: {selHouse.note}</div>}
-                  <div><IconAntennaBars5 size={12} color={GRAY} style={{ verticalAlign: '-2px' }} /> อุปกรณ์ {devicesOfHouse(selHouse.id).filter(d => d.online).length}/{devicesOfHouse(selHouse.id).length} online
-                    {devicesOfHouse(selHouse.id).map(d => (
-                      <span key={d.id} style={{ display: 'block', fontSize: 11, color: d.online ? GRAY2 : '#C96A12', paddingLeft: 18 }}>
-                        {d.model} · {d.attach.kind === 'person' ? `ติดตัว ${d.attach.residentName}` : d.attach.location} · {d.online ? 'online' : 'offline'}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <button className="hover-btn" onClick={() => navigateTo(selHouse)} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12, height: 40, width: '100%',
-                  borderRadius: 100, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#4438AD,#6658E1 50%,#8B5CF6)',
-                  color: 'white', fontSize: 12.5, fontWeight: 700, fontFamily: font, boxShadow: '0 6px 18px rgba(102,88,225,0.3)',
-                }}><IconNavigation size={14} style={{ flexShrink: 0 }} /> นำทางไปบ้าน {selHouse.no} — แสดงเส้นทางบนแผนที่</button>
-                {selHouse.contacts.length > 0 && (
-                  <a href={`tel:${selHouse.contacts[0].phone}`} className="hover-btn" style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8, height: 40,
-                    borderRadius: 100, textDecoration: 'none', border: '1.5px solid rgba(102,88,225,0.3)', background: 'white',
-                    color: PURPLE, fontSize: 12.5, fontWeight: 700, fontFamily: font,
-                  }}><IconPhone size={14} style={{ flexShrink: 0 }} /> โทร {selHouse.contacts[0].name} ({selHouse.contacts[0].relation})</a>
-                )}
-              </div>
-                )}
                 {openAlerts.map(a => (
                   <div key={a.id} style={{ flexShrink: 0 }}>
                     <AlertPanel
@@ -622,6 +584,59 @@ export default function GuardMonitor({ onExit, standalone = false }) {
                 ))}
             </div>
           </aside>
+
+          {/* Modal รายละเอียดพื้นฐานบ้าน — กดจากรายชื่อใน sidebar */}
+          {selHouse && (() => {
+            const al = houseAlertOf(selHouse.id);
+            const devs = devicesOfHouse(selHouse.id);
+            const off = devs.some(d => !d.online);
+            return (
+              <Modal
+                title={`บ้าน ${selHouse.no}${selHouse.nickname ? ` · ${selHouse.nickname}` : ''}`}
+                sub={selHouse.note ? `จุดสังเกต: ${selHouse.note}` : undefined}
+                onClose={() => setSelected(null)} width={430} zIndex={4000}
+              >
+                <span style={{ display: 'inline-block', fontSize: 11.5, fontWeight: 700, fontFamily: font, borderRadius: 100, padding: '4px 14px', marginBottom: 14, color: al ? '#D0342C' : off ? '#C96A12' : GREEN_DARK, background: al ? 'rgba(255,56,60,0.1)' : off ? 'rgba(232,128,42,0.12)' : 'rgba(52,199,89,0.12)' }}>
+                  {al ? 'มีเหตุ active — ดูการ์ดเหตุใน panel ขวา' : off ? 'อุปกรณ์ offline' : 'ปกติ'}
+                </span>
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: GRAY2, fontFamily: font, marginBottom: 4 }}>คนในบ้าน ({selHouse.residents.length})</div>
+                {selHouse.residents.length === 0 && <div style={{ fontSize: 12.5, color: GRAY2, fontFamily: font }}>—</div>}
+                {selHouse.residents.map(r => (
+                  <div key={r.id} style={{ fontSize: 13, color: BLACK, fontFamily: font, lineHeight: 1.6 }}>
+                    <b>{r.name}</b> · {r.age} ปี{r.note && <span style={{ color: '#C96A12' }}> — {r.note}</span>}
+                  </div>
+                ))}
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: GRAY2, fontFamily: font, margin: '12px 0 4px' }}>อุปกรณ์ ({devs.filter(d => d.online).length}/{devs.length} online)</div>
+                {devs.map(d => (
+                  <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: BLACK, fontFamily: font, lineHeight: 1.7 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.online ? GREEN : ORANGE, flexShrink: 0 }} />
+                    <span style={{ flex: 1 }}>{d.typeName} · {d.attach.kind === 'person' ? `ติดตัว ${d.attach.residentName}` : d.attach.location}</span>
+                    <span style={{ fontSize: 11, color: d.online ? GREEN_DARK : '#C96A12', fontWeight: 700 }}>{d.online ? 'online' : 'offline'}</span>
+                  </div>
+                ))}
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: GRAY2, fontFamily: font, margin: '12px 0 4px' }}>โทรตามลำดับ</div>
+                {selHouse.contacts.length === 0 && <div style={{ fontSize: 12.5, color: '#C96A12', fontFamily: font }}>ไม่มีผู้ติดต่อ — โทรนิติบุคคล/ทีม central</div>}
+                {selHouse.contacts.map((c, i) => (
+                  <a key={c.id} href={`tel:${c.phone}`} className="hover-btn" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', padding: '4px 0' }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, fontFamily: font, color: i === 0 ? '#D0342C' : GRAY2, width: 15, flexShrink: 0 }}>{i + 1}.</span>
+                    <span style={{ fontSize: 13, fontWeight: i === 0 ? 700 : 500, fontFamily: font, color: BLACK, flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {c.name} <span style={{ fontWeight: 400, fontSize: 11, color: GRAY2 }}>({c.relation})</span>
+                    </span>
+                    <span className="num" style={{ fontSize: 13, fontWeight: 800, color: i === 0 ? '#D0342C' : PURPLE, flexShrink: 0 }}><IconPhone size={12} style={{ verticalAlign: '-2px' }} /> {c.phone}</span>
+                  </a>
+                ))}
+
+                <button className="hover-btn" onClick={() => { navigateTo(selHouse); setSelected(null); }} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, height: 42, width: '100%',
+                  borderRadius: 100, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#4438AD,#6658E1 50%,#8B5CF6)',
+                  color: 'white', fontSize: 13, fontWeight: 700, fontFamily: font, boxShadow: '0 6px 18px rgba(102,88,225,0.3)',
+                }}><IconNavigation size={14} style={{ flexShrink: 0 }} /> นำทางไปบ้าน {selHouse.no} — แสดงเส้นทางบนแผนที่</button>
+              </Modal>
+            );
+          })()}
         </div>
       )}
     </div>,

@@ -179,10 +179,10 @@ export function EmptyState({ icon = <IconInbox size={26} />, title, sub, warn = 
 
 /* ── Modal — portal ไป document.body กัน ancestor ที่มี backdrop-filter/transform
       (เช่น .main-inner) จับ position:fixed เป็น containing block แล้ว clip ทิ้ง ── */
-export function Modal({ title, sub, onClose, children, width = 520 }) {
+export function Modal({ title, sub, onClose, children, width = 520, zIndex = 2000 }) {
   return createPortal(
     <div className="anim-backdrop" onClick={onClose} style={{
-      position: 'fixed', inset: 0, zIndex: 2000,
+      position: 'fixed', inset: 0, zIndex,
       background: 'rgba(30,27,57,0.45)', backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
     }}>
