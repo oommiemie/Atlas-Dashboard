@@ -11,6 +11,7 @@ import PatientProfile from './pages/PatientProfile'
 import ComingSoon from './components/ComingSoon'
 import ChatWidget from './components/ChatWidget'
 import SmartVillage from './pages/smartvillage'
+import GuardMonitor from './pages/smartvillage/GuardMonitor'
 
 export const CallContext = createContext(null);
 export const PatientContext = createContext(null);
@@ -33,6 +34,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [activePage, setActivePage] = useState('dashboard')
   const [callPatient, setCallPatient] = useState(null)
+  const [guardPortal, setGuardPortal] = useState(false) // portal รปภ. — เส้นทางแยกจาก dashboard (spec 4.2)
 
   const navGroups = [
     {
@@ -64,7 +66,8 @@ function App() {
 
   const [selectedPatient, setSelectedPatient] = useState(null)
 
-  if (!user) return <Login onLogin={setUser} />;
+  if (guardPortal) return <GuardMonitor standalone onExit={() => setGuardPortal(false)} />;
+  if (!user) return <Login onLogin={setUser} onGuardPortal={() => setGuardPortal(true)} />;
 
   return (
     <UserContext.Provider value={user}>

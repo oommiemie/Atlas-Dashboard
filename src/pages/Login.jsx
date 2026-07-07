@@ -29,7 +29,7 @@ const STATS = [
   { label: 'ส่งยาสำเร็จ', value: '156', icon: '💊', color: '#8B5CF6' },
 ];
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onGuardPortal }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -341,6 +341,23 @@ export default function Login({ onLogin }) {
               ) : 'เข้าสู่ระบบ'}
             </button>
           </form>
+
+          {/* ทางเข้า portal รปภ. — login แยกจากระบบ รพ. (spec Smart Village 5.6) */}
+          {onGuardPortal && (
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(116,116,128,0.12)', textAlign: 'center' }}>
+              <button
+                type="button" className="hover-btn" onClick={onGuardPortal}
+                style={{
+                  border: '1px solid rgba(102,88,225,0.25)', background: 'rgba(102,88,225,0.06)',
+                  color: '#6658E1', borderRadius: 100, padding: '9px 20px',
+                  fontSize: 13, fontWeight: 600, fontFamily: font, cursor: 'pointer',
+                }}
+              >
+                เจ้าหน้าที่ รปภ. หมู่บ้าน — เข้าสู่จอเฝ้าระวัง Smart Village
+              </button>
+              <p style={{ fontSize: 10.5, color: '#B0AEC4', marginTop: 6 }}>ระบบแยกจาก dashboard รพ. · ใช้บัญชีที่ได้รับจากผู้ดูแล</p>
+            </div>
+          )}
 
           {/* Footer */}
           <div style={{ marginTop: 20, textAlign: 'center' }}>
