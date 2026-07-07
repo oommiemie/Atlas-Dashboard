@@ -530,6 +530,13 @@ function pointInRing(pt, ring) {
   return inside;
 }
 
+/* เฉดสีอาคารตามความสูง — เตี้ย = ครีมอ่อน สูง = ม่วงพาสเทลเข้มขึ้น */
+function shadeByHeight(h) {
+  const t = Math.max(0, Math.min(1, (h - 3.2) / 9));
+  const mix = (a, b) => Math.round(a + (b - a) * t);
+  return `rgb(${mix(242, 168)},${mix(240, 160)},${mix(250, 226)})`;
+}
+
 export function SVMap3D({ points = [], center, zoom = 16.1, height = 380, radius = 14, guardPost, route }) {
   const el = useRef(null);
   const mapRef = useRef(null);
@@ -619,14 +626,24 @@ export function SVMap3D({ points = [], center, zoom = 16.1, height = 380, radius
       if (src) src.setData(buildData());
     });
     map.on('load', () => {
+      /* แสงเฉียง — หน้าตึกสว่าง/เงาต่างกัน (ห้ามใช้ setSky — fog กลืนแผนที่ทั้งจอ) */
+      try {
+        map.setLight({ anchor: 'viewport', color: '#FFFFFF', intensity: 0.42, position: [1.4, 200, 35] });
+      } catch { /* noop */ }
       map.addSource('sv3d', { type: 'geojson', data: buildData() });
+      /* เงาอ่อนรอบฐานอาคาร — ให้ตึกดู "วาง" อยู่บนพื้น */
+      map.addLayer({
+        id: 'sv3d-shadow', type: 'fill', source: 'sv3d',
+        paint: { 'fill-color': 'rgba(70,60,130,0.13)', 'fill-translate': [3, 4], 'fill-translate-anchor': 'viewport' },
+      });
       map.addLayer({
         id: 'sv3d-bld', type: 'fill-extrusion', source: 'sv3d',
         paint: {
           'fill-extrusion-color': ['get', 'color'],
           'fill-extrusion-height': ['get', 'h'],
           'fill-extrusion-base': 0,
-          'fill-extrusion-opacity': 0.95,
+          'fill-extrusion-opacity': 0.97,
+          'fill-extrusion-vertical-gradient': true,
         },
       });
       /* กดบ้านที่เฝ้าระวัง → popup ชื่อ/สถานะ */
