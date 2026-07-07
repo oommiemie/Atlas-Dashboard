@@ -1,8 +1,11 @@
 /* ═══ Smart Village — shared UI primitives (ตามธีม Atlas Dashboard) ═══ */
 import { useEffect, useRef, useState } from 'react';
+import { IconInbox, IconX, IconCopy, IconCheck } from '@tabler/icons-react';
 import { createPortal } from 'react-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import imgAvatarBlur from '../../assets/images/avatar-blur.png';
+import imgGrid from '../../assets/images/grid-bg.png';
 
 export const font = "'IBM Plex Sans Thai Looped', sans-serif";
 export const BLACK = '#1E1B39';
@@ -12,7 +15,7 @@ export const PURPLE = '#6658E1';
 export const RED = '#FF383C';
 export const GREEN = '#34C759';
 export const ORANGE = '#E8802A';
-export const BLUE = '#1398D8';
+export const BLUE = '#0088FF';
 
 export const card = {
   background: 'rgba(255,255,255,0.5)',
@@ -43,15 +46,55 @@ export const btnDanger = {
   ...btnGhost, color: RED, border: '1px solid rgba(255,56,60,0.3)',
 };
 
-/* ── หัวข้อ page/section ── */
-export function PageHead({ title, sub, right }) {
+/* ── หัวข้อ page — hero banner ตาม design language หน้าหลัก (blur circles + grid + gradient title)
+      wording ตาม pattern หน้าอื่น: คำนำสั้น + ชื่อหน้า (วงเล็บไทย) + แถว control — ไม่มีประโยคอธิบาย ── */
+export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เฝ้าระวัง', image }) {
+  const now = new Date();
+  const date = now.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
-      <div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: BLACK, fontFamily: font }}>{title}</h2>
-        {sub && <div style={{ fontSize: 12.5, color: GRAY, fontFamily: font, marginTop: 4 }}>{sub}</div>}
+    <div style={{
+      borderRadius: 24, position: 'relative', overflow: 'visible',
+      boxShadow: '0 4px 4px rgba(0,0,0,0.1)', minHeight: 150, marginBottom: 16,
+    }}>
+      {/* Background layer — overflow hidden เฉพาะส่วนนี้ (pattern เดียวกับ hero หน้า Dashboard) */}
+      <div style={{ position: 'absolute', inset: 0, borderRadius: 24, overflow: 'hidden', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%) translateY(62px)', width: 228, height: 228 }}>
+          <img src={imgAvatarBlur} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', opacity: 0.5, filter: 'blur(25px)' }} />
+        </div>
+        <div style={{ position: 'absolute', left: -60, top: '50%', transform: 'translateY(-50%)', width: 228, height: 228 }}>
+          <img src={imgAvatarBlur} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', opacity: 0.5, filter: 'blur(25px)' }} />
+        </div>
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 1483, height: 315 }}>
+          <img src={imgGrid} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} />
+        </div>
+        {image && (
+          <div style={{ position: 'absolute', right: 0, top: 30, width: 200, height: 200 }}>
+            <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
       </div>
-      {right && <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>{right}</div>}
+      {/* Content */}
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 8, padding: 16 }}>
+        <span style={{ fontSize: 16, fontWeight: 500, color: 'black', fontFamily: font }}>{greeting}</span>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <span style={{
+            fontSize: 24, fontWeight: 700, fontFamily: font,
+            background: 'linear-gradient(270deg, #0088FF 0%, #6658E1 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>{title}</span>
+          {thai && <span style={{ fontSize: 16, fontWeight: 500, color: 'black', fontFamily: font }}>({thai})</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{
+            backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
+            border: '1px solid white', borderRadius: 100, padding: '8px 14px', height: 36,
+            display: 'flex', alignItems: 'center', boxSizing: 'border-box',
+          }}>
+            <span style={{ fontSize: 12, color: 'rgba(60,60,67,0.6)', fontFamily: font }}>{date}</span>
+          </div>
+          {right}
+        </div>
+      </div>
     </div>
   );
 }
@@ -62,15 +105,15 @@ export function SectionTitle({ icon, title, sub, right }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {icon && (
           <div style={{
-            width: 34, height: 34, borderRadius: 12, flexShrink: 0,
-            background: 'linear-gradient(180deg, #8B81F2, #6658E1)',
+            width: 40, height: 40, borderRadius: 14, flexShrink: 0,
+            background: 'linear-gradient(180deg, #8B81F2, #6658E1)', color: 'white',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
             boxShadow: '0 4px 10px rgba(102,88,225,0.3)',
           }}>{icon}</div>
         )}
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: BLACK, fontFamily: font }}>{title}</div>
-          {sub && <div style={{ fontSize: 11, color: GRAY2, fontFamily: font, marginTop: 1 }}>{sub}</div>}
+          <div style={{ fontSize: 16, fontWeight: 700, color: BLACK, fontFamily: font }}>{title}</div>
+          {sub && <div style={{ fontSize: 12, color: GRAY, fontFamily: font, marginTop: 1 }}>{sub}</div>}
         </div>
       </div>
       {right}
@@ -117,7 +160,7 @@ export function SearchBox({ value, onChange, placeholder, width = 240 }) {
 }
 
 /* ── Empty state ── */
-export function EmptyState({ icon = '📭', title, sub, warn = false, cta }) {
+export function EmptyState({ icon = <IconInbox size={26} />, title, sub, warn = false, cta }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
@@ -157,7 +200,8 @@ export function Modal({ title, sub, onClose, children, width = 520 }) {
           <button onClick={onClose} style={{
             width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: 'pointer',
             background: 'rgba(116,116,128,0.1)', color: GRAY, fontSize: 14, fontFamily: font,
-          }}>✕</button>
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}><IconX size={14} style={{ flexShrink: 0 }} /></button>
         </div>
         {children}
       </div>
@@ -346,7 +390,7 @@ export function CopyBtn({ text, label = 'คัดลอก' }) {
       onClick={() => { navigator.clipboard && navigator.clipboard.writeText(text); setOk(true); setTimeout(() => setOk(false), 1500); }}
       style={{ ...btnGhost, padding: '5px 12px', fontSize: 11.5 }}
     >
-      {ok ? '✓ คัดลอกแล้ว' : `⧉ ${label}`}
+      {ok ? <><IconCheck size={12} style={{ flexShrink: 0 }} /> คัดลอกแล้ว</> : <><IconCopy size={12} style={{ flexShrink: 0 }} /> {label}</>}
     </button>
   );
 }

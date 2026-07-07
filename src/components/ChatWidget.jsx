@@ -4,6 +4,7 @@
    typing bubble 3 จุด · ส่งรูป · unread badge ═══ */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { IconMessageCircle, IconX, IconChevronLeft, IconCamera, IconSend2 } from '@tabler/icons-react';
 
 const font = "'IBM Plex Sans Thai Looped', sans-serif";
 const BLACK = '#1E1B39';
@@ -135,7 +136,7 @@ function ChatRoom({ convo, messages, onSend, onSendImage, replying, onBack }) {
     <>
       {/* header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'white', borderRadius: '20px 20px 0 0' }}>
-        <button onClick={onBack} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(102,88,225,0.08)', color: PURPLE, fontSize: 14 }}>‹</button>
+        <button onClick={onBack} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(102,88,225,0.08)', color: PURPLE, fontSize: 14 }}><IconChevronLeft size={14} style={{ verticalAlign: '-2px' }} /></button>
         <Avatar name={convo.name} online={convo.online} size={36} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: BLACK, fontFamily: font, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{convo.name}</div>
@@ -171,7 +172,7 @@ function ChatRoom({ convo, messages, onSend, onSendImage, replying, onBack }) {
             <button
               onClick={() => fileRef.current?.click()} title="ส่งรูปภาพ"
               style={{ width: 38, height: 38, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16 }}
-            >📷</button>
+            ><IconCamera size={18} color={GRAY} style={{ verticalAlign: '-4px' }} /></button>
             <input ref={fileRef} type="file" accept="image/*" hidden onChange={e => {
               const f = e.target.files?.[0];
               if (f) onSendImage(URL.createObjectURL(f));
@@ -194,7 +195,7 @@ function ChatRoom({ convo, messages, onSend, onSendImage, replying, onBack }) {
               background: canSend ? 'linear-gradient(135deg,#4438AD,#6658E1)' : '#cfcfd6',
               opacity: canSend ? 1 : 0.7,
             }}
-          >➤</button>
+          ><IconSend2 size={16} style={{ verticalAlign: '-3px' }} /></button>
         </div>
       </div>
     </>
@@ -206,7 +207,7 @@ function ChatList({ conversations, onOpen }) {
   return (
     <>
       <div style={{ padding: '16px 16px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'white', borderRadius: '20px 20px 0 0' }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: BLACK, fontFamily: font }}>💬 แชต</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: BLACK, fontFamily: font }}><IconMessageCircle size={15} color={BLACK} style={{ verticalAlign: '-2px' }} /> แชต</div>
         <div style={{ fontSize: 11, color: GRAY2, fontFamily: font, marginTop: 2 }}>คุยกับครอบครัว/นิติบุคคล</div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', background: '#fafafa', borderRadius: '0 0 20px 20px' }}>
@@ -255,7 +256,7 @@ export default function ChatWidget() {
 
   const pushMessage = (convoId, msg) => {
     setMessagesById(prev => ({ ...prev, [convoId]: [...(prev[convoId] || []), msg] }));
-    setConversations(prev => prev.map(c => (c.id === convoId ? { ...c, lastMessage: msg.text || '📷 รูปภาพ', time: msg.time } : c)));
+    setConversations(prev => prev.map(c => (c.id === convoId ? { ...c, lastMessage: msg.text || 'รูปภาพ', time: msg.time } : c)));
   };
 
   /* auto-reply 1.5s (triggerReply ต้นทาง) */
@@ -314,7 +315,7 @@ export default function ChatWidget() {
           boxShadow: '0 8px 24px rgba(102,88,225,0.45)',
         }}
       >
-        {open ? '✕' : '💬'}
+        {open ? <IconX size={24} style={{ verticalAlign: 'middle', flexShrink: 0 }} /> : <IconMessageCircle size={24} style={{ verticalAlign: 'middle', flexShrink: 0 }} />}
         {!open && unreadTotal > 0 && (
           <span style={{
             position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, borderRadius: 100,

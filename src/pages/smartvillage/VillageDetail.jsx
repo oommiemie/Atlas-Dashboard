@@ -4,9 +4,13 @@ import {
   getVillage, housesOf, guardsOf, devicesOfHouse, alertsOfHouse, villageStats, villageStatus, SV_STATUS_META,
 } from '../../data/smartVillage';
 import {
-  font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED, ORANGE,
+  font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED, ORANGE, BLUE,
   card, btnPrimary, btnGhost, btnDanger, Pill, SearchBox, Modal, Field, TextInput, SVMap, THead, TRow, CopyBtn, EmptyState, OnlinePill,
 } from './shared';
+import {
+  IconAlertTriangle, IconBuildingCommunity, IconPencil, IconHome, IconAntennaBars5,
+  IconCircleFilled, IconShield, IconUrgent, IconDoor, IconDeviceWatch,
+} from '@tabler/icons-react';
 
 const genPassword = () => {
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -27,7 +31,7 @@ function AddGuardModal({ village, onClose }) {
       <Modal title="สร้างบัญชี รปภ. สำเร็จ" sub="รหัสผ่านแสดงครั้งเดียวเท่านั้น — คัดลอกส่งมอบให้ รปภ. ทันที" onClose={onClose} width={460}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ background: 'rgba(232,128,42,0.08)', border: '1px solid rgba(232,128,42,0.25)', borderRadius: 14, padding: '10px 14px', fontSize: 11.5, color: ORANGE, fontFamily: font, lineHeight: 1.6 }}>
-            ⚠ ปิดหน้าต่างนี้แล้วจะดูรหัสผ่านอีกไม่ได้ — ถ้ารหัสหาย ต้องรีเซ็ตใหม่เท่านั้น
+            <IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> ปิดหน้าต่างนี้แล้วจะดูรหัสผ่านอีกไม่ได้ — ถ้ารหัสหาย ต้องรีเซ็ตใหม่เท่านั้น
           </div>
           {[['ชื่อผู้ใช้ (username)', uname || 'vlg001-somchai'], ['รหัสผ่าน (แสดงครั้งเดียว)', pw]].map(([l, val]) => (
             <div key={l} style={{ background: 'rgba(102,88,225,0.06)', borderRadius: 14, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
@@ -120,7 +124,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
   const [modal, setModal] = useState(null); // 'house' | 'guard' | 'suspend' | 'reset:<id>'
 
   const houseRows = houses.filter(h => (h.no + h.nickname).toLowerCase().includes(q.toLowerCase()));
-  const HCOLS = '110px 1.4fr 70px 110px 1.1fr 1fr';
+  const HCOLS = '110px 1.2fr 70px 110px 130px 1.1fr 1fr';
   const GCOLS = '1.4fr 1.2fr 110px 90px 120px 170px';
 
   const mapPoints = [
@@ -132,7 +136,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
       return {
         lat: h.lat, lng: h.lng, name: `บ้าน ${h.no}${h.nickname ? ` · ${h.nickname}` : ''}`,
         color, status: hasAlert ? 'alert' : 'ok',
-        subHtml: `<div style="font-size:11px;color:${GRAY};">${hasAlert ? '🚨 มีเหตุ active' : offline ? 'มีอุปกรณ์ offline' : 'ปกติ'} · คลิกเพื่อเปิดบ้าน</div>`,
+        subHtml: `<div style="font-size:11px;color:${GRAY};">${hasAlert ? 'มีเหตุ active' : offline ? 'มีอุปกรณ์ offline' : 'ปกติ'} · คลิกเพื่อเปิดบ้าน</div>`,
         onClick: () => onDrillHouse(h.id),
       };
     }),
@@ -148,7 +152,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
               width: 54, height: 54, borderRadius: 18, fontSize: 24, flexShrink: 0,
               background: 'linear-gradient(180deg,#8B81F2,#6658E1)', boxShadow: '0 6px 16px rgba(102,88,225,0.35)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>🏘️</div>
+            }}><IconBuildingCommunity size={26} color="white" style={{ flexShrink: 0 }} /></div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: 19, fontWeight: 700, color: BLACK, fontFamily: font }}>{village.name}</h2>
@@ -161,10 +165,16 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
                 นิติบุคคล: {village.juristic.name} · {village.juristic.phone}
               </div>
             </div>
-            <button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('ตั้งค่า')}>✎ แก้ไข</button>
+            <button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('ตั้งค่า')}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {[['บ้าน', stats.houses, '🏠'], ['ติดตั้งแล้ว', stats.installedHouses, '📡'], ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, '🟢'], ['บัญชี รปภ.', stats.guards, '🛡️'], ['เหตุ 30 วัน', stats.alerts30d, '🚨']].map(([l, v, ic]) => (
+            {[
+              ['บ้าน', stats.houses, <IconHome size={12} style={{ verticalAlign: '-2px' }} />],
+              ['ติดตั้งแล้ว', stats.installedHouses, <IconAntennaBars5 size={12} style={{ verticalAlign: '-2px' }} />],
+              ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, <IconCircleFilled size={9} color={GREEN} style={{ verticalAlign: '-1px' }} />],
+              ['บัญชี รปภ.', stats.guards, <IconShield size={12} style={{ verticalAlign: '-2px' }} />],
+              ['เหตุ 30 วัน', stats.alerts30d, <IconUrgent size={12} style={{ verticalAlign: '-2px' }} />],
+            ].map(([l, v, ic]) => (
               <div key={l} style={{ background: 'rgba(102,88,225,0.06)', border: '1px solid rgba(102,88,225,0.12)', borderRadius: 16, padding: '10px 16px', minWidth: 104 }}>
                 <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font }}>{ic} {l}</div>
                 <div className="num" style={{ fontSize: 20, fontWeight: 800, color: BLACK, marginTop: 2 }}>{v}</div>
@@ -199,7 +209,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
           </div>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 820 }}>
-              <THead cols={HCOLS} labels={['บ้านเลขที่', 'ชื่อเรียก', 'คนในบ้าน', 'อุปกรณ์', 'สถานะเชื่อม Family', 'เหตุล่าสุด']} />
+              <THead cols={HCOLS} labels={['บ้านเลขที่', 'ชื่อเรียก', 'คนในบ้าน', 'อุปกรณ์', 'ชนิดติดตั้ง', 'สถานะเชื่อม Family', 'เหตุล่าสุด']} />
               {houseRows.map(h => {
                 const devs = devicesOfHouse(h.id);
                 const linked = h.familyLinks.filter(f => f.status === 'เชื่อมแล้ว').length;
@@ -220,14 +230,25 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
                         <span style={{ color: GRAY2 }}>/{devs.length} online</span>
                       </>}
                     </div>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      {(() => {
+                        const ceiling = devs.filter(d => d.attach.kind === 'house').length;
+                        const wearable = devs.filter(d => d.attach.kind === 'person').length;
+                        if (!devs.length) return <span style={{ fontSize: 11.5, color: GRAY2, fontFamily: font }}>—</span>;
+                        return <>
+                          {ceiling > 0 && <Pill color={PURPLE} bg="rgba(102,88,225,0.1)" dot={false}><IconDoor size={12} style={{ flexShrink: 0 }} /> เพดาน {ceiling}</Pill>}
+                          {wearable > 0 && <Pill color={BLUE} bg="rgba(19,152,216,0.1)" dot={false}><IconDeviceWatch size={12} style={{ flexShrink: 0 }} /> ติดตัว {wearable}</Pill>}
+                        </>;
+                      })()}
+                    </div>
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                       {linked > 0 && <Pill color={GREEN} bg="rgba(52,199,89,0.12)">เชื่อมแล้ว {linked} กลุ่ม</Pill>}
                       {pending > 0 && <Pill color={ORANGE} bg="rgba(232,128,42,0.12)">รออนุมัติ {pending}</Pill>}
-                      {linked === 0 && pending === 0 && <Pill color={ORANGE} bg="rgba(232,128,42,0.12)" dot={false}>⚠ ยังไม่เชื่อม</Pill>}
+                      {linked === 0 && pending === 0 && <Pill color={ORANGE} bg="rgba(232,128,42,0.12)" dot={false}><IconAlertTriangle size={12} style={{ flexShrink: 0 }} /> ยังไม่เชื่อม</Pill>}
                     </div>
                     <div style={{ fontSize: 11.5 }}>
                       {activeAlert
-                        ? <span style={{ color: RED, fontWeight: 700 }}>🚨 {activeAlert.detectType} {activeAlert.time} น.</span>
+                        ? <span style={{ color: RED, fontWeight: 700 }}><IconUrgent size={12} style={{ verticalAlign: '-2px' }} /> {activeAlert.detectType} {activeAlert.time} น.</span>
                         : lastAlert ? `${lastAlert.date} ${lastAlert.time}` : <span style={{ color: GRAY2 }}>—</span>}
                     </div>
                   </TRow>
@@ -249,7 +270,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
           </div>
           {guards.length === 0 ? (
             <EmptyState
-              icon="🛡️" warn
+              icon={<IconShield size={15} />} warn
               title="ยังไม่มีบัญชี รปภ."
               sub="หมู่บ้านนี้จะไม่มีคนเฝ้าเหตุจนกว่าจะเพิ่มบัญชี — เมื่อเกิดเหตุจะมีเพียงครอบครัวและ central ที่เห็น"
               cta={<button className="hover-btn" style={btnPrimary} onClick={() => setModal('guard')}>+ เพิ่มบัญชีแรก</button>}
@@ -300,7 +321,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             <button className="hover-btn" style={{ ...btnPrimary, alignSelf: 'flex-end' }}>บันทึกการแก้ไข</button>
           </div>
           <div style={{ ...card, border: '1px solid rgba(255,56,60,0.25)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 700, color: RED, fontFamily: font }}>⚠ ระงับหมู่บ้าน</div>
+            <div style={{ fontSize: 14.5, fontWeight: 700, color: RED, fontFamily: font }}><IconAlertTriangle size={15} style={{ verticalAlign: '-2px' }} /> ระงับหมู่บ้าน</div>
             <div style={{ fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.7 }}>
               เมื่อระงับ: บัญชี รปภ. ทั้งหมดจะ login ไม่ได้ และระบบจะไม่รับเหตุใหม่จากอุปกรณ์ในหมู่บ้านนี้
               <br />ไม่มีการลบถาวร เพราะมีบ้าน {stats.houses} หลังและอุปกรณ์ {stats.devices} เครื่องผูกอยู่

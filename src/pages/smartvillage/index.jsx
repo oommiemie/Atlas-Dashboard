@@ -2,6 +2,7 @@
    sidebar เลือก section (ภาพรวม/หมู่บ้าน/อุปกรณ์/เหตุการณ์)
    drill-down: หมู่บ้าน → รายละเอียดหมู่บ้าน → รายละเอียดบ้าน (มี breadcrumb) */
 import { useState } from 'react';
+import { IconBuildingCommunity } from '@tabler/icons-react';
 import { getVillage, getHouse } from '../../data/smartVillage';
 import { font, GRAY, GRAY2, PURPLE, BLACK } from './shared';
 import Overview from './Overview';
@@ -63,7 +64,7 @@ export default function SmartVillage({ section, onNavigate }) {
     body = (
       <>
         <Crumb items={[
-          { label: '🏘️ หมู่บ้าน', onClick: () => setDrill({}) },
+          { label: <><IconBuildingCommunity size={14} style={{ verticalAlign: '-2px' }} /> หมู่บ้าน</>, onClick: () => setDrill({}) },
           { label: village.name, onClick: () => setDrill({ villageId: village.id }) },
           { label: `บ้าน ${house.no}` },
         ]} />
@@ -74,7 +75,7 @@ export default function SmartVillage({ section, onNavigate }) {
     body = (
       <>
         <Crumb items={[
-          { label: '🏘️ หมู่บ้าน', onClick: () => setDrill({}) },
+          { label: <><IconBuildingCommunity size={14} style={{ verticalAlign: '-2px' }} /> หมู่บ้าน</>, onClick: () => setDrill({}) },
           { label: village.name },
         ]} />
         <VillageDetail villageId={village.id} onDrillHouse={(houseId) => goHouse(village.id, houseId)} />

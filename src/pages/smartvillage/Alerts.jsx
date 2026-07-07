@@ -2,6 +2,9 @@
 import { useState } from 'react';
 import CountUp from '../../components/CountUp';
 import {
+  IconAlertTriangleFilled, IconRun, IconCircleCheckFilled, IconConfetti, IconRadar2, IconCheck, IconAlertTriangle,
+} from '@tabler/icons-react';
+import {
   SV_ALERTS, SV_VILLAGES, getVillage, getHouse, ALERT_STATUS_META, ALERT_RESULT_META,
 } from '../../data/smartVillage';
 import {
@@ -34,20 +37,25 @@ export default function Alerts({ onDrillHouse }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
-        <PageHead title="เหตุการณ์" sub="Alert Case ทุกหมู่บ้าน · วงจร: ใหม่ → รับทราบแล้ว → ปิดแล้ว (พร้อมผล)" right={<LivePill />} />
+        <PageHead thai="เหตุการณ์" right={<LivePill />} />
       </div>
 
-      {/* สรุปสถานะ */}
-      <div className="anim-slide-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      {/* สรุปสถานะ — anatomy เดียวกับ StatCards หน้า Dashboard */}
+      <div className="anim-slide-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
         {[
-          ['ใหม่ (ยังไม่มีผู้รับทราบ)', counts['ใหม่'], 'linear-gradient(135deg,#E0262B,#FF7A45)', '🚨'],
-          ['รับทราบแล้ว (กำลังช่วยเหลือ)', counts['รับทราบแล้ว'], 'linear-gradient(135deg,#C96A12,#F2A254)', '🏃'],
-          ['ปิดแล้ว (30 วัน)', counts['ปิดแล้ว'], 'linear-gradient(135deg,#4438AD,#8B5CF6)', '✅'],
-        ].map(([l, v, g, ic]) => (
-          <div key={l} className="hover-stat" style={{ borderRadius: 22, padding: '16px 20px', color: 'white', background: g, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: -30, right: -18, width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.13)' }} />
-            <div style={{ fontSize: 11.5, fontFamily: font, opacity: 0.92 }}>{ic} {l}</div>
-            <div style={{ fontSize: 30, fontWeight: 800, fontFamily: font, marginTop: 6 }}><CountUp end={v} /></div>
+          ['ใหม่ (ยังไม่มีผู้รับทราบ)', counts['ใหม่'], 'linear-gradient(149deg, #E8432A 0%, #D0381A 100%)', '0 4px 14px rgba(232,67,42,0.3)', <IconAlertTriangleFilled size={20} style={{ flexShrink: 0 }} />],
+          ['รับทราบแล้ว (กำลังช่วยเหลือ)', counts['รับทราบแล้ว'], 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', '0 4px 14px rgba(232,128,42,0.3)', <IconRun size={20} style={{ flexShrink: 0 }} />],
+          ['ปิดแล้ว (30 วัน)', counts['ปิดแล้ว'], 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', '0 4px 14px rgba(139,92,246,0.3)', <IconCircleCheckFilled size={20} style={{ flexShrink: 0 }} />],
+        ].map(([l, v, g, sh, ic], i) => (
+          <div key={l} className="hover-stat" style={{
+            background: g, borderRadius: 24, padding: 16, color: 'white',
+            overflow: 'hidden', position: 'relative', boxShadow: sh,
+            display: 'flex', flexDirection: 'column', gap: 8,
+            animation: `cardPop 0.5s cubic-bezier(.22,1,.36,1) ${i * 80}ms both`,
+          }}>
+            <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ic}</div>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.6)', fontFamily: font, letterSpacing: 0.22 }}>{l}</span>
+            <CountUp end={v} style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font, lineHeight: '26px' }} />
           </div>
         ))}
       </div>
@@ -68,7 +76,7 @@ export default function Alerts({ onDrillHouse }) {
       </div>
 
       <div className="anim-slide-up delay-3" style={{ ...card, padding: 8 }}>
-        {rows.length === 0 ? <EmptyState icon="🎉" title="ไม่มีเหตุการณ์ตามเงื่อนไข" sub="ลองปรับ filter" /> : (
+        {rows.length === 0 ? <EmptyState icon={<IconConfetti size={26} style={{ flexShrink: 0 }} />} title="ไม่มีเหตุการณ์ตามเงื่อนไข" sub="ลองปรับ filter" /> : (
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 960 }}>
               <THead cols={COLS} labels={['เลขเคส', 'เวลา', 'บ้าน · หมู่บ้าน', 'เหตุ', 'สถานะ', 'การจัดการ / ผล']} />
@@ -88,16 +96,16 @@ export default function Alerts({ onDrillHouse }) {
                     </div>
                     <div style={{ fontSize: 11.5 }}>
                       {a.detectType} · {a.location}
-                      {a.recovered && <div style={{ fontSize: 10, color: BLUE, fontFamily: font }}>📡 เครื่องรายงานกลับสู่ปกติ</div>}
+                      {a.recovered && <div style={{ fontSize: 10, color: BLUE, fontFamily: font }}><IconRadar2 size={12} style={{ verticalAlign: '-2px' }} /> เครื่องรายงานกลับสู่ปกติ</div>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
                       <Pill color={ALERT_STATUS_META[a.status].color} bg={ALERT_STATUS_META[a.status].bg}>{a.status}</Pill>
                       {a.status === 'ใหม่' && <span style={{ fontSize: 10, color: RED, fontWeight: 700, fontFamily: font }}><ElapsedSince minAgo={a.minAgo} /></span>}
                     </div>
                     <div style={{ fontSize: 11, lineHeight: 1.55 }}>
-                      {a.ackBy && <div>✓ {a.ackBy} · {a.ackAt} น.</div>}
+                      {a.ackBy && <div><IconCheck size={12} style={{ verticalAlign: '-2px' }} /> {a.ackBy} · {a.ackAt} น.</div>}
                       {a.result && <div style={{ marginTop: 2 }}><Pill color={ALERT_RESULT_META[a.result].color} bg={ALERT_RESULT_META[a.result].bg} dot={false}>{a.result}</Pill></div>}
-                      {a.status === 'ใหม่' && <span style={{ color: RED, fontWeight: 700 }}>⚠ ยังไม่มีผู้รับทราบ</span>}
+                      {a.status === 'ใหม่' && <span style={{ color: RED, fontWeight: 700 }}><IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> ยังไม่มีผู้รับทราบ</span>}
                     </div>
                   </TRow>
                 );

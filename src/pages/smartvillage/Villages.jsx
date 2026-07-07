@@ -7,6 +7,7 @@ import {
   font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED,
   card, btnPrimary, btnGhost, PageHead, Pill, SearchBox, Modal, Field, TextInput, Select, SVMap, THead, TRow, CopyBtn,
 } from './shared';
+import { IconBuildingCommunity, IconMapPin, IconConfetti, IconList, IconLayoutGrid } from '@tabler/icons-react';
 
 const TYPES = ['หมู่บ้านจัดสรร', 'คอนโด/อาคาร', 'ชุมชน', 'อื่นๆ'];
 
@@ -20,7 +21,7 @@ function AddVillageModal({ onClose }) {
 
   if (saved) {
     return (
-      <Modal title="เพิ่มหมู่บ้านสำเร็จ 🎉" sub="ขั้นถัดไปตาม flow การติดตั้ง" onClose={onClose} width={440}>
+      <Modal title={<>เพิ่มหมู่บ้านสำเร็จ <IconConfetti size={16} style={{ verticalAlign: '-2px' }} /></>} sub="ขั้นถัดไปตาม flow การติดตั้ง" onClose={onClose} width={440}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {['สร้างบัญชี รปภ. แล้วส่งมอบ username/รหัสผ่าน', 'เพิ่มบ้าน + ปักหมุดตำแหน่ง', 'เพิ่มคนในบ้านและผู้ติดต่อ', 'ติดตั้งอุปกรณ์ + ยืนยันเครื่อง online', 'ส่ง QR รหัสบ้านให้ลูกบ้านเชื่อม Family'].map((s, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(102,88,225,0.06)', borderRadius: 12, padding: '10px 14px' }}>
@@ -57,7 +58,7 @@ function AddVillageModal({ onClose }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <button className="hover-btn" style={{ ...btnGhost, padding: '6px 12px', fontSize: 11.5 }} onClick={() => setPin({ lat: 16.4419, lng: 102.8360 })}>
-                📍 ใช้ตำแหน่งจากที่อยู่
+                <IconMapPin size={12} style={{ verticalAlign: '-2px' }} /> ใช้ตำแหน่งจากที่อยู่
               </button>
               {pin ? (
                 <>
@@ -109,14 +110,11 @@ export default function Villages({ onDrillVillage }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
-        <PageHead
-          title="หมู่บ้าน"
-          sub={`ทั้งหมด ${SV_VILLAGES.length} แห่ง · จัดการหมู่บ้าน บ้าน และบัญชี รปภ.`}
-          right={<button className="hover-btn" style={btnPrimary} onClick={() => setAdding(true)}>+ เพิ่มหมู่บ้าน</button>}
-        />
+        <PageHead thai="หมู่บ้าน" />
       </div>
 
       <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button className="hover-btn" style={btnPrimary} onClick={() => setAdding(true)}>+ เพิ่มหมู่บ้าน</button>
         <SearchBox value={q} onChange={setQ} placeholder="ค้นหาชื่อหมู่บ้าน / จังหวัด…" width={260} />
         <div className="seg">
           {['ทั้งหมด', ...TYPES].map(t => (
@@ -131,8 +129,8 @@ export default function Villages({ onDrillVillage }) {
           ))}
         </div>
         <div className="seg" style={{ marginLeft: 'auto' }}>
-          <button className={`seg-btn${view === 'table' ? ' active' : ''}`} onClick={() => setView('table')}>☰ ตาราง</button>
-          <button className={`seg-btn${view === 'card' ? ' active' : ''}`} onClick={() => setView('card')}>▦ การ์ด</button>
+          <button className={`seg-btn${view === 'table' ? ' active' : ''}`} onClick={() => setView('table')}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconList size={13} style={{ flexShrink: 0 }} /> ตาราง</span></button>
+          <button className={`seg-btn${view === 'card' ? ' active' : ''}`} onClick={() => setView('card')}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconLayoutGrid size={13} style={{ flexShrink: 0 }} /> การ์ด</span></button>
         </div>
       </div>
 
@@ -185,7 +183,7 @@ export default function Villages({ onDrillVillage }) {
                     width: 44, height: 44, borderRadius: 16, fontSize: 20, flexShrink: 0,
                     background: 'linear-gradient(180deg,#8B81F2,#6658E1)', boxShadow: '0 4px 12px rgba(102,88,225,0.3)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>🏘️</div>
+                  }}><IconBuildingCommunity size={20} style={{ flexShrink: 0 }} color="white" /></div>
                   <Pill color={SV_STATUS_META[st].color} bg={`${SV_STATUS_META[st].color}1F`}>{SV_STATUS_META[st].label}</Pill>
                 </div>
                 <div>

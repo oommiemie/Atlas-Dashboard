@@ -1,6 +1,9 @@
 /* ═══ Smart Village — อุปกรณ์ (global) + ฟอร์มเพิ่มอุปกรณ์ — spec 5.5 ═══ */
 import { useState } from 'react';
 import {
+  IconBolt, IconAlertTriangle, IconDoor, IconDeviceWatch, IconRadar2, IconAntennaBars5, IconSos, IconUser,
+} from '@tabler/icons-react';
+import {
   SV_DEVICES, SV_VILLAGES, getVillage, getHouse, housesOf,
 } from '../../data/smartVillage';
 import {
@@ -47,7 +50,7 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
               ))}
             </div>
           </div>
-          <button className="hover-btn" style={{ ...btnGhost, justifyContent: 'center' }}>⚡ โหมดทดสอบเหตุ — ยิงเหตุทดสอบ (ไม่แจ้งครอบครัว/ไม่นับสถิติ)</button>
+          <button className="hover-btn" style={{ ...btnGhost, justifyContent: 'center' }}><IconBolt size={14} style={{ flexShrink: 0 }} /> โหมดทดสอบเหตุ — ยิงเหตุทดสอบ (ไม่แจ้งครอบครัว/ไม่นับสถิติ)</button>
           <button className="hover-btn" style={{ ...btnPrimary, justifyContent: 'center' }} onClick={onClose}>เสร็จสิ้นการติดตั้ง</button>
         </div>
       </Modal>
@@ -62,7 +65,7 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
           <TextInput value={imei} onChange={e => setImei(e.target.value)} placeholder="เช่น 861230051234671" style={dupDevice ? { borderColor: RED } : undefined} />
           {dupDevice && (
             <div style={{ fontSize: 11, color: RED, fontFamily: font, background: 'rgba(255,56,60,0.07)', borderRadius: 10, padding: '7px 10px', marginTop: 2 }}>
-              ⚠ IMEI นี้ลงทะเบียนแล้วที่ บ้าน {getHouse(dupDevice.houseId).no} — {getVillage(dupDevice.villageId).name}
+              <IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> IMEI นี้ลงทะเบียนแล้วที่ บ้าน {getHouse(dupDevice.houseId).no} — {getVillage(dupDevice.villageId).name}
             </div>
           )}
         </Field>
@@ -83,13 +86,13 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
         </div>
         <Field label="การติดตั้ง" required>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[['house', '🚪 ติดกับบ้าน', 'เช่น เรดาร์ติดเพดานห้อง'], ['person', '⌚ ติดกับคน', 'อุปกรณ์พกติดตัว เห็นว่า "ใคร" ล้ม']].map(([k, t, s]) => (
+            {[['house', <IconDoor size={13} style={{ verticalAlign: '-2px' }} />, 'ติดกับบ้าน', 'เช่น เรดาร์ติดเพดานห้อง'], ['person', <IconDeviceWatch size={13} style={{ verticalAlign: '-2px' }} />, 'ติดกับคน', 'อุปกรณ์พกติดตัว เห็นว่า "ใคร" ล้ม']].map(([k, ic, t, s]) => (
               <div key={k} onClick={() => setInstallKind(k)} style={{
                 border: `1.5px solid ${installKind === k ? PURPLE : 'rgba(116,116,128,0.15)'}`,
                 background: installKind === k ? 'rgba(102,88,225,0.06)' : 'white',
                 borderRadius: 14, padding: '10px 12px', cursor: 'pointer',
               }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: installKind === k ? PURPLE : BLACK, fontFamily: font }}>{t}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: installKind === k ? PURPLE : BLACK, fontFamily: font }}>{ic} {t}</div>
                 <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font, marginTop: 2 }}>{s}</div>
               </div>
             ))}
@@ -122,7 +125,6 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false }) {
   const [statusFilter, setStatusFilter] = useState('ทั้งหมด');
   const [adding, setAdding] = useState(autoOpenAdd);
 
-  const online = SV_DEVICES.filter(d => d.online).length;
   const rows = SV_DEVICES.filter(d => {
     const v = getVillage(d.villageId);
     return (villageFilter === 'ทั้งหมด' || v.id === villageFilter)
@@ -135,14 +137,11 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
-        <PageHead
-          title="อุปกรณ์"
-          sub={`ทั้งหมด ${SV_DEVICES.length} เครื่อง · online ${online} · offline ${SV_DEVICES.length - online}`}
-          right={<><LivePill /><button className="hover-btn" style={btnPrimary} onClick={() => setAdding(true)}>+ เพิ่มอุปกรณ์</button></>}
-        />
+        <PageHead thai="อุปกรณ์" right={<LivePill />} />
       </div>
 
       <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button className="hover-btn" style={btnPrimary} onClick={() => setAdding(true)}>+ เพิ่มอุปกรณ์</button>
         <SearchBox value={q} onChange={setQ} placeholder="ค้นหาด้วย IMEI / ชนิด…" width={240} />
         <select value={villageFilter} onChange={e => setVillageFilter(e.target.value)} className="f-select" style={{ borderRadius: 100, fontFamily: font }}>
           <option value="ทั้งหมด">ทุกหมู่บ้าน</option>
@@ -156,7 +155,7 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false }) {
       </div>
 
       <div className="anim-slide-up delay-2" style={{ ...card, padding: 8 }}>
-        {rows.length === 0 ? <EmptyState icon="📡" title="ไม่พบอุปกรณ์" sub="ลองปรับคำค้นหรือ filter" /> : (
+        {rows.length === 0 ? <EmptyState icon={<IconRadar2 size={26} style={{ flexShrink: 0 }} />} title="ไม่พบอุปกรณ์" sub="ลองปรับคำค้นหรือ filter" /> : (
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 900 }}>
               <THead cols={COLS} labels={['IMEI', 'ชนิด', 'หมู่บ้าน · บ้าน', 'ติดกับ', 'สถานะ', 'เห็นล่าสุด']} />
@@ -166,17 +165,17 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false }) {
                   <TRow key={d.id} cols={COLS} onClick={() => onDrillHouse(d.villageId, d.houseId)}>
                     <div className="num" style={{ fontSize: 11.5, fontWeight: 600, color: BLACK }}>{d.imei}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 15 }}>{d.type === 'radar' ? '📶' : '🆘'}</span>
+                      {d.type === 'radar' ? <IconAntennaBars5 size={15} style={{ flexShrink: 0 }} /> : <IconSos size={15} style={{ flexShrink: 0 }} />}
                       <span style={{ fontSize: 12 }}>{d.typeName}</span>
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: BLACK, fontFamily: font }}>บ้าน {h.no}{h.nickname ? ` · ${h.nickname}` : ''}</div>
                       <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font }}>{getVillage(d.villageId).name}</div>
                     </div>
-                    <div style={{ fontSize: 11.5 }}>{d.attach.kind === 'house' ? `🚪 ${d.attach.location}` : `⌚ ${d.attach.residentName}`}</div>
+                    <div style={{ fontSize: 11.5 }}>{d.attach.kind === 'house' ? <><IconDoor size={12} style={{ verticalAlign: '-2px' }} /> {d.attach.location}</> : <><IconDeviceWatch size={12} style={{ verticalAlign: '-2px' }} /> {d.attach.residentName}</>}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
                       {d.online ? <Pill color={GREEN} bg="rgba(52,199,89,0.12)">online</Pill> : <Pill color={ORANGE} bg="rgba(232,128,42,0.12)">offline</Pill>}
-                      {d.presence && <span style={{ fontSize: 10, color: d.presence === 'มีคน' ? BLUE : GRAY2, fontFamily: font }}>{d.presence === 'มีคน' ? '👤 มีคนในห้อง' : '— ไม่มีคน'}</span>}
+                      {d.presence && <span style={{ fontSize: 10, color: d.presence === 'มีคน' ? BLUE : GRAY2, fontFamily: font }}>{d.presence === 'มีคน' ? <><IconUser size={12} style={{ verticalAlign: '-2px' }} /> มีคนในห้อง</> : '— ไม่มีคน'}</span>}
                     </div>
                     <div className="num" style={{ fontSize: 11.5 }}>{d.lastSeen}</div>
                   </TRow>
