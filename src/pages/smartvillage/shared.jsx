@@ -381,6 +381,22 @@ function makeAlertPinElement() {
   return wrap;
 }
 
+/* ป้าย profile บ้าน — โชว์ค้างบนแผนที่ (ไม่ต้อง hover) */
+function makeLabelElement(pt) {
+  const el = document.createElement('div');
+  const c = pt.color || '#34C759';
+  el.style.cssText = 'pointer-events:none;transform:translateY(-4px);';
+  el.innerHTML = `
+    <div style="font-family:${font};background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.9);border-radius:10px;box-shadow:0 4px 14px rgba(13,10,44,0.18);padding:5px 9px;white-space:nowrap;">
+      <div style="display:flex;align-items:center;gap:5px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:${c};flex-shrink:0;${pt.status === 'alert' ? 'animation:svBlink 0.8s infinite;' : ''}"></span>
+        <span style="font-size:11.5px;font-weight:800;color:${BLACK};">${pt.labelTitle || pt.name}</span>
+      </div>
+      ${pt.labelSub ? `<div style="font-size:9.5px;color:${pt.status === 'alert' ? '#D0342C' : '#9291A5'};font-weight:${pt.status === 'alert' ? 700 : 400};margin-top:1px;">${pt.labelSub}</div>` : ''}
+    </div>`;
+  return el;
+}
+
 /* เส้นทางนำทาง — วาด/อัปเดต layer บนแผนที่ + fitBounds */
 function applyRoute(map, route) {
   const coords = route ? route.coords : [];
@@ -411,10 +427,11 @@ function applyRoute(map, route) {
   if (map.isStyleLoaded()) apply(); else map.once('load', apply);
 }
 
-export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = false, onPick, pin, radius = 24, guardPost, route }) {
+export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = false, onPick, pin, radius = 24, guardPost, route, navPosition = 'top-left', labels = false }) {
   const el = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
+  const labelMarkersRef = useRef([]);
   const pickMarkerRef = useRef(null);
   const guardMarkerRef = useRef(null);
   const pointsKey = JSON.stringify(points.map(p => [p.lat, p.lng, p.color]));
@@ -424,6 +441,8 @@ export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = 
   const renderMarkers = (map) => {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
+    labelMarkersRef.current.forEach(m => m.remove());
+    labelMarkersRef.current = [];
     points.forEach(pt => {
       const alertPin = pt.status === 'alert';
       let elm;
@@ -443,6 +462,12 @@ export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = 
       elm.addEventListener('mouseleave', () => { if (mk.getPopup().isOpen()) mk.togglePopup(); });
       if (pt.onClick) elm.addEventListener('click', pt.onClick);
       markersRef.current.push(mk);
+      /* ป้าย profile ค้าง */
+      if (labels && pt.labelTitle) {
+        const lmk = new maplibregl.Marker({ element: makeLabelElement(pt), anchor: 'bottom', offset: [0, alertPin ? -42 : (pt.big ? -16 : -12)] })
+          .setLngLat([pt.lng, pt.lat]).addTo(map);
+        labelMarkersRef.current.push(lmk);
+      }
     });
     /* หมุดจากโหมด picker */
     if (pickMarkerRef.current) { pickMarkerRef.current.remove(); pickMarkerRef.current = null; }
@@ -466,7 +491,7 @@ export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = 
       container: el.current, style: CARTO_STYLE,
       center: center || [100.8, 14.8], zoom, attributionControl: false,
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), navPosition);
     if (picker) {
       map.on('click', (e) => onPick && onPick({ lat: +e.lngLat.lat.toFixed(6), lng: +e.lngLat.lng.toFixed(6) }));
     }
@@ -537,7 +562,7 @@ function shadeByHeight(h) {
   return `rgb(${mix(242, 168)},${mix(240, 160)},${mix(250, 226)})`;
 }
 
-export function SVMap3D({ points = [], center, zoom = 16.1, height = 380, radius = 14, guardPost, route }) {
+export function SVMap3D({ points = [], center, zoom = 16.1, height = 380, radius = 14, guardPost, route, navPosition = 'top-left', labels = false }) {
   const el = useRef(null);
   const mapRef = useRef(null);
   const pointsRef = useRef(points);
@@ -545,6 +570,7 @@ export function SVMap3D({ points = [], center, zoom = 16.1, height = 380, radius
   const fpRef = useRef(null); // footprint OSM (null = ยังไม่มา / โหลดไม่สำเร็จ)
   const guardMarkerRef = useRef(null);
   const alertMarkersRef = useRef([]);
+  const labelMarkersRef = useRef([]);
   const [source, setSource] = useState('loading'); // loading | osm | fallback
   const pointsKey = JSON.stringify(points.map(p => [p.lat, p.lng, p.color, p.status]));
   const routeKey = route ? `${route.coords.length},${route.coords[0]},${route.coords[route.coords.length - 1]}` : '';
@@ -617,7 +643,7 @@ export function SVMap3D({ points = [], center, zoom = 16.1, height = 380, radius
       container: el.current, style: CARTO_STYLE,
       center, zoom, pitch: 58, bearing: -18, attributionControl: false, antialias: true,
     });
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-left');
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), navPosition);
     /* ดึง footprint จริงจาก OSM — มาเมื่อไหร่ อัปเดต layer เมื่อนั้น */
     fetchOsmFootprints(center[1], center[0]).then(fps => {
       if (dead) return;
@@ -683,19 +709,31 @@ export function SVMap3D({ points = [], center, zoom = 16.1, height = 380, radius
   const renderAlertPins = (map) => {
     alertMarkersRef.current.forEach(m => m.remove());
     alertMarkersRef.current = [];
+    labelMarkersRef.current.forEach(m => m.remove());
+    labelMarkersRef.current = [];
     pointsRef.current.forEach(p => {
-      if (p.status !== 'alert') return;
-      const elm = makeAlertPinElement();
-      const popup = new maplibregl.Popup({ offset: 30, closeButton: false, maxWidth: '230px' })
-        .setHTML(`<div style="font-family:${font};padding:4px 2px;">
-          <div style="font-weight:700;font-size:12.5px;color:${BLACK};margin-bottom:4px;">${p.name}</div>
-          ${p.subHtml || ''}
-        </div>`);
-      const mk = new maplibregl.Marker({ element: elm, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).setPopup(popup).addTo(map);
-      elm.addEventListener('mouseenter', () => { if (!mk.getPopup().isOpen()) mk.togglePopup(); });
-      elm.addEventListener('mouseleave', () => { if (mk.getPopup().isOpen()) mk.togglePopup(); });
-      if (p.onClick) elm.addEventListener('click', p.onClick);
-      alertMarkersRef.current.push(mk);
+      const isAlert = p.status === 'alert';
+      if (isAlert) {
+        const elm = makeAlertPinElement();
+        const popup = new maplibregl.Popup({ offset: 30, closeButton: false, maxWidth: '230px' })
+          .setHTML(`<div style="font-family:${font};padding:4px 2px;">
+            <div style="font-weight:700;font-size:12.5px;color:${BLACK};margin-bottom:4px;">${p.name}</div>
+            ${p.subHtml || ''}
+          </div>`);
+        const mk = new maplibregl.Marker({ element: elm, anchor: 'bottom' }).setLngLat([p.lng, p.lat]).setPopup(popup).addTo(map);
+        elm.addEventListener('mouseenter', () => { if (!mk.getPopup().isOpen()) mk.togglePopup(); });
+        elm.addEventListener('mouseleave', () => { if (mk.getPopup().isOpen()) mk.togglePopup(); });
+        if (p.onClick) elm.addEventListener('click', p.onClick);
+        alertMarkersRef.current.push(mk);
+      }
+      /* ป้าย profile ค้าง — ทุกบ้าน */
+      if (labels && p.labelTitle) {
+        const lel = makeLabelElement(p);
+        if (p.onClick) { lel.style.pointerEvents = 'auto'; lel.style.cursor = 'pointer'; lel.addEventListener('click', p.onClick); }
+        const lmk = new maplibregl.Marker({ element: lel, anchor: 'bottom', offset: [0, isAlert ? -44 : -10] })
+          .setLngLat([p.lng, p.lat]).addTo(map);
+        labelMarkersRef.current.push(lmk);
+      }
     });
   };
 

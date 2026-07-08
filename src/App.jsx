@@ -34,7 +34,6 @@ function App() {
   const [user, setUser] = useState(null)
   const [activePage, setActivePage] = useState('dashboard')
   const [callPatient, setCallPatient] = useState(null)
-  const [guardPortal, setGuardPortal] = useState(false) // portal รปภ. — เส้นทางแยกจาก dashboard (spec 4.2)
 
   const navGroups = [
     {
@@ -59,8 +58,9 @@ function App() {
 
   const [selectedPatient, setSelectedPatient] = useState(null)
 
-  if (guardPortal) return <GuardMonitor standalone onExit={() => setGuardPortal(false)} />;
-  if (!user) return <Login onLogin={setUser} onGuardPortal={() => setGuardPortal(true)} />;
+  if (!user) return <Login onLogin={setUser} />;
+  /* บัญชี รปภ. — เข้าจอเฝ้าระวังตรง ๆ (login เดียวกับ dashboard, ไม่มีหน้า login แยก) */
+  if (user.role === 'guard') return <GuardMonitor standalone guardUsername={user.guardUsername} onExit={() => setUser(null)} />;
 
   return (
     <UserContext.Provider value={user}>

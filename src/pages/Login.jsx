@@ -5,7 +5,10 @@ const font = "'IBM Plex Sans Thai Looped', sans-serif";
 const ACCOUNTS = [
   { username: 'admin', password: 'admin', role: 'admin', name: 'สมชาย ใจดี', title: 'ผู้ดูแลระบบ', hospital: null },
   { username: 'hospital', password: 'hospital', role: 'hospital', name: 'โรงพยาบาลขอนแก่น', title: 'รพ.ศูนย์ขอนแก่น', hospital: 'ขอนแก่น' },
+  { username: 'guard', password: 'guard', role: 'guard', name: 'สมศักดิ์ เข้มแข็ง', title: 'รปภ. หมู่บ้าน', guardUsername: 'vlg001-somsak' },
 ];
+
+const ROLE_LABEL = { admin: 'Admin', hospital: 'Hospital', guard: 'รปภ.' };
 
 /* Floating health icons */
 const FLOAT_ITEMS = [
@@ -29,7 +32,7 @@ const STATS = [
   { label: 'ส่งยาสำเร็จ', value: '156', icon: '💊', color: '#8B5CF6' },
 ];
 
-export default function Login({ onLogin, onGuardPortal }) {
+export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -252,7 +255,7 @@ export default function Login({ onLogin, onGuardPortal }) {
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <span style={{ fontSize: 12, color: isSelected ? '#8B5CF6' : '#8E8E93', fontWeight: isSelected ? 600 : 400 }}>{acc.role === 'admin' ? 'Admin' : 'Hospital'}</span>
+                  <span style={{ fontSize: 12, color: isSelected ? '#8B5CF6' : '#8E8E93', fontWeight: isSelected ? 600 : 400 }}>{ROLE_LABEL[acc.role]}</span>
                 </button>
               );
             })}
@@ -341,23 +344,6 @@ export default function Login({ onLogin, onGuardPortal }) {
               ) : 'เข้าสู่ระบบ'}
             </button>
           </form>
-
-          {/* ทางเข้า portal รปภ. — login แยกจากระบบ รพ. (spec Smart Village 5.6) */}
-          {onGuardPortal && (
-            <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(116,116,128,0.12)', textAlign: 'center' }}>
-              <button
-                type="button" className="hover-btn" onClick={onGuardPortal}
-                style={{
-                  border: '1px solid rgba(102,88,225,0.25)', background: 'rgba(102,88,225,0.06)',
-                  color: '#6658E1', borderRadius: 100, padding: '9px 20px',
-                  fontSize: 13, fontWeight: 600, fontFamily: font, cursor: 'pointer',
-                }}
-              >
-                เจ้าหน้าที่ รปภ. หมู่บ้าน — เข้าสู่จอเฝ้าระวัง Smart Village
-              </button>
-              <p style={{ fontSize: 10.5, color: '#B0AEC4', marginTop: 6 }}>ระบบแยกจาก dashboard รพ. · ใช้บัญชีที่ได้รับจากผู้ดูแล</p>
-            </div>
-          )}
 
           {/* Footer */}
           <div style={{ marginTop: 20, textAlign: 'center' }}>
