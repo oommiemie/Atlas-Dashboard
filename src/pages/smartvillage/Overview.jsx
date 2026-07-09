@@ -97,20 +97,20 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
       <div className="anim-slide-up">
         <PageHead
           thai="ภาพรวม" image={imgHero3d} right={<LivePill />} section="sv-overview" onGoSection={onGoSection}
-          topRight={<>
-            <button className="hover-btn" style={btnGhost} onClick={onOpenGuard}><IconDeviceDesktop size={14} style={{ verticalAlign: '-2px' }} /> จอ รปภ. (ตัวอย่าง)</button>
-            <button className="hover-btn" style={btnPrimary} onClick={() => onGoSection('sv-devices', { addDevice: true })}>+ เพิ่มอุปกรณ์</button>
-          </>}
         />
       </div>
 
-      {/* KPI compact — แถวเหนือแผนที่ (ไม่ลอยทับ panel) */}
-      <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {/* KPI compact + action ปุ่ม — row เดียวกัน */}
+      <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <KpiPill icon={<IconBuildingCommunity size={14} color="white" style={{ flexShrink: 0 }} />} value={SV_VILLAGES.length} label="หมู่บ้าน" color="linear-gradient(149deg,#8B5CF6,#7C3AED)" />
         <KpiPill icon={<IconHome size={14} color="white" style={{ flexShrink: 0 }} />} value={installedHouses} label="ติดตั้งแล้ว" color="linear-gradient(149deg,#19A589,#0D7C66)" />
         <KpiPill icon={<IconAntennaBars5 size={14} color="white" style={{ flexShrink: 0 }} />} value={`${online}/${totalDevices}`} label="อุปกรณ์ online" color="linear-gradient(149deg,#3B82F6,#1D4ED8)" />
         <KpiPill icon={<IconAlertTriangleFilled size={14} color="white" style={{ flexShrink: 0 }} />} value={today} label="เหตุวันนี้" color="linear-gradient(149deg,#E8432A,#D0381A)" />
         <KpiPill icon={<IconCalendar size={14} color="white" style={{ flexShrink: 0 }} />} value={month} label="เหตุเดือนนี้" color="linear-gradient(149deg,#E8802A,#D06A1A)" />
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="hover-btn" style={btnGhost} onClick={onOpenGuard}><IconDeviceDesktop size={14} style={{ verticalAlign: '-2px' }} /> จอ รปภ. (ตัวอย่าง)</button>
+          <button className="hover-btn" style={btnPrimary} onClick={() => onGoSection('sv-devices', { addDevice: true })}>+ เพิ่มอุปกรณ์</button>
+        </div>
       </div>
 
       {/* ── Console: หมู่บ้าน · แผนที่ (card) · เหตุการณ์ ── */}
