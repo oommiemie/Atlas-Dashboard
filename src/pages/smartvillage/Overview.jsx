@@ -1,118 +1,49 @@
-/* ═══ Smart Village — ภาพรวม (Central Overview) — spec 5.1 ═══ */
-import CountUp from '../../components/CountUp';
+/* ═══ Smart Village — ภาพรวม (Central Overview) — spec 5.1 ═══
+   Layout จอมอนิเตอร์: แผนที่เป็น dominant เต็มพื้นที่ · element อื่นลอย + compact
+   คงข้อมูลเดิม (KPI, หมู่บ้าน, attention, เหตุการณ์ล่าสุด) */
 import imgHero3d from '../../assets/images/homevisit-hero-3d.png';
+import imgVillage3d from '../../assets/images/sv-village-3d.png';
+import imgAlert3d from '../../assets/images/sv-alert-3d.png';
 import {
   SV_VILLAGES, SV_HOUSES, SV_DEVICES, SV_ALERTS,
   activeAlerts, getHouse, getVillage, getDevice, buildAttention,
-  villageStatus, villageStats, SV_STATUS_META, ALERT_STATUS_META, ALERT_RESULT_META,
+  villageStatus, villageStats, SV_STATUS_META, ALERT_RESULT_META,
 } from '../../data/smartVillage';
 import {
   font, BLACK, GRAY, GRAY2, RED, GREEN, ORANGE, PURPLE,
-  card, btnPrimary, btnGhost, PageHead, SectionTitle, Pill, LivePill, SVMap, ElapsedSince, EmptyState,
+  card, btnPrimary, btnGhost, PageHead, Pill, LivePill, SVMap, SectionTitle, ElapsedSince, EmptyState,
 } from './shared';
 import {
-  IconAlertTriangleFilled, IconAlertTriangle, IconCheck, IconBuildingCommunity, IconHome,
-  IconAntennaBars5, IconCalendar, IconMap2, IconClipboardList, IconHistory, IconDeviceDesktop,
-  IconWifiOff, IconLink, IconPhoneOff, IconShield,
+  IconAlertTriangleFilled, IconBuildingCommunity, IconHome,
+  IconAntennaBars5, IconCalendar, IconClipboardList, IconHistory, IconDeviceDesktop,
+  IconWifiOff, IconLink, IconPhoneOff, IconShield, IconCircleCheck, IconChevronRight,
 } from '@tabler/icons-react';
 
-const ATTENTION_ICONS = {
-  offline: IconWifiOff,
-  nofamily: IconLink,
-  nocontact: IconPhoneOff,
-  noguard: IconShield,
+const ATTENTION_ICONS = { offline: IconWifiOff, nofamily: IconLink, nocontact: IconPhoneOff, noguard: IconShield };
+
+/* panel glass ลอย — compact */
+const FLOAT = {
+  background: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(24px) saturate(180%)',
+  border: '1.5px solid rgba(255,255,255,0.9)', borderRadius: 18,
+  boxShadow: '0 8px 28px rgba(108,92,231,0.15)',
+  display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
 };
 
-/* ── แถบเหตุ active — การ์ดเดียวรวมทุกเหตุ แถวละรายการ (กระชับ + anatomy เดียวกับ StatCards) ── */
-function ActiveAlertStrip({ alerts, onDrillHouse, onOpenGuard }) {
-  const newCount = alerts.filter(a => a.status === 'ใหม่').length;
+/* KPI pill compact ลอยบนแผนที่ */
+function KpiPill({ icon, label, value, color }) {
   return (
-    <div style={{
-      background: 'linear-gradient(149deg, #E8432A 0%, #D0381A 100%)',
-      borderRadius: 24, padding: 16, color: 'white',
-      boxShadow: '0 4px 14px rgba(232,67,42,0.3)',
-      animation: newCount > 0 ? 'svSirenGlow 1.6s ease-in-out infinite' : 'none',
-    }}>
-      {/* header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          animation: newCount > 0 ? 'svShake 0.9s ease-in-out infinite' : 'none',
-        }}><IconAlertTriangleFilled size={20} style={{ flexShrink: 0 }} /></div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, fontFamily: font }}>เหตุ active · {alerts.length} รายการ</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: font }}>
-            {newCount > 0 ? `ยังไม่มีผู้รับทราบ ${newCount} เหตุ — siren ที่ป้อมยามยังดังอยู่` : 'รับทราบครบทุกเหตุ · กำลังช่วยเหลือ'}
-          </div>
-        </div>
-        <button className="hover-btn" onClick={onOpenGuard} style={{
-          ...btnGhost, background: 'rgba(255,255,255,0.18)', color: 'white',
-          border: '1px solid rgba(255,255,255,0.4)', padding: '6px 14px', fontSize: 12,
-        }}>จอ รปภ.</button>
-      </div>
-      {/* rows */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-        {alerts.map(a => {
-          const house = getHouse(a.houseId);
-          const village = getVillage(a.villageId);
-          const device = getDevice(a.deviceId);
-          const isNew = a.status === 'ใหม่';
-          return (
-            <div
-              key={a.id} className="hover-btn" onClick={() => onDrillHouse(a.villageId, a.houseId)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-                background: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: '8px 12px', flexWrap: 'wrap',
-              }}
-            >
-              <Pill color={isNew ? '#D0381A' : 'white'} bg={isNew ? 'white' : 'rgba(255,255,255,0.22)'} dot={false} style={{ fontSize: 10, flexShrink: 0 }}>
-                {isNew ? 'ยังไม่รับทราบ' : 'รับทราบแล้ว'}
-              </Pill>
-              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: font, flexShrink: 0 }}>
-                บ้าน {house.no}{house.nickname ? ` · ${house.nickname}` : ''}
-              </span>
-              <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.85)', fontFamily: font, flex: 1, minWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {village.name} · {device.attach.kind === 'person' ? `ติดตัว — ${device.attach.residentName}` : a.location} · {a.time} น.
-              </span>
-              <ElapsedSince minAgo={a.minAgo} style={{ fontSize: 11.5, fontWeight: 700, flexShrink: 0 }} />
-              <span style={{ fontSize: 11.5, fontWeight: 700, fontFamily: font, flexShrink: 0 }}>ดูรายละเอียด →</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ── การ์ด KPI — anatomy เดียวกับ StatCards หน้า Dashboard (icon box + growth badge + 26/700) ── */
-function KpiCard({ icon, label, value, sub, grad, shadow, trend, index = 0, delay = 0 }) {
-  return (
-    <div className="hover-stat" style={{
-      background: grad, borderRadius: 24, padding: 16, color: 'white',
-      overflow: 'hidden', position: 'relative', boxShadow: shadow, minWidth: 0,
-      display: 'flex', flexDirection: 'column', gap: 8,
-      animation: `cardPop 0.5s cubic-bezier(.22,1,.36,1) ${index * 80}ms both`,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: 40 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {icon}
-        </div>
-        {trend && (
-          <div style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 999, padding: '4px 10px', display: 'flex', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)', fontFamily: font }}>{trend}</span>
-          </div>
-        )}
-      </div>
-      <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.6)', fontFamily: font, letterSpacing: 0.22 }}>{label}</span>
-      <CountUp end={value} delay={delay} style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font, lineHeight: '26px' }} />
-      {sub && <div style={{ fontSize: 11, fontFamily: font, color: 'rgba(255,255,255,0.75)' }}>{sub}</div>}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 13px', borderRadius: 100, background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.9)', boxShadow: '0 2px 10px rgba(13,10,44,0.08)', flexShrink: 0 }}>
+      <span style={{ width: 26, height: 26, borderRadius: 9, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
+      <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+        <span style={{ fontSize: 15, fontWeight: 800, color: BLACK, fontFamily: font }}>{value}</span>
+        <span style={{ fontSize: 9.5, color: GRAY2, fontFamily: font }}>{label}</span>
+      </span>
     </div>
   );
 }
 
 export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, onOpenGuard }) {
-  /* Empty state ระดับหน้า — ยังไม่มีหมู่บ้านเลย → CTA เพิ่มหมู่บ้านแรก (spec 5.1) */
+  /* Empty state ระดับหน้า */
   if (SV_VILLAGES.length === 0) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -132,13 +63,15 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
   }
 
   const actives = activeAlerts();
+  const newCount = actives.filter(a => a.status === 'ใหม่').length;
   const attention = buildAttention();
   const totalDevices = SV_DEVICES.length;
   const online = SV_DEVICES.filter(d => d.online).length;
   const installedHouses = SV_HOUSES.filter(h => SV_DEVICES.some(d => d.houseId === h.id)).length;
   const today = SV_ALERTS.filter(a => a.date === 'วันนี้').length;
   const month = SV_ALERTS.filter(a => a.date === 'วันนี้' || a.date.includes('ก.ค.')).length;
-  const recent = SV_ALERTS.slice(0, 6);
+  /* ประวัติ = เหตุที่ปิดแล้ว (เหตุ active อยู่ใน panel ขวาแล้ว — ไม่ซ้ำ) */
+  const recent = SV_ALERTS.filter(a => a.status === 'ปิดแล้ว').slice(0, 8);
 
   const mapPoints = SV_VILLAGES.map(v => {
     const st = villageStatus(v.id);
@@ -156,8 +89,11 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
     };
   });
 
+  const rank = { alert: 0, offline: 1, ok: 2, suspended: 3 };
+  const sortedVillages = [...SV_VILLAGES].sort((a, b) => (rank[villageStatus(a.id)] ?? 9) - (rank[villageStatus(b.id)] ?? 9));
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="anim-slide-up">
         <PageHead
           thai="ภาพรวม" image={imgHero3d} right={<LivePill />} section="sv-overview" onGoSection={onGoSection}
@@ -168,101 +104,180 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
         />
       </div>
 
-      {/* แถบเหตุ active — การ์ดเดียวรวมทุกเหตุ */}
-      {actives.length > 0 && (
-        <div className="anim-slide-up">
-          <ActiveAlertStrip alerts={actives} onDrillHouse={onDrillHouse} onOpenGuard={onOpenGuard} />
-        </div>
-      )}
-
-      {/* KPI — gradient/shadow ชุดเดียวกับ StatCards หน้า Dashboard */}
-      <div className="anim-slide-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16 }}>
-        <KpiCard index={0} icon={<IconBuildingCommunity size={20} style={{ flexShrink: 0 }} />} label="หมู่บ้านทั้งหมด" value={SV_VILLAGES.length} trend="↑ +1" sub={`ใช้งาน ${SV_VILLAGES.filter(v => v.status === 'ใช้งาน').length} · ระงับ ${SV_VILLAGES.filter(v => v.status === 'ระงับ').length}`} grad="linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)" shadow="0 4px 14px rgba(139,92,246,0.3)" />
-        <KpiCard index={1} icon={<IconHome size={20} style={{ flexShrink: 0 }} />} label="บ้านที่ติดตั้งแล้ว" value={installedHouses} trend="↑ +6.3%" sub={`จากทะเบียนบ้าน ${SV_HOUSES.length} หลัง`} grad="linear-gradient(149deg, #19A589 0%, #0D7C66 100%)" shadow="0 4px 14px rgba(25,165,137,0.3)" delay={80} />
-        <KpiCard index={2} icon={<IconAntennaBars5 size={20} style={{ flexShrink: 0 }} />} label="อุปกรณ์ทั้งหมด" value={totalDevices} trend="↑ +8.5%" sub={`online ${online} · offline ${totalDevices - online}`} grad="linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)" shadow="0 4px 14px rgba(59,130,246,0.3)" delay={160} />
-        <KpiCard index={3} icon={<IconAlertTriangleFilled size={20} style={{ flexShrink: 0 }} />} label="เหตุล้มวันนี้" value={today} sub={`active อยู่ ${actives.length} เหตุ`} grad="linear-gradient(149deg, #E8432A 0%, #D0381A 100%)" shadow="0 4px 14px rgba(232,67,42,0.3)" delay={240} />
-        <KpiCard index={4} icon={<IconCalendar size={20} style={{ flexShrink: 0 }} />} label="เหตุล้มเดือนนี้" value={month} trend="↓ -2.4%" sub="กรกฎาคม 2569" grad="linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)" shadow="0 4px 14px rgba(232,128,42,0.3)" delay={320} />
+      {/* KPI compact — แถวเหนือแผนที่ (ไม่ลอยทับ panel) */}
+      <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <KpiPill icon={<IconBuildingCommunity size={14} color="white" style={{ flexShrink: 0 }} />} value={SV_VILLAGES.length} label="หมู่บ้าน" color="linear-gradient(149deg,#8B5CF6,#7C3AED)" />
+        <KpiPill icon={<IconHome size={14} color="white" style={{ flexShrink: 0 }} />} value={installedHouses} label="ติดตั้งแล้ว" color="linear-gradient(149deg,#19A589,#0D7C66)" />
+        <KpiPill icon={<IconAntennaBars5 size={14} color="white" style={{ flexShrink: 0 }} />} value={`${online}/${totalDevices}`} label="อุปกรณ์ online" color="linear-gradient(149deg,#3B82F6,#1D4ED8)" />
+        <KpiPill icon={<IconAlertTriangleFilled size={14} color="white" style={{ flexShrink: 0 }} />} value={today} label="เหตุวันนี้" color="linear-gradient(149deg,#E8432A,#D0381A)" />
+        <KpiPill icon={<IconCalendar size={14} color="white" style={{ flexShrink: 0 }} />} value={month} label="เหตุเดือนนี้" color="linear-gradient(149deg,#E8802A,#D06A1A)" />
       </div>
 
-      {/* แผนที่ + attention list */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.7fr 1fr', gap: 16, alignItems: 'stretch' }}>
-        <div className="anim-slide-up delay-2" style={{ ...card, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <SectionTitle
-            icon={<IconMap2 size={15} style={{ flexShrink: 0 }} />} title="แผนที่หมู่บ้าน" sub="สีหมุดตามสถานะ · คลิกหมุดเพื่อเปิดหมู่บ้าน"
-            right={
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {Object.entries(SV_STATUS_META).map(([k, m]) => (
-                  <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: GRAY, fontFamily: font }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: m.color }} />{m.label}
-                  </span>
-                ))}
-              </div>
-            }
-          />
-          <SVMap points={mapPoints} center={[100.9, 15.2]} zoom={5.0} height={330} radius={18} />
-        </div>
+      {/* ── Console: หมู่บ้าน · แผนที่ (card) · เหตุการณ์ ── */}
+      <div className="anim-slide-up delay-2" style={{ display: 'flex', gap: 14, height: 'calc(100vh - 300px)', minHeight: 560 }}>
 
-        <div className="anim-slide-up delay-3" style={{ ...card, display: 'flex', flexDirection: 'column' }}>
-          <SectionTitle icon={<IconClipboardList size={15} style={{ flexShrink: 0 }} />} title="ต้องตามงาน" sub={`${attention.length} รายการ`} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', maxHeight: 330, paddingRight: 2 }}>
-            {attention.map((it, i) => (
-              <div
-                key={i} className="hover-card"
-                onClick={() => it.houseId ? onDrillHouse(it.villageId, it.houseId) : onDrillVillage(it.villageId)}
-                style={{
-                  display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer',
-                  background: it.severity === 'warn' ? 'rgba(232,128,42,0.07)' : 'rgba(102,88,225,0.06)',
-                  border: `1px solid ${it.severity === 'warn' ? 'rgba(232,128,42,0.2)' : 'rgba(102,88,225,0.15)'}`,
-                  borderRadius: 14, padding: '10px 12px',
-                }}
-              >
-                <span style={{ fontSize: 15, marginTop: 1 }}>
-                  {(() => { const AttIcon = ATTENTION_ICONS[it.kind] || IconClipboardList; return <AttIcon size={15} style={{ flexShrink: 0 }} />; })()}
-                </span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: BLACK, fontFamily: font, lineHeight: 1.45 }}>{it.title}</div>
-                  <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font, marginTop: 2 }}>{it.sub}</div>
-                </div>
-              </div>
-            ))}
+        {/* ── ซ้าย: รายการหมู่บ้าน (Figma 390:6174) ── */}
+        <aside style={{ width: 270, flexShrink: 0, background: 'white', borderRadius: 24, overflow: 'hidden', border: '1.5px solid rgba(255,255,255,0.9)', boxShadow: '0 8px 28px rgba(108,92,231,0.12)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* header น้ำเงิน + ภาพบ้าน 3D */}
+          <div style={{ position: 'relative', background: 'linear-gradient(149deg, #2A7DF5 0%, #0546C9 100%)', padding: '16px 16px 30px', flexShrink: 0, overflow: 'hidden' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'white', fontFamily: font, position: 'relative', zIndex: 1 }}>หมู่บ้านทั้งหมด</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontFamily: font, marginTop: 4, position: 'relative', zIndex: 1 }}>ออนไลน์ {online}/{totalDevices}</div>
+            <img src={imgVillage3d} alt="" style={{ position: 'absolute', right: -12, top: 4, width: 130, height: 100, objectFit: 'cover', objectPosition: '54% 42%', pointerEvents: 'none' }} />
           </div>
-        </div>
-      </div>
-
-      {/* เหตุการณ์ล่าสุด */}
-      <div className="anim-slide-up delay-4" style={{ ...card }}>
-        <SectionTitle
-          icon={<IconHistory size={15} style={{ flexShrink: 0 }} />} title="เหตุการณ์ล่าสุด" sub="10 รายการล่าสุดจากทุกหมู่บ้าน"
-          right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => onGoSection('sv-alerts')}>ดูทั้งหมด →</button>}
-        />
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 760 }}>
-            {recent.map((a) => {
-              const h = getHouse(a.houseId);
-              const stMeta = ALERT_STATUS_META[a.status];
+          {/* list — stack ทับ header + top rounded */}
+          <div style={{ overflowY: 'auto', minHeight: 0, background: 'white', marginTop: -20, borderTopLeftRadius: 24, borderTopRightRadius: 24, position: 'relative', zIndex: 1 }}>
+            {sortedVillages.map(v => {
+              const st = villageStatus(v.id);
+              const s = villageStats(v.id);
+              const isAlert = st === 'alert';
               return (
-                <div key={a.id} className="hover-row" onClick={() => onDrillHouse(a.villageId, a.houseId)} style={{
-                  display: 'grid', gridTemplateColumns: '110px 1.4fr 1.2fr 120px 130px', gap: 12, alignItems: 'center',
-                  padding: '12px 14px', borderTop: '1px solid rgba(0,0,0,0.04)', borderRadius: 14, cursor: 'pointer',
+                <button key={v.id} onClick={() => onDrillVillage(v.id)} className="hover-btn" style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, width: '100%', textAlign: 'left', cursor: 'pointer',
+                  padding: '10px 16px', border: 'none', borderBottom: '0.5px solid #CCC',
+                  background: isAlert ? 'rgba(255,56,60,0.06)' : 'white',
                 }}>
-                  <div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>{a.time} น.</div>
-                    <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font }}>{a.date}</div>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: isAlert ? '#D0342C' : '#000', fontFamily: font, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.name}</span>
+                    <span style={{ display: 'block', fontSize: 12, color: 'rgba(0,0,0,0.6)', fontFamily: font, marginTop: 6 }}>ให้บริการอยู่ {s.houses} ครัวเรือน</span>
+                  </span>
+                  <IconChevronRight size={20} color="rgba(0,0,0,0.45)" style={{ flexShrink: 0 }} />
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* ── กลาง: แผนที่ (card) ── */}
+        <main style={{ ...FLOAT, flex: 1, minWidth: 0 }}>
+          <div style={{ padding: '11px 16px 9px', borderBottom: '1px solid rgba(13,10,44,0.06)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <IconBuildingCommunity size={15} color={PURPLE} style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: 14, fontWeight: 800, color: BLACK, fontFamily: font }}>แผนที่หมู่บ้าน</div>
+            <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font }}>คลิกหมุดเพื่อเปิด</div>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              {Object.entries(SV_STATUS_META).map(([k, m]) => (
+                <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, color: GRAY, fontFamily: font }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: m.color }} />{m.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+            <div style={{ position: 'absolute', inset: 0 }}>
+              <SVMap points={mapPoints} center={[100.9, 15.2]} zoom={5.0} height="100%" radius={0} />
+            </div>
+          </div>
+        </main>
+
+        {/* ── ขวา: เหตุการณ์ active (blue header + stack) ── */}
+        <aside style={{ flexShrink: 0, width: 320, background: 'white', borderRadius: 24, overflow: 'hidden', border: '1.5px solid rgba(255,255,255,0.9)', boxShadow: '0 8px 28px rgba(108,92,231,0.12)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* header แดง — context เหตุการณ์/แจ้งเตือน */}
+          <div style={{ position: 'relative', background: 'linear-gradient(149deg, #E8432A 0%, #D0381A 100%)', padding: '16px 16px 30px', flexShrink: 0, overflow: 'hidden' }}>
+            <img src={imgAlert3d} alt="" style={{ position: 'absolute', right: -18, top: 6, width: 150, height: 96, objectFit: 'contain', objectPosition: 'center', pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'white', fontFamily: font }}>เหตุการณ์</div>
+              <button className="hover-btn" onClick={onOpenGuard} style={{ marginLeft: 'auto', height: 28, padding: '0 12px', borderRadius: 100, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(10px) saturate(180%)', WebkitBackdropFilter: 'blur(10px) saturate(180%)', color: 'white', fontSize: 11, fontWeight: 700, fontFamily: font }}><IconDeviceDesktop size={12} style={{ verticalAlign: '-2px' }} /> จอ รปภ.</button>
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontFamily: font, marginTop: 4, position: 'relative', zIndex: 1 }}>
+              {actives.length > 0 ? `active ${actives.length}${newCount > 0 ? ` · ยังไม่รับทราบ ${newCount}` : ''}` : 'ไม่มีเหตุ active'}
+            </div>
+          </div>
+          {/* list — stack ทับ header + top rounded */}
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, background: 'white', marginTop: -20, borderTopLeftRadius: 24, borderTopRightRadius: 24, position: 'relative', zIndex: 1, padding: '16px 11px 11px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {actives.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '22px 16px' }}>
+                <IconCircleCheck size={26} color={GREEN} style={{ flexShrink: 0 }} />
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: BLACK, fontFamily: font, marginTop: 7 }}>ไม่มีเหตุ active</div>
+                <div style={{ fontSize: 11, color: GRAY2, fontFamily: font, marginTop: 3 }}>ทุกหมู่บ้านทำงานปกติ</div>
+              </div>
+            ) : actives.map(a => {
+              const house = getHouse(a.houseId);
+              const village = getVillage(a.villageId);
+              const device = getDevice(a.deviceId);
+              const isNew = a.status === 'ใหม่';
+              const accent = isNew ? RED : ORANGE;
+              return (
+                <div key={a.id} className="hover-btn" onClick={() => onDrillHouse(a.villageId, a.houseId)} style={{
+                  cursor: 'pointer', flexShrink: 0, background: 'rgba(255,255,255,0.92)', borderRadius: 13, padding: '10px 12px',
+                  borderLeft: `4px solid ${accent}`, boxShadow: '0 4px 16px rgba(108,92,231,0.1)',
+                  animation: isNew ? 'svSirenGlow 1.6s ease-in-out infinite' : 'none',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <IconAlertTriangleFilled size={11} color={accent} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: accent, fontFamily: font }}>{isNew ? 'ยังไม่รับทราบ' : 'รับทราบแล้ว'}</span>
+                    <ElapsedSince minAgo={a.minAgo} style={{ marginLeft: 'auto', fontSize: 10.5, fontWeight: 800, color: accent }} />
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>บ้าน {h.no}{h.nickname ? ` · ${h.nickname}` : ''}</div>
-                    <div style={{ fontSize: 11, color: GRAY, fontFamily: font }}>{getVillage(a.villageId).name}</div>
-                  </div>
-                  <div style={{ fontSize: 11.5, color: GRAY, fontFamily: font }}>{a.detectType} · {a.location}</div>
-                  <Pill color={stMeta.color} bg={stMeta.bg}>{a.status}</Pill>
-                  <div>
-                    {a.result
-                      ? <Pill color={ALERT_RESULT_META[a.result].color} bg={ALERT_RESULT_META[a.result].bg} dot={false}>{a.result}</Pill>
-                      : <span style={{ fontSize: 11, color: GRAY2, fontFamily: font }}>—</span>}
+                  <div style={{ fontSize: 14, fontWeight: 800, color: BLACK, fontFamily: font, marginTop: 3 }}>บ้าน {house.no}{house.nickname ? ` · ${house.nickname}` : ''}</div>
+                  <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {village.name} · {device.attach.kind === 'person' ? `ติดตัว ${device.attach.residentName}` : a.location} · {a.time} น.
                   </div>
                 </div>
               );
             })}
+          </div>
+        </aside>
+
+      </div>
+
+      {/* ── ใต้แผนที่: รายละเอียด — ต้องตามงาน + เหตุการณ์ล่าสุด ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 14, alignItems: 'stretch' }}>
+        {/* ต้องตามงาน */}
+        <div className="anim-slide-up delay-3" style={{ ...card, display: 'flex', flexDirection: 'column' }}>
+          <SectionTitle icon={<IconClipboardList size={15} style={{ flexShrink: 0 }} />} title="ต้องตามงาน" sub={`${attention.length} รายการ`} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0, paddingRight: 2 }}>
+            {attention.length === 0 && <div style={{ fontSize: 12, color: GRAY2, fontFamily: font, padding: '8px 2px' }}>ไม่มีรายการค้าง</div>}
+            {attention.map((it, i) => {
+              const AttIcon = ATTENTION_ICONS[it.kind] || IconClipboardList;
+              return (
+                <div key={i} className="hover-card" onClick={() => it.houseId ? onDrillHouse(it.villageId, it.houseId) : onDrillVillage(it.villageId)} style={{
+                  display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer',
+                  background: it.severity === 'warn' ? 'rgba(232,128,42,0.07)' : 'rgba(102,88,225,0.06)',
+                  border: `1px solid ${it.severity === 'warn' ? 'rgba(232,128,42,0.2)' : 'rgba(102,88,225,0.15)'}`,
+                  borderRadius: 14, padding: '10px 12px',
+                }}>
+                  <AttIcon size={15} color={it.severity === 'warn' ? '#C96A12' : PURPLE} style={{ flexShrink: 0, marginTop: 1 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: BLACK, fontFamily: font, lineHeight: 1.45 }}>{it.title}</div>
+                    <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font, marginTop: 2 }}>{it.sub}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* เหตุการณ์ล่าสุด */}
+        <div className="anim-slide-up delay-4" style={{ ...card }}>
+          <SectionTitle
+            icon={<IconHistory size={15} style={{ flexShrink: 0 }} />} title="ประวัติเหตุที่ปิดแล้ว" sub={`${recent.length} รายการล่าสุด`}
+            right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => onGoSection('sv-alerts')}>ดูทั้งหมด →</button>}
+          />
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: 560 }}>
+              {recent.map(a => {
+                const h = getHouse(a.houseId);
+                return (
+                  <div key={a.id} className="hover-row" onClick={() => onDrillHouse(a.villageId, a.houseId)} style={{
+                    display: 'grid', gridTemplateColumns: '110px 1.5fr 1.2fr 130px', gap: 12, alignItems: 'center',
+                    padding: '11px 12px', borderTop: '1px solid rgba(0,0,0,0.04)', borderRadius: 14, cursor: 'pointer',
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>{a.time} น.</div>
+                      <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font }}>{a.date}</div>
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>บ้าน {h.no}{h.nickname ? ` · ${h.nickname}` : ''}</div>
+                      <div style={{ fontSize: 11, color: GRAY, fontFamily: font }}>{getVillage(a.villageId).name}</div>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: GRAY, fontFamily: font }}>{a.detectType} · {a.location}</div>
+                    <div>
+                      {a.result
+                        ? <Pill color={ALERT_RESULT_META[a.result].color} bg={ALERT_RESULT_META[a.result].bg} dot={false}>{a.result}</Pill>
+                        : <span style={{ fontSize: 11, color: GRAY2, fontFamily: font }}>—</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
