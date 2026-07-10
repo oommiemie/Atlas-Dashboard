@@ -196,18 +196,18 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
               const isNew = a.status === 'ใหม่';
               const accent = isNew ? RED : ORANGE;
               return (
-                <div key={a.id} className="hover-btn" onClick={() => onDrillHouse(a.villageId, a.houseId)} style={{
-                  cursor: 'pointer', flexShrink: 0, background: 'rgba(255,255,255,0.92)', borderRadius: 13, padding: '10px 12px',
-                  borderLeft: `4px solid ${accent}`, boxShadow: '0 4px 16px rgba(108,92,231,0.1)',
-                  animation: isNew ? 'svSirenGlow 1.6s ease-in-out infinite' : 'none',
+                <div key={a.id} className="hover-card" onClick={() => onDrillHouse(a.villageId, a.houseId)} style={{
+                  cursor: 'pointer', flexShrink: 0, background: 'white', borderRadius: 12, padding: '11px 13px',
+                  border: '1px solid rgba(13,10,44,0.09)',
+                  boxShadow: '0 1px 2px rgba(13,10,44,0.05)',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <IconAlertTriangleFilled size={11} color={accent} style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, color: accent, fontFamily: font }}>{isNew ? 'ยังไม่รับทราบ' : 'รับทราบแล้ว'}</span>
-                    <ElapsedSince minAgo={a.minAgo} style={{ marginLeft: 'auto', fontSize: 10.5, fontWeight: 800, color: accent }} />
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, fontWeight: 600, color: accent, fontFamily: font }}>{isNew ? 'ยังไม่รับทราบ' : 'รับทราบแล้ว'}</span>
+                    <ElapsedSince minAgo={a.minAgo} style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: GRAY2 }} />
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: BLACK, fontFamily: font, marginTop: 3 }}>บ้าน {house.no}{house.nickname ? ` · ${house.nickname}` : ''}</div>
-                  <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: BLACK, fontFamily: font, marginTop: 4 }}>บ้าน {house.no}{house.nickname ? ` · ${house.nickname}` : ''}</div>
+                  <div style={{ fontSize: 11, color: GRAY, fontFamily: font, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {village.name} · {device.attach.kind === 'person' ? `ติดตัว ${device.attach.residentName}` : a.location} · {a.time} น.
                   </div>
                 </div>

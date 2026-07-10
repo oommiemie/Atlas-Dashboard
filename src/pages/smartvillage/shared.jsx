@@ -427,7 +427,7 @@ function applyRoute(map, route) {
   if (map.isStyleLoaded()) apply(); else map.once('load', apply);
 }
 
-export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = false, onPick, pin, radius = 24, guardPost, route, navPosition = 'top-left', labels = false }) {
+export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = false, onPick, pin, radius = 24, guardPost, route, navPosition = 'top-left', labels = false, focus, focusNonce = 0 }) {
   const el = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -509,6 +509,11 @@ export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = 
   }, [guardPost && `${guardPost.lat},${guardPost.lng}`]);
 
   useEffect(() => { if (mapRef.current) applyRoute(mapRef.current, route); }, [routeKey]);
+
+  /* บินไปตำแหน่งที่ค้นเจอ (geocode) — trigger ด้วย focusNonce */
+  useEffect(() => {
+    if (mapRef.current && focus && focus.lat) mapRef.current.flyTo({ center: [focus.lng, focus.lat], zoom: 15.5, duration: 900 });
+  }, [focusNonce]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   return <div ref={el} style={{ width: '100%', height, borderRadius: radius, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.7)', boxShadow: '0 2px 8px rgba(13,10,44,0.06)' }} />;
