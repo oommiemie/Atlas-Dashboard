@@ -5,7 +5,7 @@ import {
 } from '../../data/smartVillage';
 import {
   font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED, ORANGE, BLUE,
-  card, btnPrimary, btnGhost, btnDanger, Pill, SearchBox, Modal, Field, TextInput, SVMap, THead, TRow, CopyBtn, EmptyState, OnlinePill,
+  card, btnPrimary, btnGhost, btnDanger, Pill, SearchBox, Modal, Field, TextInput, SVMap, THead, TRow, CopyBtn, EmptyState, OnlinePill, VizBar,
 } from './shared';
 import {
   IconAlertTriangle, IconBuildingCommunity, IconPencil, IconHome, IconAntennaBars5,
@@ -167,17 +167,22 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             </div>
             <button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('ตั้งค่า')}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
           </div>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 10 }}>
             {[
-              ['บ้าน', stats.houses, <IconHome size={12} style={{ verticalAlign: '-2px' }} />],
-              ['ติดตั้งแล้ว', stats.installedHouses, <IconAntennaBars5 size={12} style={{ verticalAlign: '-2px' }} />],
-              ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, <IconCircleFilled size={9} color={GREEN} style={{ verticalAlign: '-1px' }} />],
-              ['บัญชี รปภ.', stats.guards, <IconShield size={12} style={{ verticalAlign: '-2px' }} />],
-              ['เหตุ 30 วัน', stats.alerts30d, <IconUrgent size={12} style={{ verticalAlign: '-2px' }} />],
-            ].map(([l, v, ic]) => (
-              <div key={l} style={{ background: 'rgba(102,88,225,0.06)', border: '1px solid rgba(102,88,225,0.12)', borderRadius: 16, padding: '10px 16px', minWidth: 104 }}>
-                <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font }}>{ic} {l}</div>
-                <div className="num" style={{ fontSize: 20, fontWeight: 800, color: BLACK, marginTop: 2 }}>{v}</div>
+              ['บ้าน', stats.houses, <IconHome size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', 'rgba(139,92,246,0.3)'],
+              ['ติดตั้งแล้ว', stats.installedHouses, <IconAntennaBars5 size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)', 'rgba(25,165,137,0.3)'],
+              ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, <IconCircleFilled size={13} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', 'rgba(59,130,246,0.3)'],
+              ['บัญชี รปภ.', stats.guards, <IconShield size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)', 'rgba(19,152,216,0.3)'],
+              ['เหตุ 30 วัน', stats.alerts30d, <IconUrgent size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', 'rgba(232,128,42,0.3)'],
+            ].map(([l, v, ic, grad, shadow]) => (
+              <div key={l} className="hover-stat" style={{
+                background: grad, border: '1px solid rgba(255,255,255,0.7)', borderRadius: 18, padding: '12px 14px',
+                color: 'white', boxShadow: `0 4px 14px ${shadow}`, minWidth: 0,
+                display: 'flex', flexDirection: 'column', gap: 6,
+              }}>
+                <div style={{ width: 30, height: 30, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ic}</div>
+                <span style={{ fontSize: 10.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: font, letterSpacing: 0.22, whiteSpace: 'nowrap' }}>{l}</span>
+                <span className="num" style={{ fontSize: 20, fontWeight: 700, color: 'white', lineHeight: '20px' }}>{v}</span>
               </div>
             ))}
           </div>
@@ -185,19 +190,15 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
         <SVMap points={mapPoints} center={[village.lng, village.lat]} zoom={14.6} height={200} radius={16} />
       </div>
 
-      {/* Tabs */}
-      <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 8 }}>
-        {['บ้าน', 'รปภ.', 'ตั้งค่า'].map(t => (
-          <button key={t} onClick={() => setTab(t)} className="hover-btn" style={{
-            border: 'none', cursor: 'pointer', borderRadius: 100, padding: '9px 22px',
-            fontSize: 13, fontWeight: 600, fontFamily: font,
-            background: tab === t ? 'linear-gradient(135deg,#4438AD,#6658E1 50%,#8B5CF6)' : 'rgba(255,255,255,0.6)',
-            color: tab === t ? 'white' : GRAY,
-            boxShadow: tab === t ? '0 4px 12px rgba(102,88,225,0.3)' : 'none',
-          }}>
-            {t === 'บ้าน' ? `บ้าน (${houses.length})` : t === 'รปภ.' ? `รปภ. (${guards.length})` : t}
-          </button>
-        ))}
+      {/* Tabs — seg pill เดียวกับ filter ทั้งระบบ */}
+      <div className="anim-slide-up delay-1" style={{ display: 'flex' }}>
+        <div className="seg">
+          {['บ้าน', 'รปภ.', 'ตั้งค่า'].map(t => (
+            <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
+              {t === 'บ้าน' ? `บ้าน (${houses.length})` : t === 'รปภ.' ? `รปภ. (${guards.length})` : t}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── แท็บบ้าน ── */}
@@ -208,7 +209,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             <button className="hover-btn" style={{ ...btnPrimary, marginLeft: 'auto' }} onClick={() => setModal('house')}>+ เพิ่มบ้าน</button>
           </div>
           <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: 820 }}>
+            <div style={{ minWidth: 820, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden' }}>
               <THead cols={HCOLS} labels={['บ้านเลขที่', 'ชื่อเรียก', 'คนในบ้าน', 'อุปกรณ์', 'ชนิดติดตั้ง', 'สถานะเชื่อม Family', 'เหตุล่าสุด']} />
               {houseRows.map(h => {
                 const devs = devicesOfHouse(h.id);
@@ -230,22 +231,17 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
                         <span style={{ color: GRAY2 }}>/{devs.length} online</span>
                       </>}
                     </div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      {(() => {
-                        const ceiling = devs.filter(d => d.attach.kind === 'house').length;
-                        const wearable = devs.filter(d => d.attach.kind === 'person').length;
-                        if (!devs.length) return <span style={{ fontSize: 11.5, color: GRAY2, fontFamily: font }}>—</span>;
-                        return <>
-                          {ceiling > 0 && <Pill color={PURPLE} bg="rgba(102,88,225,0.1)" dot={false}><IconDoor size={12} style={{ flexShrink: 0 }} /> เพดาน {ceiling}</Pill>}
-                          {wearable > 0 && <Pill color={BLUE} bg="rgba(19,152,216,0.1)" dot={false}><IconDeviceWatch size={12} style={{ flexShrink: 0 }} /> ติดตัว {wearable}</Pill>}
-                        </>;
-                      })()}
-                    </div>
-                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                      {linked > 0 && <Pill color={GREEN} bg="rgba(52,199,89,0.12)">เชื่อมแล้ว {linked} กลุ่ม</Pill>}
-                      {pending > 0 && <Pill color={ORANGE} bg="rgba(232,128,42,0.12)">รออนุมัติ {pending}</Pill>}
-                      {linked === 0 && pending === 0 && <Pill color={ORANGE} bg="rgba(232,128,42,0.12)" dot={false}><IconAlertTriangle size={12} style={{ flexShrink: 0 }} /> ยังไม่เชื่อม</Pill>}
-                    </div>
+                    {devs.length === 0
+                      ? <span style={{ fontSize: 11.5, color: GRAY2, fontFamily: font }}>—</span>
+                      : <VizBar title="ชนิดติดตั้ง" segments={[
+                        { label: 'ติดเพดาน', value: devs.filter(d => d.attach.kind === 'house').length, color: PURPLE },
+                        { label: 'พกติดตัว', value: devs.filter(d => d.attach.kind === 'person').length, color: BLUE },
+                      ]} />}
+                    <VizBar title="สถานะเชื่อม Family" segments={[
+                      { label: 'เชื่อมแล้ว', value: linked, color: GREEN },
+                      { label: 'รออนุมัติ', value: pending, color: ORANGE },
+                      { label: 'ยังไม่เชื่อม', value: Math.max(0, h.familyLinks.length - linked - pending), color: '#C7C7CC' },
+                    ]} />
                     <div style={{ fontSize: 11.5 }}>
                       {activeAlert
                         ? <span style={{ color: RED, fontWeight: 700 }}><IconUrgent size={12} style={{ verticalAlign: '-2px' }} /> {activeAlert.detectType} {activeAlert.time} น.</span>
@@ -277,7 +273,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             />
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <div style={{ minWidth: 860 }}>
+              <div style={{ minWidth: 860, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden' }}>
                 <THead cols={GCOLS} labels={['ชื่อ-นามสกุล', 'username', 'เบอร์โทร', 'สถานะ', 'เข้าใช้ล่าสุด', 'การกระทำ']} />
                 {guards.map(g => (
                   <TRow key={g.id} cols={GCOLS}>

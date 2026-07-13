@@ -1,6 +1,7 @@
 /* ═══ Smart Village — shared UI primitives (ตามธีม Atlas Dashboard) ═══ */
 import { useEffect, useRef, useState } from 'react';
-import { IconInbox, IconX, IconCopy, IconCheck } from '@tabler/icons-react';
+import { IconInbox, IconX, IconCopy, IconCheck, IconChevronDown } from '@tabler/icons-react';
+import { Select as HSelect, ListBox, ListBoxItem } from '@heroui/react';
 import { createPortal } from 'react-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -35,16 +36,17 @@ export const btnPrimary = {
   cursor: 'pointer', boxShadow: '0 4px 12px rgba(102,88,225,0.3)',
 };
 
+/* button = capsule ขาวทึบ + border ชัด + เงา (บอกว่ากดได้) — ต่างจาก Pill ที่เป็น badge tinted เหลี่ยมมน */
 export const btnGhost = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
-  background: 'rgba(255,255,255,0.7)', color: PURPLE,
-  border: '1px solid rgba(102,88,225,0.25)', borderRadius: 100,
+  background: 'white', color: PURPLE,
+  border: '1.5px solid rgba(102,88,225,0.35)', borderRadius: 100,
   padding: '8px 16px', fontSize: 13, fontWeight: 600, fontFamily: font,
-  cursor: 'pointer',
+  cursor: 'pointer', boxShadow: '0 1px 3px rgba(13,10,44,0.08)',
 };
 
 export const btnDanger = {
-  ...btnGhost, color: RED, border: '1px solid rgba(255,56,60,0.3)',
+  ...btnGhost, color: RED, border: '1.5px solid rgba(255,56,60,0.35)',
 };
 
 /* ── หัวข้อ page — hero banner ตาม design language หน้าหลัก (blur circles + grid + gradient title)
@@ -57,9 +59,7 @@ export const SV_TABS = [
   ['sv-alerts', 'เหตุการณ์'],
 ];
 
-export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เฝ้าระวัง', image = imgHero3d, section, onGoSection, topRight }) {
-  const now = new Date();
-  const date = now.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เฝ้าระวัง', image = imgHero3d, section, onGoSection, topRight, bottomRight }) {
   return (
     <div style={{
       borderRadius: 24, position: 'relative', overflow: 'visible',
@@ -86,6 +86,12 @@ export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เ
       {topRight && (
         <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {topRight}
+        </div>
+      )}
+      {/* action มุมขวาล่าง */}
+      {bottomRight && (
+        <div style={{ position: 'absolute', bottom: 14, right: 14, zIndex: 2, display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {bottomRight}
         </div>
       )}
       {/* Content */}
@@ -123,16 +129,43 @@ export function PageHead({ title = 'Smart Village', thai, right, greeting = 'เ
               })}
             </div>
           )}
-          <div style={{
-            backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
-            border: '1px solid white', borderRadius: 100, padding: '8px 14px', height: 36,
-            display: 'flex', alignItems: 'center', boxSizing: 'border-box',
-          }}>
-            <span style={{ fontSize: 12, color: 'rgba(60,60,67,0.6)', fontFamily: font }}>{date}</span>
-          </div>
           {right}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ── Full-page form (แทน modal) — header + section cards แบบหน้าวางแผนเยี่ยมบ้าน ── */
+export function FormPageHeader({ icon, title, sub, onCancel, onSave, saveLabel = 'บันทึก', saveDisabled = false, error }) {
+  return (
+    <div style={{ flexShrink: 0, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg, #6658E1, #0088FF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>{icon}</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: BLACK, fontFamily: font }}>{title}</div>
+          {sub && <div style={{ fontSize: 13, color: GRAY, fontFamily: font }}>{sub}</div>}
+        </div>
+      </div>
+      {error && <div style={{ fontSize: 13, color: '#E8432A', fontFamily: font, textAlign: 'right', maxWidth: 240 }}>{error}</div>}
+      <button className="hover-btn" onClick={onCancel} style={{ height: 44, padding: '0 24px', borderRadius: 100, cursor: 'pointer', fontFamily: font, fontSize: 14, border: '1px solid rgba(116,116,128,0.2)', background: 'white', color: GRAY, flexShrink: 0 }}>ยกเลิก</button>
+      <button className="hover-btn" onClick={() => !saveDisabled && onSave()} style={{ height: 44, padding: '0 32px', borderRadius: 100, cursor: saveDisabled ? 'not-allowed' : 'pointer', opacity: saveDisabled ? 0.5 : 1, fontFamily: font, fontSize: 14, fontWeight: 600, border: 'none', color: 'white', background: 'linear-gradient(135deg, #6658E1, #0088FF)', boxShadow: '0 4px 14px rgba(102,88,225,0.35)', flexShrink: 0, whiteSpace: 'nowrap' }}>{saveLabel}</button>
+    </div>
+  );
+}
+
+export function FormSection({ icon, title, desc, action, children }) {
+  return (
+    <div style={{ background: 'white', borderRadius: 20, padding: 22, boxShadow: '0 2px 12px rgba(30,27,57,0.05)', border: '1px solid rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, color: 'white', background: 'linear-gradient(135deg, #6658E1, #0088FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: BLACK, fontFamily: font }}>{title}</div>
+          {desc && <div style={{ fontSize: 12, color: GRAY, fontFamily: font }}>{desc}</div>}
+        </div>
+        {action}
+      </div>
+      {children}
     </div>
   );
 }
@@ -160,11 +193,12 @@ export function SectionTitle({ icon, title, sub, right }) {
 }
 
 /* ── ป้ายสถานะ (pill) ── */
+/* Pill = badge สถานะ (อ่านอย่างเดียว) — tinted เหลี่ยมมน ไม่มี border/เงา · ต่างจาก button ที่เป็น capsule ขาว+เงา */
 export function Pill({ color, bg, children, dot = true, style }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
-      background: bg, color, borderRadius: 100, padding: '3px 10px',
+      background: bg, color, borderRadius: 8, padding: '3px 9px',
       fontSize: 11.5, fontWeight: 600, fontFamily: font, whiteSpace: 'nowrap', ...style,
     }}>
       {dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />}
@@ -271,24 +305,114 @@ export function TextInput(props) {
   return <input {...props} style={{ ...inputStyle, ...props.style }} />;
 }
 
-export function Select({ options, value, onChange, placeholder }) {
+/* ── Dropdown — HeroUI v3 Select (react-aria) แทน native <select> ทั้ง flow ── */
+function HeroDropdown({ options, value, onChange, placeholder, disabled, triggerStyle }) {
+  const opts = options.map(o => (typeof o === 'string' ? { value: o, label: o } : o));
   return (
-    <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}>
-      {placeholder && <option value="">{placeholder}</option>}
-      {options.map(o => <option key={o} value={o}>{o}</option>)}
-    </select>
+    <HSelect
+      selectedKey={value || null}
+      onSelectionChange={k => onChange(k == null ? '' : String(k))}
+      isDisabled={disabled}
+      placeholder={placeholder || 'เลือก'}
+      aria-label={placeholder || 'เลือก'}
+    >
+      <HSelect.Trigger style={{
+        fontFamily: font, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+        color: BLACK, ...triggerStyle,
+      }}>
+        <HSelect.Value style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, flex: 1, textAlign: 'left' }} />
+        <IconChevronDown size={14} color={GRAY} style={{ flexShrink: 0 }} aria-hidden />
+      </HSelect.Trigger>
+      <HSelect.Popover className="hui-pop" style={{ fontFamily: font, zIndex: 9000 }}>
+        <ListBox style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {opts.map(o => (
+            <ListBoxItem key={o.value} id={o.value} textValue={o.label} className="hui-item">{o.label}</ListBoxItem>
+          ))}
+        </ListBox>
+      </HSelect.Popover>
+    </HSelect>
+  );
+}
+
+/* dropdown ในฟอร์ม — ทรง input */
+export function Select({ options, value, onChange, placeholder, disabled }) {
+  return (
+    <HeroDropdown
+      options={options} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
+      triggerStyle={{ width: '100%', minHeight: 44, borderRadius: 12, fontSize: 14, padding: '0 14px', justifyContent: 'space-between', background: 'rgba(116,116,128,0.03)', border: '1px solid rgba(116,116,128,0.2)' }}
+    />
+  );
+}
+
+/* dropdown ใน toolbar — ทรง pill compact */
+export function FilterSelect({ options, value, onChange, placeholder }) {
+  return (
+    <HeroDropdown
+      options={options} value={value} onChange={onChange} placeholder={placeholder}
+      triggerStyle={{ height: 36, borderRadius: 100, fontSize: 12.5, padding: '0 14px', background: 'rgba(255,255,255,0.72)', border: '1px solid rgba(255,255,255,0.85)', boxShadow: '0 1px 4px rgba(13,10,44,0.06)' }}
+    />
   );
 }
 
 /* ── ตาราง (div-based ให้คุมสไตล์ง่าย) ── */
+/* table แบบเดียวกับหน้าส่งยาที่บ้าน (Medication) — header ม่วงอ่อน, row padding 16, hover #F5F3FF */
 export function THead({ cols, labels }) {
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: cols, gap: 12, padding: '10px 14px',
-      fontSize: 10.5, fontWeight: 700, color: GRAY2, fontFamily: font,
-      textTransform: 'uppercase', letterSpacing: 0.6,
+      display: 'grid', gridTemplateColumns: cols, gap: 10, padding: 16,
+      background: 'rgba(139,92,246,0.1)',
+      fontSize: 12, fontWeight: 700, color: BLACK, fontFamily: font,
     }}>
       {labels.map((l, i) => <div key={i}>{l}</div>)}
+    </div>
+  );
+}
+
+/* mini bar ในตาราง — ไม่มี label, โชว์ข้อมูลใน tooltip เมื่อ hover (แบบ Vital Signs)
+   tooltip portal ไป document.body (fixed) — ไม่โดน overflow/stacking ของตารางตัด */
+export function VizBar({ title, segments, maxWidth = 170 }) {
+  const cellRef = useRef(null);
+  const [tipPos, setTipPos] = useState(null); // { x, y }
+  const total = segments.reduce((a, s) => a + s.value, 0);
+  const mx = Math.max(1, ...segments.map(s => s.value));
+  const show = () => {
+    const r = cellRef.current?.getBoundingClientRect();
+    if (r) setTipPos({ x: r.left + r.width / 2, y: r.top });
+  };
+  return (
+    <div
+      ref={cellRef} onMouseEnter={show} onMouseLeave={() => setTipPos(null)}
+      style={{ position: 'relative', minWidth: 0, maxWidth, padding: '14px 0', margin: '-14px 0' }}
+    >
+      <div style={{ display: 'flex', height: 6, borderRadius: 100, overflow: 'hidden', background: 'rgba(0,0,0,0.06)', gap: total ? 2 : 0 }}>
+        {segments.filter(s => s.value > 0).map((s, i) => <div key={i} style={{ flex: s.value, background: s.color }} />)}
+      </div>
+      {tipPos && createPortal(
+        <div style={{
+          position: 'fixed', left: tipPos.x, top: tipPos.y - 8, transform: 'translate(-50%, -100%)',
+          zIndex: 9000, pointerEvents: 'none',
+          background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(12px)', borderRadius: 14, padding: '12px 14px', minWidth: 210,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.14)', border: '1px solid rgba(255,255,255,0.8)', fontFamily: font,
+        }}>
+          <div style={{ fontWeight: 700, fontSize: 12.5, color: BLACK, fontFamily: font, marginBottom: 9 }}>{title}</div>
+          {segments.map((s, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: GRAY, fontFamily: font, width: 74, flexShrink: 0 }}>{s.label}</span>
+              <div style={{ flex: 1, height: 6, borderRadius: 100, background: 'rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 100, background: s.color, width: `${(s.value / mx) * 100}%` }} />
+              </div>
+              <span className="num" style={{ fontSize: 12, fontWeight: 700, color: s.color, fontFamily: font, width: 26, textAlign: 'right', flexShrink: 0 }}>{s.value}</span>
+            </div>
+          ))}
+          <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: 6, paddingTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: GRAY, fontFamily: font }}>รวม</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: BLACK, fontFamily: font }}>{total}</span>
+          </div>
+          <div style={{ position: 'absolute', bottom: -6, left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: 12, height: 12, background: 'rgba(255,255,255,0.98)', borderRight: '1px solid rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.8)' }} />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -299,10 +423,9 @@ export function TRow({ cols, onClick, children, style }) {
       className={onClick ? 'hover-row' : undefined}
       onClick={onClick}
       style={{
-        display: 'grid', gridTemplateColumns: cols, gap: 12, alignItems: 'center',
-        padding: '13px 14px', borderRadius: 14,
-        borderTop: '1px solid rgba(0,0,0,0.04)',
-        fontSize: 12.5, color: GRAY, fontFamily: font,
+        display: 'grid', gridTemplateColumns: cols, gap: 10, alignItems: 'center',
+        padding: 16, borderTop: '1px solid rgba(0,0,0,0.04)',
+        fontSize: 12, color: BLACK, fontFamily: font,
         cursor: onClick ? 'pointer' : 'default', ...style,
       }}
     >
@@ -317,6 +440,7 @@ export function LivePill({ dark = false }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       background: dark ? 'rgba(52,199,89,0.18)' : 'rgba(52,199,89,0.12)',
+      backdropFilter: 'blur(10px) saturate(180%)', WebkitBackdropFilter: 'blur(10px) saturate(180%)',
       border: '1px solid rgba(52,199,89,0.3)',
       color: dark ? '#7CF5A4' : '#1E9E4B', borderRadius: 100, padding: '4px 12px',
       fontSize: 11, fontWeight: 600, fontFamily: font,

@@ -16,6 +16,53 @@ import {
 
 const AVATAR_COLORS = ['linear-gradient(135deg,#8B81F2,#6658E1)', 'linear-gradient(135deg,#4FC3F7,#1398D8)', 'linear-gradient(135deg,#F2A254,#E8802A)'];
 
+/* ── หัวการ์ดสไตล์ vital card (หน้า PatientProfile): gradient จัดเต็ม + icon box + pill ขาวโปร่ง + เลขใหญ่ + icon ใหญ่จางขวาล่าง ── */
+function VitalHead({ grad, shadow, icon, bigIcon, title, pillLabel, value, unit, action }) {
+  return (
+    <div style={{
+      background: grad, borderRadius: 18, padding: '14px 16px', color: 'white',
+      position: 'relative', overflow: 'hidden', boxShadow: `0 6px 18px ${shadow}`,
+      display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14,
+    }}>
+      <div style={{ position: 'absolute', right: -14, bottom: -18, opacity: 0.22, transform: 'rotate(-12deg)', pointerEvents: 'none' }}>{bigIcon}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 13, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
+        <span style={{ fontSize: 14, fontWeight: 700, fontFamily: font, flex: 1, minWidth: 0 }}>{title}</span>
+        {pillLabel && (
+          <span style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(6px)', borderRadius: 100, padding: '4px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, whiteSpace: 'nowrap' }}>{pillLabel}</span>
+        )}
+        {action}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, position: 'relative' }}>
+        <span className="num" style={{ fontSize: 28, fontWeight: 800, lineHeight: 1 }}>{value}</span>
+        {unit && <span style={{ fontSize: 12, fontFamily: font, opacity: 0.85 }}>{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+/* ── แถวข้อมูลมาตรฐานเดียวทั้งหน้า: leading 38px · title+sub · right actions ── */
+function InfoRow({ leading, title, titleExtra, sub, note, right, dragProps, style }) {
+  return (
+    <div {...(dragProps || {})} style={{
+      display: 'flex', gap: 10, alignItems: 'center',
+      background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.7)',
+      borderRadius: 16, padding: '10px 12px', minHeight: 58, ...style,
+    }}>
+      {leading}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: BLACK, fontFamily: font }}>{title}</span>
+          {titleExtra}
+        </div>
+        {sub && <div style={{ fontSize: 11, color: GRAY2, fontFamily: font, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>}
+        {note && <div style={{ fontSize: 11, color: ORANGE, fontFamily: font, marginTop: 1 }}><IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> {note}</div>}
+      </div>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>{right}</div>
+    </div>
+  );
+}
+
 function ConfirmModal({ title, body, confirmLabel, onClose }) {
   return (
     <Modal title={title} onClose={onClose} width={440}>
@@ -102,16 +149,16 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
   const linked = house.familyLinks.filter(f => f.status === 'เชื่อมแล้ว');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: 'calc(100vh - 112px)', minHeight: 560 }}>
       {/* เหตุ active ของบ้านนี้ */}
       {activeAlert && (
         <div className="anim-slide-up" style={{
           borderRadius: 20, padding: '14px 18px', color: 'white',
-          background: 'linear-gradient(120deg, #E0262B, #FF5A3C)',
-          animation: 'svSirenGlow 1.6s ease-in-out infinite',
+          background: 'linear-gradient(149deg, #E8432A 0%, #D0381A 100%)',
+          boxShadow: '0 4px 14px rgba(232,67,42,0.3)',
           display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 22, animation: 'svShake 0.9s infinite' }}><IconUrgent size={22} style={{ flexShrink: 0 }} /></span>
+          <span style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconUrgent size={20} style={{ flexShrink: 0 }} /></span>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontSize: 14.5, fontWeight: 700, fontFamily: font }}>{activeAlert.detectType} — {activeAlert.location} · <ElapsedSince minAgo={activeAlert.minAgo} /></div>
             <div style={{ fontSize: 11.5, fontFamily: font, opacity: 0.92, marginTop: 2 }}>
@@ -123,65 +170,89 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
         </div>
       )}
 
-      {/* (ก) ข้อมูลบ้าน */}
-      <div className="anim-slide-up" style={{ ...card, display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <div style={{
-              width: 54, height: 54, borderRadius: 18, fontSize: 24, flexShrink: 0,
-              background: 'linear-gradient(180deg,#8B81F2,#6658E1)', boxShadow: '0 6px 16px rgba(102,88,225,0.35)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}><IconHome size={26} color="white" style={{ flexShrink: 0 }} /></div>
-            <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: 19, fontWeight: 700, color: BLACK, fontFamily: font }}>
-                บ้าน {house.no}{house.nickname && <span style={{ fontWeight: 500, color: GRAY }}> · {house.nickname}</span>}
-              </h2>
-              <div style={{ fontSize: 12, color: GRAY, fontFamily: font, marginTop: 3 }}>{village.name} · {village.province}</div>
-              {house.note && <div style={{ fontSize: 11.5, color: GRAY2, fontFamily: font, marginTop: 2 }}><IconNote size={12} style={{ verticalAlign: '-2px' }} /> {house.note}</div>}
+      {/* ── Layout ยกเครื่อง: profile rail ซ้ายเต็มความสูง + scroll เฉพาะขวา ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '340px minmax(0, 1fr)', gap: 16, flex: 1, minHeight: 0 }}>
+
+        {/* ══ ซ้าย: โปรไฟล์บ้าน — เต็มความสูง ══ */}
+        <div className="anim-slide-up" style={{ ...card, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <SVMap points={[{ lat: house.lat, lng: house.lng, name: `บ้าน ${house.no}`, color: activeAlert ? RED : PURPLE, big: true, status: activeAlert ? 'alert' : 'ok' }]} center={[house.lng, house.lat]} zoom={16.5} height={180} radius={0} />
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 16, flexShrink: 0,
+                background: 'linear-gradient(180deg,#8B81F2,#6658E1)', boxShadow: '0 6px 16px rgba(102,88,225,0.35)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}><IconHome size={24} color="white" style={{ flexShrink: 0 }} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: BLACK, fontFamily: font, lineHeight: 1.3 }}>บ้าน {house.no}</h2>
+                {house.nickname && <div style={{ fontSize: 13, color: GRAY, fontFamily: font }}>{house.nickname}</div>}
+              </div>
+              <button className="hover-btn" style={{ ...btnGhost, padding: '5px 12px', fontSize: 11.5, flexShrink: 0 }}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
             </div>
-            <button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="num" style={{ fontSize: 12, color: GRAY, fontFamily: font }}><IconMapPin size={12} style={{ verticalAlign: '-2px' }} /> {house.lat}, {house.lng}</span>
-            <CopyBtn text={`${house.lat}, ${house.lng}`} label="copy พิกัด" />
-            <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-              {[['คนในบ้าน', house.residents.length], ['อุปกรณ์', devices.length], ['ผู้ติดต่อ', house.contacts.length], ['Family', linked.length]].map(([l, v]) => (
-                <div key={l} style={{ background: 'rgba(102,88,225,0.06)', borderRadius: 14, padding: '8px 14px', textAlign: 'center' }}>
-                  <div className="num" style={{ fontSize: 17, fontWeight: 800, color: BLACK }}>{v}</div>
-                  <div style={{ fontSize: 10, color: GRAY2, fontFamily: font }}>{l}</div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.5 }}>
+              <div><IconHome size={12} style={{ verticalAlign: '-2px' }} /> {village.name} · {village.province}</div>
+              {house.note && <div><IconNote size={12} style={{ verticalAlign: '-2px' }} /> {house.note}</div>}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="num"><IconMapPin size={12} style={{ verticalAlign: '-2px' }} /> {house.lat}, {house.lng}</span>
+                <CopyBtn text={`${house.lat}, ${house.lng}`} label="copy" />
+              </div>
+            </div>
+
+            {/* mini stat cards 2×2 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {[
+                ['คนในบ้าน', house.residents.length, <IconUsers size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', 'rgba(139,92,246,0.3)'],
+                ['อุปกรณ์', devices.length, <IconAntennaBars5 size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)', 'rgba(25,165,137,0.3)'],
+                ['ผู้ติดต่อ', house.contacts.length, <IconPhone size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', 'rgba(59,130,246,0.3)'],
+                ['Family', linked.length, <IconLink size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)', 'rgba(19,152,216,0.3)'],
+              ].map(([l, v, ic, grad, shadow]) => (
+                <div key={l} className="hover-stat" style={{
+                  background: grad, border: '1px solid rgba(255,255,255,0.7)', borderRadius: 16, padding: '10px 12px',
+                  color: 'white', boxShadow: `0 4px 14px ${shadow}`, minWidth: 0,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 9, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ic}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="num" style={{ fontSize: 17, fontWeight: 700, color: 'white', lineHeight: '18px' }}>{v}</div>
+                    <div style={{ fontSize: 9.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: font, whiteSpace: 'nowrap' }}>{l}</div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        <SVMap points={[{ lat: house.lat, lng: house.lng, name: `บ้าน ${house.no}`, color: activeAlert ? RED : PURPLE, big: true, status: activeAlert ? 'alert' : 'ok' }]} center={[house.lng, house.lat]} zoom={16.5} height={170} radius={16} />
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
+        {/* ══ ขวา: งานหลัก — scroll เฉพาะฝั่งนี้ ══ */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0, minHeight: 0, overflowY: 'auto', paddingRight: 4, paddingBottom: 4 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, alignItems: 'start' }}>
         {/* (ข) คนในบ้าน */}
         <div className="anim-slide-up delay-1" style={{ ...card }}>
-          <SectionTitle icon={<IconUsers size={15} />} title="คนในบ้าน (Resident)" sub="ข้อมูลช่วย รปภ./กู้ภัยตอนเข้าช่วยเหตุ — ไม่ใช่เวชระเบียน"
-            right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 12px', fontSize: 11.5 }} onClick={() => setModal('resident')}>+ เพิ่มคน</button>} />
+          <VitalHead
+            grad="linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)" shadow="rgba(139,92,246,0.35)"
+            icon={<IconUsers size={19} color="white" style={{ flexShrink: 0 }} />}
+            bigIcon={<IconUsers size={110} color="white" style={{ flexShrink: 0 }} />}
+            title="คนในบ้าน"
+            value={house.residents.length} unit="คน"
+            action={<button className="hover-btn" onClick={() => setModal('resident')} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, color: PURPLE, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่มคน</button>}
+          />
           {house.residents.length === 0 ? (
             <EmptyState icon={<IconUser size={15} />} title="ยังไม่มีทะเบียนคนในบ้าน" sub="จำเป็นสำหรับอุปกรณ์ติดตัวคน และช่วยผู้ช่วยเหลือรู้ว่าในบ้านมีใครบ้าง" />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {house.residents.map((r, i) => (
-                <div key={r.id} style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.7)', borderRadius: 16, padding: '10px 12px' }}>
-                  <div style={{
+                <InfoRow
+                  key={r.id}
+                  leading={<div style={{
                     width: 38, height: 38, borderRadius: '50%', flexShrink: 0, color: 'white', fontSize: 14, fontWeight: 700, fontFamily: font,
                     background: AVATAR_COLORS[i % AVATAR_COLORS.length], display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>{r.name[0]}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: BLACK, fontFamily: font }}>{r.name}</span>
-                      <span style={{ fontSize: 11, color: GRAY2, fontFamily: font }}>{r.age} ปี · {r.gender}</span>
-                      {r.wearable && <Pill color={BLUE} bg="rgba(19,152,216,0.1)" dot={false}><IconDeviceWatch size={12} style={{ flexShrink: 0 }} /> มีอุปกรณ์ติดตัว</Pill>}
-                    </div>
-                    {r.note && <div style={{ fontSize: 11, color: ORANGE, fontFamily: font, marginTop: 2 }}><IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> {r.note}</div>}
-                  </div>
-                  <button className="hover-btn" style={{ ...btnGhost, padding: '4px 10px', fontSize: 10.5 }}>แก้ไข</button>
-                </div>
+                  }}>{r.name[0]}</div>}
+                  title={r.name}
+                  titleExtra={r.wearable && <Pill color={BLUE} bg="rgba(19,152,216,0.1)" dot={false}><IconDeviceWatch size={12} style={{ flexShrink: 0 }} /> ติดตัว</Pill>}
+                  sub={`${r.age} ปี · ${r.gender}`}
+                  note={r.note}
+                  right={<button className="hover-btn" style={{ ...btnGhost, padding: '4px 12px', fontSize: 11 }}>แก้ไข</button>}
+                />
               ))}
             </div>
           )}
@@ -189,42 +260,35 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
 
         {/* (ค) อุปกรณ์ */}
         <div className="anim-slide-up delay-1" style={{ ...card }}>
-          <SectionTitle icon={<IconAntennaBars5 size={15} />} title="อุปกรณ์" sub="สถานะ realtime จากเครื่อง"
-            right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 12px', fontSize: 11.5 }} onClick={onAddDevice}>+ เพิ่มอุปกรณ์</button>} />
+          <VitalHead
+            grad="linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)" shadow="rgba(25,165,137,0.35)"
+            icon={<IconAntennaBars5 size={19} color="white" style={{ flexShrink: 0 }} />}
+            bigIcon={<IconRadar2 size={110} color="white" style={{ flexShrink: 0 }} />}
+            title="อุปกรณ์"
+            value={`${devices.filter(d => d.online).length}/${devices.length}`} unit="online"
+            action={<button className="hover-btn" onClick={onAddDevice} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, color: '#0D7C66', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่มอุปกรณ์</button>}
+          />
           {devices.length === 0 ? (
             <EmptyState icon={<IconAntennaBars5 size={15} />} warn title="ยังไม่ติดตั้งอุปกรณ์" sub="บ้านนี้ยังไม่มีการเฝ้าระวัง" />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {devices.map(d => (
-                <div key={d.id} style={{
-                  background: 'rgba(255,255,255,0.55)', borderRadius: 16, padding: '10px 12px',
-                  border: `1px solid ${!d.online ? 'rgba(232,128,42,0.35)' : 'rgba(255,255,255,0.7)'}`,
-                }}>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <div style={{
-                      width: 38, height: 38, borderRadius: 12, flexShrink: 0, fontSize: 17,
-                      background: d.type === 'radar' ? 'rgba(102,88,225,0.1)' : 'rgba(19,152,216,0.1)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>{d.type === 'radar' ? <IconRadar2 size={18} color={PURPLE} style={{ flexShrink: 0 }} /> : <IconSos size={18} color={BLUE} style={{ flexShrink: 0 }} />}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>{d.typeName}</div>
-                      <div className="num" style={{ fontSize: 10.5, color: GRAY2 }}>IMEI {d.imei}</div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                      {d.online ? <Pill color={GREEN} bg="rgba(52,199,89,0.12)">online</Pill> : <Pill color={ORANGE} bg="rgba(232,128,42,0.12)">offline · {d.lastSeen}</Pill>}
-                      {d.presence && <Pill color={d.presence === 'มีคน' ? BLUE : GRAY2} bg={d.presence === 'มีคน' ? 'rgba(19,152,216,0.1)' : 'rgba(146,145,165,0.12)'} dot={false}>{d.presence === 'มีคน' ? <><IconUser size={12} style={{ flexShrink: 0 }} /> มีคนในห้อง</> : 'ไม่มีคนในห้อง'}</Pill>}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 8, paddingTop: 8, borderTop: '1px dashed rgba(0,0,0,0.06)' }}>
-                    <span style={{ fontSize: 11, color: GRAY, fontFamily: font }}>
-                      {d.attach.kind === 'house'
-                        ? <><IconDoor size={12} style={{ verticalAlign: '-2px' }} /> ติดกับบ้าน — {d.attach.location}</>
-                        : <><IconDeviceWatch size={12} style={{ verticalAlign: '-2px' }} /> ติดกับคน — {d.attach.residentName}</>}
-                    </span>
-                    <span style={{ fontSize: 10.5, color: GRAY2, fontFamily: font, marginLeft: 'auto' }}>เห็นล่าสุด {d.lastSeen}</span>
-                    <button className="hover-btn" style={{ ...btnDanger, padding: '3px 10px', fontSize: 10.5 }} onClick={() => setModal('remove-device')}>ถอด/ย้าย</button>
-                  </div>
-                </div>
+                <InfoRow
+                  key={d.id}
+                  style={!d.online ? { border: '1px solid rgba(232,128,42,0.35)' } : undefined}
+                  leading={<div style={{
+                    width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                    background: d.type === 'radar' ? 'rgba(102,88,225,0.1)' : 'rgba(19,152,216,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{d.type === 'radar' ? <IconRadar2 size={18} color={PURPLE} style={{ flexShrink: 0 }} /> : <IconSos size={18} color={BLUE} style={{ flexShrink: 0 }} />}</div>}
+                  title={d.typeName}
+                  titleExtra={<>
+                    {d.online ? <Pill color={GREEN} bg="rgba(52,199,89,0.12)">online</Pill> : <Pill color={ORANGE} bg="rgba(232,128,42,0.12)">offline</Pill>}
+                    {d.presence === 'มีคน' && <Pill color={BLUE} bg="rgba(19,152,216,0.1)" dot={false}><IconUser size={12} style={{ flexShrink: 0 }} /> มีคนในห้อง</Pill>}
+                  </>}
+                  sub={`${d.attach.kind === 'house' ? `ติดกับบ้าน — ${d.attach.location}` : `ติดกับคน — ${d.attach.residentName}`} · เห็นล่าสุด ${d.lastSeen}`}
+                  right={<button className="hover-btn" style={{ ...btnDanger, padding: '4px 12px', fontSize: 11 }} onClick={() => setModal('remove-device')}>ถอด/ย้าย</button>}
+                />
               ))}
             </div>
           )}
@@ -232,44 +296,47 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
 
         {/* (ง) ผู้ติดต่อเมื่อเกิดเหตุ */}
         <div className="anim-slide-up delay-2" style={{ ...card }}>
-          <SectionTitle icon={<IconPhone size={15} />} title="ผู้ติดต่อเมื่อเกิดเหตุ" sub="ลากจัดลำดับได้ — ลำดับนี้คือลำดับที่ รปภ. เห็นตอนเกิดเหตุ"
-            right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 12px', fontSize: 11.5 }} onClick={() => setModal('contact')}>+ เพิ่มผู้ติดต่อ</button>} />
+          <VitalHead
+            grad="linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)" shadow="rgba(59,130,246,0.35)"
+            icon={<IconPhone size={19} color="white" style={{ flexShrink: 0 }} />}
+            bigIcon={<IconPhone size={110} color="white" style={{ flexShrink: 0 }} />}
+            title="ผู้ติดต่อเมื่อเกิดเหตุ"
+            value={contacts.length} unit="รายการ"
+            action={<button className="hover-btn" onClick={() => setModal('contact')} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, color: '#1D4ED8', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่ม</button>}
+          />
           {contacts.length === 0 ? (
             <EmptyState icon={<IconPhoneOff size={15} />} warn title="ยังไม่มีผู้ติดต่อ" sub="เมื่อเกิดเหตุ รปภ. จะไม่รู้ว่าต้องโทรหาใคร — ควรเพิ่มอย่างน้อย 1 รายการ"
               cta={<button className="hover-btn" style={btnPrimary} onClick={() => setModal('contact')}>+ เพิ่มผู้ติดต่อแรก</button>} />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {contacts.map((c, i) => (
-                <div
+                <InfoRow
                   key={c.id}
-                  draggable
-                  onDragStart={() => setDragIdx(i)}
-                  onDragOver={(e) => onDragOverContact(e, i)}
-                  onDragEnd={() => setDragIdx(null)}
+                  dragProps={{
+                    draggable: true,
+                    onDragStart: () => setDragIdx(i),
+                    onDragOver: (e) => onDragOverContact(e, i),
+                    onDragEnd: () => setDragIdx(null),
+                  }}
                   style={{
-                    display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(255,255,255,0.55)',
+                    cursor: 'grab',
                     border: `1px solid ${dragIdx === i ? 'rgba(102,88,225,0.5)' : 'rgba(255,255,255,0.7)'}`,
-                    borderRadius: 16, padding: '10px 12px',
                     opacity: dragIdx === i ? 0.65 : 1,
                     boxShadow: dragIdx === i ? '0 6px 18px rgba(102,88,225,0.25)' : 'none',
-                    cursor: 'grab',
                   }}
-                >
-                  <span title="ลากเพื่อจัดลำดับ" style={{ cursor: 'grab', color: GRAY2, fontSize: 13 }}><IconGripVertical size={14} style={{ flexShrink: 0 }} /></span>
-                  <span style={{
-                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0, fontSize: 11, fontWeight: 700, fontFamily: font,
-                    background: i === 0 ? 'linear-gradient(180deg,#8B81F2,#6658E1)' : 'rgba(102,88,225,0.12)',
-                    color: i === 0 ? 'white' : PURPLE,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>{i + 1}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>
-                      {c.name} <span style={{ fontWeight: 400, fontSize: 11, color: GRAY2 }}>· {c.relation}</span>
-                    </div>
-                    {c.note && <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font }}>{c.note}</div>}
-                  </div>
-                  <a href={`tel:${c.phone}`} className="hover-btn" style={{ ...btnGhost, padding: '5px 12px', fontSize: 11.5, textDecoration: 'none' }}><IconPhone size={12} style={{ verticalAlign: '-2px' }} /> {c.phone}</a>
-                </div>
+                  leading={<span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <IconGripVertical size={14} color={GRAY2} style={{ flexShrink: 0 }} />
+                    <span style={{
+                      width: 38, height: 38, borderRadius: '50%', flexShrink: 0, fontSize: 13, fontWeight: 700, fontFamily: font,
+                      background: i === 0 ? 'linear-gradient(180deg,#8B81F2,#6658E1)' : 'rgba(102,88,225,0.12)',
+                      color: i === 0 ? 'white' : PURPLE,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{i + 1}</span>
+                  </span>}
+                  title={c.name}
+                  sub={`${c.relation}${c.note ? ` · ${c.note}` : ''}`}
+                  right={<a href={`tel:${c.phone}`} className="hover-btn" style={{ ...btnGhost, padding: '5px 12px', fontSize: 11.5, textDecoration: 'none' }}><IconPhone size={12} style={{ verticalAlign: '-2px' }} /> {c.phone}</a>}
+                />
               ))}
             </div>
           )}
@@ -277,7 +344,13 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
 
         {/* (จ) การเชื่อมครอบครัว */}
         <div className="anim-slide-up delay-2" style={{ ...card }}>
-          <SectionTitle icon={<IconLink size={15} />} title="การเชื่อมครอบครัว (Family Link)" sub="บ้านเดียวเชื่อมได้หลายกลุ่ม — เกิดเหตุแจ้งทุกกลุ่ม" />
+          <VitalHead
+            grad="linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)" shadow="rgba(19,152,216,0.35)"
+            icon={<IconLink size={19} color="white" style={{ flexShrink: 0 }} />}
+            bigIcon={<IconUsersGroup size={110} color="white" style={{ flexShrink: 0 }} />}
+            title="การเชื่อมครอบครัว"
+            value={linked.length} unit="กลุ่ม"
+          />
           {/* ทิศที่ 1: รหัสบ้าน + QR */}
           <div style={{ display: 'flex', gap: 14, background: 'rgba(102,88,225,0.05)', border: '1px solid rgba(102,88,225,0.12)', borderRadius: 18, padding: 14 }}>
             <FakeQR code={house.houseCode} size={92} />
@@ -294,19 +367,22 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
           {/* ทิศที่ 2 + รายการ group */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
             {house.familyLinks.map(f => (
-              <div key={f.id} style={{ display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.7)', borderRadius: 16, padding: '10px 12px' }}>
-                <span style={{ fontSize: 16 }}>{f.status === 'เชื่อมแล้ว' ? <IconUsersGroup size={16} style={{ flexShrink: 0 }} /> : <IconHourglass size={16} style={{ flexShrink: 0 }} />}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>{f.groupName} <span style={{ fontWeight: 400, fontSize: 11, color: GRAY2 }}>· {f.members} สมาชิก</span></div>
-                  <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font }}>{f.source} · {f.date}{f.expires ? ` · ${f.expires}` : ''}</div>
-                </div>
-                {f.status === 'เชื่อมแล้ว'
+              <InfoRow
+                key={f.id}
+                leading={<div style={{
+                  width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                  background: f.status === 'เชื่อมแล้ว' ? 'rgba(52,199,89,0.12)' : 'rgba(232,128,42,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{f.status === 'เชื่อมแล้ว' ? <IconUsersGroup size={18} color={GREEN} style={{ flexShrink: 0 }} /> : <IconHourglass size={18} color={ORANGE} style={{ flexShrink: 0 }} />}</div>}
+                title={f.groupName}
+                titleExtra={f.status === 'เชื่อมแล้ว'
                   ? <Pill color={GREEN} bg="rgba(52,199,89,0.12)">เชื่อมแล้ว</Pill>
                   : <Pill color={ORANGE} bg="rgba(232,128,42,0.12)">รออนุมัติ</Pill>}
-                <button className="hover-btn" style={{ ...btnDanger, padding: '4px 10px', fontSize: 10.5 }} onClick={() => setModal('unlink')}>
+                sub={`${f.members} สมาชิก · ${f.source} · ${f.date}${f.expires ? ` · ${f.expires}` : ''}`}
+                right={<button className="hover-btn" style={{ ...btnDanger, padding: '4px 12px', fontSize: 11 }} onClick={() => setModal('unlink')}>
                   {f.status === 'เชื่อมแล้ว' ? 'ยกเลิกเชื่อม' : 'ยกเลิกคำขอ'}
-                </button>
-              </div>
+                </button>}
+              />
             ))}
             {house.familyLinks.length === 0 && (
               <EmptyState icon={<IconLink size={15} />} warn title="ยังไม่เชื่อมครอบครัว" sub="ให้ลูกบ้านสแกน QR ด้านบนในแอป MyAtlas หรือทีมงานกรอกรหัสครอบครัวเชื่อมให้" />
@@ -316,41 +392,52 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
             </button>
           </div>
         </div>
-      </div>
+        </div>
 
-      {/* (ฉ) ประวัติเหตุการณ์ของบ้าน */}
-      <div className="anim-slide-up delay-3" style={{ ...card }}>
+        {/* (ฉ) ประวัติเหตุการณ์ของบ้าน */}
+        <div className="anim-slide-up delay-3" style={{ ...card }}>
         <SectionTitle icon={<IconHistory size={15} />} title="ประวัติเหตุการณ์ของบ้าน" sub={`${alerts.length} เหตุการณ์`} />
         {alerts.length === 0 ? (
           <EmptyState icon={<IconCircleCheck size={15} />} title="ยังไม่เคยมีเหตุ" sub="บ้านนี้ไม่เคยมีการแจ้งเหตุ" />
         ) : (
-          <div style={{ position: 'relative', paddingLeft: 22 }}>
-            <div style={{ position: 'absolute', left: 7, top: 8, bottom: 8, width: 2, background: 'linear-gradient(180deg, rgba(102,88,225,0.3), rgba(102,88,225,0.06))', borderRadius: 2 }} />
-            {alerts.map(a => {
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {alerts.map((a, ai) => {
               const active = a.status !== 'ปิดแล้ว';
+              const [dd, mm] = a.date === 'วันนี้' ? ['วันนี้', ''] : a.date.split(' ');
               return (
-                <div key={a.id} style={{ position: 'relative', paddingBottom: 14 }}>
-                  <span style={{
-                    position: 'absolute', left: -22, top: 5, width: 16, height: 16, borderRadius: '50%',
-                    background: active ? RED : 'white', border: `3px solid ${active ? RED : PURPLE}`,
-                    boxShadow: active ? '0 0 0 4px rgba(255,56,60,0.15)' : 'none',
-                    animation: active ? 'svBlink 1.2s infinite' : 'none',
-                  }} />
-                  <div style={{ background: active ? 'rgba(255,56,60,0.05)' : 'rgba(255,255,255,0.55)', border: `1px solid ${active ? 'rgba(255,56,60,0.2)' : 'rgba(255,255,255,0.7)'}`, borderRadius: 16, padding: '12px 14px' }}>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span className="num" style={{ fontSize: 11, color: GRAY2 }}>{a.no}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: BLACK, fontFamily: font }}>{a.detectType} · {a.location}</span>
-                      <span style={{ fontSize: 11.5, color: GRAY, fontFamily: font }}>{a.date} {a.time} น.</span>
-                      <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
-                        <Pill color={ALERT_STATUS_META[a.status].color} bg={ALERT_STATUS_META[a.status].bg}>{a.status}</Pill>
-                        {a.result && <Pill color={ALERT_RESULT_META[a.result].color} bg={ALERT_RESULT_META[a.result].bg} dot={false}>{a.result}</Pill>}
-                      </span>
+                <div key={a.id} style={{ display: 'flex', gap: 10 }}>
+                  {/* date tile + เส้นเชื่อม — pattern เดียวกับ timeline หน้า PatientProfile */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingBottom: 12 }}>
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 16, flexShrink: 0,
+                      background: active ? 'linear-gradient(135deg, #E8432A, #D0381A)' : 'linear-gradient(135deg, #8B81F2, #6658E1)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                    }}>
+                      <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.8)', fontFamily: font }}>{mm || a.time + ' น.'}</span>
+                      <span style={{ fontSize: dd === 'วันนี้' ? 12 : 16, fontWeight: 700, color: 'white', fontFamily: font }}>{dd}</span>
                     </div>
-                    <div style={{ fontSize: 11.5, color: GRAY, fontFamily: font, marginTop: 6, lineHeight: 1.6 }}>
-                      {a.recovered && <div><IconAntennaBars5 size={12} style={{ verticalAlign: '-2px' }} /> เครื่องรายงานว่ากลับสู่ปกติ (ไม่ปิดเหตุอัตโนมัติ)</div>}
-                      {a.ackBy && <div><IconCheck size={12} style={{ verticalAlign: '-2px' }} /> รับทราบโดย {a.ackBy} เมื่อ {a.ackAt} น.</div>}
-                      {a.closedBy && <div><IconPlayerStopFilled size={12} style={{ verticalAlign: '-2px' }} /> ปิดเหตุโดย {a.closedBy} เมื่อ {a.closedAt} น.{a.note ? ` — "${a.note}"` : ''}</div>}
-                      {!a.ackBy && <div style={{ color: RED, fontWeight: 600 }}><IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> ยังไม่มีผู้รับทราบ</div>}
+                    {ai < alerts.length - 1 && <div style={{ width: 1, flex: 1, minHeight: 12, background: active ? 'rgba(232,67,42,0.3)' : 'rgba(102,88,225,0.3)' }} />}
+                  </div>
+
+                  {/* การ์ดเหตุ */}
+                  <div style={{
+                    flex: 1, minWidth: 0, borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
+                    border: `1px solid ${active ? 'rgba(255,56,60,0.25)' : 'white'}`, marginBottom: 12,
+                    background: active ? 'rgba(255,56,60,0.04)' : 'white',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: BLACK, fontFamily: font }}>{a.detectType} · {a.location} <span style={{ fontWeight: 400, fontSize: 11.5, color: GRAY2 }}>{a.time} น.</span></span>
+                      <span className="num" style={{ fontSize: 10.5, color: GRAY2 }}>{a.no}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', fontSize: 10.5, color: GRAY2, fontFamily: font }}>
+                      {a.recovered && <span><IconAntennaBars5 size={12} style={{ verticalAlign: '-2px' }} /> เครื่องกลับสู่ปกติ</span>}
+                      {a.ackBy && <span><IconCheck size={12} style={{ verticalAlign: '-2px' }} /> รับทราบ: {a.ackBy} · {a.ackAt} น.</span>}
+                      {a.closedBy && <span><IconPlayerStopFilled size={12} style={{ verticalAlign: '-2px' }} /> ปิดเหตุ: {a.closedBy} · {a.closedAt} น.{a.note ? ` — "${a.note}"` : ''}</span>}
+                      {!a.ackBy && <span style={{ color: RED, fontWeight: 600 }}><IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> ยังไม่มีผู้รับทราบ</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Pill color={ALERT_STATUS_META[a.status].color} bg={ALERT_STATUS_META[a.status].bg}>{a.status}</Pill>
+                      {a.result && <Pill color={ALERT_RESULT_META[a.result].color} bg={ALERT_RESULT_META[a.result].bg} dot={false}>{a.result}</Pill>}
                     </div>
                   </div>
                 </div>
@@ -358,6 +445,8 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
             })}
           </div>
         )}
+        </div>
+        </div>
       </div>
 
       {/* Modals */}

@@ -1,6 +1,9 @@
 /* ═══ Smart Village — ภาพรวม (Central Overview) — spec 5.1 ═══
    Layout จอมอนิเตอร์: แผนที่เป็น dominant เต็มพื้นที่ · element อื่นลอย + compact
    คงข้อมูลเดิม (KPI, หมู่บ้าน, attention, เหตุการณ์ล่าสุด) */
+import { useState } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import CountUp from '../../components/CountUp';
 import imgHero3d from '../../assets/images/homevisit-hero-3d.png';
 import imgVillage3d from '../../assets/images/sv-village-3d.png';
 import imgAlert3d from '../../assets/images/sv-alert-3d.png';
@@ -29,15 +32,119 @@ const FLOAT = {
   display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
 };
 
-/* KPI pill compact ลอยบนแผนที่ */
-function KpiPill({ icon, label, value, color }) {
+/* ── Outcome status card + donut — reuse จาก OutcomeDonutCard หน้ารายงานเยี่ยมบ้าน ── */
+function SvOutcomeCard({ d, idx, hoverIdx, setHoverIdx, total, onClick }) {
+  const isActive = hoverIdx === idx;
+  const pct = Math.round((d.count / total) * 100);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 13px', borderRadius: 100, background: 'rgba(255,255,255,0.82)', backdropFilter: 'blur(16px) saturate(180%)', border: '1px solid rgba(255,255,255,0.9)', boxShadow: '0 2px 10px rgba(13,10,44,0.08)', flexShrink: 0 }}>
-      <span style={{ width: 26, height: 26, borderRadius: 9, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
-      <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-        <span style={{ fontSize: 15, fontWeight: 800, color: BLACK, fontFamily: font }}>{value}</span>
-        <span style={{ fontSize: 9.5, color: GRAY2, fontFamily: font }}>{label}</span>
-      </span>
+    <div
+      onMouseEnter={() => setHoverIdx(idx)} onMouseLeave={() => setHoverIdx(null)} onClick={onClick}
+      style={{
+        width: 128, position: 'relative', overflow: 'hidden',
+        background: `linear-gradient(145deg, ${d.bg}, rgba(255,255,255,0.95))`,
+        border: `1.5px solid ${isActive ? d.color : d.borderC}`,
+        borderRadius: 18, padding: '12px 14px',
+        boxShadow: isActive ? `0 10px 30px ${d.color}30` : '0 2px 10px rgba(0,0,0,0.04)',
+        transform: isActive ? 'scale(1.06) translateY(-2px)' : 'scale(1) translateY(0)',
+        transition: 'all 0.3s cubic-bezier(.22,1,.36,1)', cursor: 'pointer',
+      }}
+    >
+      <div style={{ position: 'absolute', top: -15, right: -15, width: 50, height: 50, borderRadius: '50%', background: `${d.color}12`, transition: 'transform 0.3s ease', transform: isActive ? 'scale(1.8)' : 'scale(1)' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, position: 'relative' }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0, boxShadow: isActive ? `0 0 8px ${d.color}80` : 'none', transition: 'box-shadow 0.3s ease' }} />
+        <span style={{ fontSize: 11.5, fontWeight: 600, color: BLACK, fontFamily: font, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
+        <div style={{ marginLeft: 'auto', background: isActive ? d.color : 'rgba(255,255,255,0.7)', borderRadius: 99, padding: '2px 8px', transition: 'background 0.3s ease' }}>
+          <span style={{ fontSize: 10, fontWeight: 700, fontFamily: font, color: isActive ? 'white' : d.dark, transition: 'color 0.3s ease' }}>{pct}%</span>
+        </div>
+      </div>
+      <CountUp end={d.count} style={{ fontSize: 28, fontWeight: 700, color: d.dark, fontFamily: font, lineHeight: 1, position: 'relative', display: 'block' }} />
+      <div style={{ marginTop: 9, height: 4, borderRadius: 100, overflow: 'hidden', background: `${d.color}15`, position: 'relative' }}>
+        <div style={{ height: '100%', borderRadius: 100, background: `linear-gradient(90deg, ${d.light}, ${d.color})`, width: isActive ? `${pct}%` : `${pct * 0.7}%`, transition: 'width 0.5s cubic-bezier(.22,1,.36,1)' }} />
+      </div>
+    </div>
+  );
+}
+
+function SvOutcomeDonut({ data, onGoSection }) {
+  const [hoverIdx, setHoverIdx] = useState(null);
+  const total = data.reduce((a, d) => a + d.count, 0);
+  const active = hoverIdx !== null ? data[hoverIdx] : null;
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      {/* legend */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 6, flexWrap: 'wrap' }}>
+        {data.map((d, i) => (
+          <div key={i} onMouseEnter={() => setHoverIdx(i)} onMouseLeave={() => setHoverIdx(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', opacity: hoverIdx === null || hoverIdx === i ? 1 : 0.4, transition: 'opacity 0.2s ease' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color }} />
+            <span style={{ fontSize: 12, color: GRAY, fontFamily: font }}>{d.name} {Math.round(d.count / (total || 1) * 100)}%</span>
+          </div>
+        ))}
+      </div>
+      {/* donut + cards */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {data[0] && <SvOutcomeCard d={data[0]} idx={0} hoverIdx={hoverIdx} setHoverIdx={setHoverIdx} total={total} onClick={() => onGoSection('sv-alerts')} />}
+          <div style={{ position: 'relative', width: 180, height: 180, flexShrink: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data} dataKey="count" cx="50%" cy="50%"
+                  innerRadius="58%" outerRadius="88%" paddingAngle={5} cornerRadius={6}
+                  strokeWidth={0} startAngle={90} endAngle={-270}
+                  onMouseEnter={(_, i) => setHoverIdx(i)} onMouseLeave={() => setHoverIdx(null)}
+                  animationDuration={1000} animationBegin={200}
+                >
+                  {data.map((d, i) => (
+                    <Cell key={i} fill={d.color} opacity={hoverIdx === null || hoverIdx === i ? 1 : 0.25}
+                      style={{ filter: hoverIdx === i ? `drop-shadow(0 0 12px ${d.color}90)` : 'none', transition: 'all 0.3s ease' }} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+              <CountUp end={active ? active.count : total} duration={800} style={{ fontSize: 38, fontWeight: 700, fontFamily: font, lineHeight: 1, color: active ? active.dark : BLACK, transition: 'color 0.3s ease' }} />
+              <span style={{ fontSize: 11, fontWeight: 500, fontFamily: font, marginTop: 6, color: active ? active.color : GRAY, transition: 'color 0.3s ease' }}>{active ? active.name : 'ทั้งหมด'}</span>
+            </div>
+          </div>
+          {data.length > 1 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {data.slice(1).map((d, idx) => (
+                <SvOutcomeCard key={idx + 1} d={d} idx={idx + 1} hoverIdx={hoverIdx} setHoverIdx={setHoverIdx} total={total} onClick={() => onGoSection('sv-alerts')} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Stat card — anatomy เดียวกับ StatCard หน้ารายงานเยี่ยมบ้าน */
+function StatCard({ icon, label, value, unit, growth, bg }) {
+  const numeric = typeof value === 'number';
+  return (
+    <div className="hover-stat anim-slide-up" style={{
+      background: bg, border: '1px solid rgba(255,255,255,0.7)',
+      borderRadius: 24, padding: 16, color: 'white', fontFamily: font,
+      position: 'relative', overflow: 'hidden', height: 130,
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: 40 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</div>
+        {growth && (
+          <div style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 999, padding: '4px 10px', display: 'flex', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{growth}</span>
+          </div>
+        )}
+      </div>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'white', letterSpacing: 0.22 }}>{label}</span>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+        {numeric
+          ? <CountUp end={value} style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }} />
+          : <span style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }}>{value}</span>}
+        {unit && <span style={{ fontSize: 12, lineHeight: '12px' }}>{unit}</span>}
+      </div>
     </div>
   );
 }
@@ -65,13 +172,40 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
   const actives = activeAlerts();
   const newCount = actives.filter(a => a.status === 'ใหม่').length;
   const attention = buildAttention();
+  /* breakdown ต้องตามงานตามชนิด — สำหรับ pie */
+  const ATT_META = {
+    offline: { label: 'อุปกรณ์ offline', color: ORANGE },
+    nocontact: { label: 'ไม่มีผู้ติดต่อ', color: RED },
+    noguard: { label: 'ไม่มีบัญชี รปภ.', color: PURPLE },
+    nofamily: { label: 'ยังไม่เชื่อม Family', color: '#0088FF' },
+  };
+  const attBreakdown = Object.keys(ATT_META)
+    .map(k => ({ k, ...ATT_META[k], count: attention.filter(a => a.kind === k).length }))
+    .filter(x => x.count > 0);
+  const attTotal = attention.length || 1;
   const totalDevices = SV_DEVICES.length;
   const online = SV_DEVICES.filter(d => d.online).length;
   const installedHouses = SV_HOUSES.filter(h => SV_DEVICES.some(d => d.houseId === h.id)).length;
   const today = SV_ALERTS.filter(a => a.date === 'วันนี้').length;
   const month = SV_ALERTS.filter(a => a.date === 'วันนี้' || a.date.includes('ก.ค.')).length;
   /* ประวัติ = เหตุที่ปิดแล้ว (เหตุ active อยู่ใน panel ขวาแล้ว — ไม่ซ้ำ) */
-  const recent = SV_ALERTS.filter(a => a.status === 'ปิดแล้ว').slice(0, 8);
+  const closedAll = SV_ALERTS.filter(a => a.status === 'ปิดแล้ว');
+  const recent = closedAll.slice(0, 8);
+  /* breakdown ผลการปิดเหตุ — สำหรับ visualize */
+  const outcomeBreakdown = Object.keys(ALERT_RESULT_META)
+    .map(k => ({ k, color: ALERT_RESULT_META[k].color, count: closedAll.filter(a => a.result === k).length }))
+    .filter(x => x.count > 0);
+  const closedTotal = closedAll.length || 1;
+  /* ตารางผลการปิดเหตุ แยกหมู่บ้าน (แบบ FeatureTable "แยก รพ." หน้า Dashboard) */
+  const OUTCOME_COLS = [
+    { key: 'ช่วยเหลือแล้ว', label: 'ช่วยเหลือ', color: '#34C759' },
+    { key: 'แจ้งเตือนผิดพลาด', label: 'ผิดพลาด', color: '#E8802A' },
+    { key: 'เหตุทดสอบ', label: 'ทดสอบ', color: '#1398D8' },
+  ];
+  const closedByVillage = SV_VILLAGES.map(v => {
+    const cs = closedAll.filter(a => a.villageId === v.id);
+    return { id: v.id, name: v.name, vals: OUTCOME_COLS.map(c => cs.filter(a => a.result === c.key).length), total: cs.length };
+  }).filter(r => r.total > 0);
 
   const mapPoints = SV_VILLAGES.map(v => {
     const st = villageStatus(v.id);
@@ -96,21 +230,18 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="anim-slide-up">
         <PageHead
-          thai="ภาพรวม" image={imgHero3d} right={<LivePill />} section="sv-overview" onGoSection={onGoSection}
+          thai="ภาพรวม" image={imgHero3d} section="sv-overview" onGoSection={onGoSection}
+          topRight={<LivePill />}
         />
       </div>
 
-      {/* KPI compact + action ปุ่ม — row เดียวกัน */}
-      <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        <KpiPill icon={<IconBuildingCommunity size={14} color="white" style={{ flexShrink: 0 }} />} value={SV_VILLAGES.length} label="หมู่บ้าน" color="linear-gradient(149deg,#8B5CF6,#7C3AED)" />
-        <KpiPill icon={<IconHome size={14} color="white" style={{ flexShrink: 0 }} />} value={installedHouses} label="ติดตั้งแล้ว" color="linear-gradient(149deg,#19A589,#0D7C66)" />
-        <KpiPill icon={<IconAntennaBars5 size={14} color="white" style={{ flexShrink: 0 }} />} value={`${online}/${totalDevices}`} label="อุปกรณ์ online" color="linear-gradient(149deg,#3B82F6,#1D4ED8)" />
-        <KpiPill icon={<IconAlertTriangleFilled size={14} color="white" style={{ flexShrink: 0 }} />} value={today} label="เหตุวันนี้" color="linear-gradient(149deg,#E8432A,#D0381A)" />
-        <KpiPill icon={<IconCalendar size={14} color="white" style={{ flexShrink: 0 }} />} value={month} label="เหตุเดือนนี้" color="linear-gradient(149deg,#E8802A,#D06A1A)" />
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button className="hover-btn" style={btnGhost} onClick={onOpenGuard}><IconDeviceDesktop size={14} style={{ verticalAlign: '-2px' }} /> จอ รปภ. (ตัวอย่าง)</button>
-          <button className="hover-btn" style={btnPrimary} onClick={() => onGoSection('sv-devices', { addDevice: true })}>+ เพิ่มอุปกรณ์</button>
-        </div>
+      {/* Stat cards — anatomy เดียวกับหน้ารายงานเยี่ยมบ้าน */}
+      <div className="anim-slide-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+        <StatCard icon={<IconBuildingCommunity size={20} color="white" style={{ flexShrink: 0 }} />} label="หมู่บ้านทั้งหมด" value={SV_VILLAGES.length} unit="หมู่บ้าน" growth="↑ +1" bg="linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)" />
+        <StatCard icon={<IconHome size={20} color="white" style={{ flexShrink: 0 }} />} label="บ้านที่ติดตั้งแล้ว" value={installedHouses} unit="หลัง" growth="↑ +6.3%" bg="linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)" />
+        <StatCard icon={<IconAntennaBars5 size={20} color="white" style={{ flexShrink: 0 }} />} label="อุปกรณ์ online" value={`${online}/${totalDevices}`} growth="↑ +8.5%" bg="linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)" />
+        <StatCard icon={<IconAlertTriangleFilled size={20} color="white" style={{ flexShrink: 0 }} />} label="เหตุล้มวันนี้" value={today} unit="เหตุ" bg="linear-gradient(180deg, #FF383C 0%, #992224 100%)" />
+        <StatCard icon={<IconCalendar size={20} color="white" style={{ flexShrink: 0 }} />} label="เหตุล้มเดือนนี้" value={month} unit="เหตุ" growth="↓ -2.4%" bg="linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)" />
       </div>
 
       {/* ── Console: หมู่บ้าน · แผนที่ (card) · เหตุการณ์ ── */}
@@ -219,64 +350,99 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
       </div>
 
       {/* ── ใต้แผนที่: รายละเอียด — ต้องตามงาน + เหตุการณ์ล่าสุด ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 14, alignItems: 'stretch' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
         {/* ต้องตามงาน */}
-        <div className="anim-slide-up delay-3" style={{ ...card, display: 'flex', flexDirection: 'column' }}>
-          <SectionTitle icon={<IconClipboardList size={15} style={{ flexShrink: 0 }} />} title="ต้องตามงาน" sub={`${attention.length} รายการ`} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto', flex: 1, minHeight: 0, paddingRight: 2 }}>
-            {attention.length === 0 && <div style={{ fontSize: 12, color: GRAY2, fontFamily: font, padding: '8px 2px' }}>ไม่มีรายการค้าง</div>}
-            {attention.map((it, i) => {
-              const AttIcon = ATTENTION_ICONS[it.kind] || IconClipboardList;
-              return (
-                <div key={i} className="hover-card" onClick={() => it.houseId ? onDrillHouse(it.villageId, it.houseId) : onDrillVillage(it.villageId)} style={{
-                  display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer',
-                  background: it.severity === 'warn' ? 'rgba(232,128,42,0.07)' : 'rgba(102,88,225,0.06)',
-                  border: `1px solid ${it.severity === 'warn' ? 'rgba(232,128,42,0.2)' : 'rgba(102,88,225,0.15)'}`,
-                  borderRadius: 14, padding: '10px 12px',
-                }}>
-                  <AttIcon size={15} color={it.severity === 'warn' ? '#C96A12' : PURPLE} style={{ flexShrink: 0, marginTop: 1 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: BLACK, fontFamily: font, lineHeight: 1.45 }}>{it.title}</div>
-                    <div style={{ fontSize: 10.5, color: GRAY, fontFamily: font, marginTop: 2 }}>{it.sub}</div>
-                  </div>
-                </div>
-              );
-            })}
+        <div className="anim-slide-up delay-3" style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Hero banner — pattern เดียวกับหัว "ประวัติการเยี่ยมบ้าน" (PatientProfile) */}
+          <div style={{
+            background: 'linear-gradient(175deg, #E8802A 0%, #D06A1A 100%)',
+            borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
+            backdropFilter: 'blur(10px)', boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
+            display: 'flex', gap: 16, alignItems: 'center',
+          }}>
+            <img src={imgHero3d} alt="" style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: 84, height: 84, objectFit: 'cover', pointerEvents: 'none' }} />
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 96 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'white', fontFamily: font }}>ต้องตามงาน</div>
+                <div style={{ fontSize: 12, color: 'white', fontFamily: font, marginTop: 4 }}>งานค้างที่ต้องติดตามจากทุกหมู่บ้าน</div>
+              </div>
+              <div style={{
+                backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
+                border: '1px solid white', borderRadius: 100, padding: '4px 16px',
+                height: 36, display: 'flex', alignItems: 'center',
+                fontSize: 12, fontWeight: 600, fontFamily: font, color: BLACK,
+              }}>{attention.length} รายการ</div>
+            </div>
           </div>
+          {attention.length === 0 ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontSize: 12, color: GRAY2, fontFamily: font }}>ไม่มีรายการค้าง</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 18, alignItems: 'center', flex: 1, minHeight: 0 }}>
+              <div style={{ width: 150, height: 150, flexShrink: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={attBreakdown} dataKey="count" cx="50%" cy="50%" outerRadius={72} startAngle={90} endAngle={-270} strokeWidth={0} animationDuration={800}>
+                      {attBreakdown.map(b => <Cell key={b.k} fill={b.color} />)}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {attBreakdown.map(b => (
+                  <div key={b.k} className="hover-btn" onClick={() => onGoSection('sv-alerts')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: b.color, flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: BLACK, fontFamily: font, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label}</span>
+                    <span className="num" style={{ fontSize: 13, fontWeight: 700, color: GRAY, flexShrink: 0 }}>{b.count} <span style={{ color: GRAY2, fontWeight: 500 }}>({Math.round(b.count / attTotal * 100)}%)</span></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* เหตุการณ์ล่าสุด */}
-        <div className="anim-slide-up delay-4" style={{ ...card }}>
+        {/* ประวัติเหตุที่ปิดแล้ว — ตารางผลการปิดเหตุ แยกหมู่บ้าน (แบบ FeatureTable) */}
+        <div className="anim-slide-up delay-4" style={{ ...card, display: 'flex', flexDirection: 'column' }}>
           <SectionTitle
-            icon={<IconHistory size={15} style={{ flexShrink: 0 }} />} title="ประวัติเหตุที่ปิดแล้ว" sub={`${recent.length} รายการล่าสุด`}
+            icon={<IconHistory size={15} style={{ flexShrink: 0 }} />} title="สถิติเหตุที่ปิดแล้ว แยกหมู่บ้าน" sub={`${closedAll.length} เหตุทั้งหมด`}
             right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => onGoSection('sv-alerts')}>ดูทั้งหมด →</button>}
           />
           <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: 560 }}>
-              {recent.map(a => {
-                const h = getHouse(a.houseId);
+            <div style={{ minWidth: 420, background: 'white', border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden' }}>
+              {/* header */}
+              <div style={{ display: 'grid', gridTemplateColumns: `1.6fr repeat(${OUTCOME_COLS.length}, 1fr) 0.8fr`, gap: 10, padding: 16, background: 'rgba(139,92,246,0.1)', fontWeight: 700, fontSize: 12, color: BLACK, fontFamily: font }}>
+                <span>หมู่บ้าน</span>
+                {OUTCOME_COLS.map(c => <span key={c.key} style={{ textAlign: 'center' }}>{c.label}</span>)}
+                <span style={{ textAlign: 'center' }}>รวม</span>
+              </div>
+              {/* rows */}
+              {closedByVillage.map(r => {
+                const maxVal = Math.max(...r.vals);
                 return (
-                  <div key={a.id} className="hover-row" onClick={() => onDrillHouse(a.villageId, a.houseId)} style={{
-                    display: 'grid', gridTemplateColumns: '110px 1.5fr 1.2fr 130px', gap: 12, alignItems: 'center',
-                    padding: '11px 12px', borderTop: '1px solid rgba(0,0,0,0.04)', borderRadius: 14, cursor: 'pointer',
-                  }}>
-                    <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>{a.time} น.</div>
-                      <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font }}>{a.date}</div>
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: BLACK, fontFamily: font }}>บ้าน {h.no}{h.nickname ? ` · ${h.nickname}` : ''}</div>
-                      <div style={{ fontSize: 11, color: GRAY, fontFamily: font }}>{getVillage(a.villageId).name}</div>
-                    </div>
-                    <div style={{ fontSize: 11.5, color: GRAY, fontFamily: font }}>{a.detectType} · {a.location}</div>
-                    <div>
-                      {a.result
-                        ? <Pill color={ALERT_RESULT_META[a.result].color} bg={ALERT_RESULT_META[a.result].bg} dot={false}>{a.result}</Pill>
-                        : <span style={{ fontSize: 11, color: GRAY2, fontFamily: font }}>—</span>}
-                    </div>
+                  <div key={r.id} className="hover-row" onClick={() => onDrillVillage(r.id)} style={{ display: 'grid', gridTemplateColumns: `1.6fr repeat(${OUTCOME_COLS.length}, 1fr) 0.8fr`, gap: 10, padding: 16, fontSize: 12, fontFamily: font, color: BLACK, cursor: 'pointer', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                    <span style={{ fontWeight: 500, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</span>
+                    {r.vals.map((v, j) => {
+                      const c = OUTCOME_COLS[j];
+                      const hi = v > 0 && v === maxVal;
+                      return (
+                        <span key={j} style={{ textAlign: 'center' }}>
+                          <span className="num" style={{ display: 'inline-block', padding: '2px 9px', borderRadius: 8, background: hi ? `${c.color}18` : 'transparent', color: hi ? c.color : (v ? BLACK : GRAY2), fontWeight: hi ? 700 : 500 }}>{v}</span>
+                        </span>
+                      );
+                    })}
+                    <span className="num" style={{ textAlign: 'center', fontWeight: 700 }}>{r.total}</span>
                   </div>
                 );
               })}
+              {/* legend สี */}
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 14px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                {OUTCOME_COLS.map(c => (
+                  <span key={c.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: GRAY, fontFamily: font }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.color }} />{c.key}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

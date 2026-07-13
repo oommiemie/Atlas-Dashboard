@@ -98,11 +98,15 @@ export default function SmartVillage({ section, onNavigate }) {
     );
   }
 
+  /* เพิ่มอุปกรณ์ = full page (แทน body) */
+  if (quickAdd) {
+    return <div className="anim-slide-up"><AddDeviceModal prefill={house ? { villageId: village.id, houseId: house.id } : {}} onClose={() => setQuickAdd(false)} /></div>;
+  }
+
   return (
     <div>
       {body}
       {guardOpen && <GuardMonitor onExit={() => setGuardOpen(false)} />}
-      {quickAdd && <AddDeviceModal prefill={house ? { villageId: village.id, houseId: house.id } : {}} onClose={() => setQuickAdd(false)} />}
     </div>
   );
 }

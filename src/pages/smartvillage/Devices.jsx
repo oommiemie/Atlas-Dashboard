@@ -10,6 +10,7 @@ import {
 import {
   font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED, ORANGE, BLUE,
   card, btnPrimary, btnGhost, PageHead, Pill, SearchBox, Modal, Field, TextInput, Select, THead, TRow, LivePill, EmptyState,
+  FormPageHeader, FormSection, FilterSelect,
 } from './shared';
 
 const DEVICE_TYPES = ['เรดาร์ตรวจล้ม RT-W03', 'ปุ่ม SOS พกพา', 'เซ็นเซอร์ควัน/แก๊ส (อนาคต)'];
@@ -32,16 +33,7 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
   const house = houseId ? getHouse(houseId) : null;
   const residents = house ? house.residents : [];
 
-  const STEPS = [
-    { n: 1, label: 'อุปกรณ์', icon: IconCpu },
-    { n: 2, label: 'ตำแหน่ง', icon: IconMapPin },
-    { n: 3, label: 'ติดตั้ง', icon: IconTool },
-  ];
-  const step1ok = imei.trim().length >= 10 && !dupDevice && !!type;
-  const step2ok = !!villageId && !!houseId;
-  const step3ok = installKind === 'house' ? !!location : !!residentId;
-  const stepOk = { 1: step1ok, 2: step2ok, 3: step3ok };
-  const canSave = step1ok && step2ok && step3ok;
+  const canSave = imei.trim().length >= 10 && !dupDevice && !!type && !!villageId && !!houseId && (installKind === 'house' ? !!location : !!residentId);
 
   /* แผงสถานะ live หลังบันทึก — ทีมติดตั้งยืนยันหน้างานว่าเครื่องส่งข้อมูลจริง */
   if (saved) {
@@ -69,50 +61,18 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
     );
   }
 
-  const goNext = () => { if (stepOk[step] && step < 3) setStep(step + 1); };
-  const goBack = () => { if (step > 1) setStep(step - 1); };
-
   return (
-    <Modal title="+ เพิ่มอุปกรณ์" onClose={onClose} width={520}>
-      {/* ── stepper ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-        {STEPS.map((s, i) => {
-          const done = s.n < step;
-          const active = s.n === step;
-          const Ic = s.icon;
-          return (
-            <div key={s.n} style={{ display: 'flex', alignItems: 'center', flex: 'none' }}>
-              <div
-                onClick={() => (s.n < step || stepOk[step]) && s.n <= step && setStep(s.n)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: s.n <= step ? 'pointer' : 'default' }}
-              >
-                <div style={{
-                  width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: done ? GREEN : active ? PURPLE : 'rgba(116,116,128,0.12)',
-                  color: done || active ? 'white' : GRAY2,
-                  boxShadow: active ? '0 4px 12px rgba(102,88,225,0.35)' : 'none',
-                  transition: 'all .2s',
-                }}>
-                  {done ? <IconCheck size={17} style={{ flexShrink: 0 }} /> : <Ic size={16} style={{ flexShrink: 0 }} />}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 9.5, color: GRAY2, fontFamily: font, lineHeight: 1.1 }}>ขั้นที่ {s.n}</div>
-                  <div style={{ fontSize: 12.5, fontWeight: active || done ? 700 : 500, color: active ? PURPLE : done ? '#1E9E4B' : GRAY, fontFamily: font }}>{s.label}</div>
-                </div>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div style={{ width: 56, height: 2, margin: '0 10px', borderRadius: 2, background: done ? GREEN : 'rgba(116,116,128,0.15)', transition: 'all .2s' }} />
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <div style={{ fontFamily: font }}>
+      <FormPageHeader
+        icon={<IconCpu size={22} style={{ flexShrink: 0 }} />}
+        title="เพิ่มอุปกรณ์" sub="ลงทะเบียนอุปกรณ์ตรวจจับการล้มเข้าระบบเฝ้าระวัง"
+        onCancel={onClose} onSave={() => setSaved(true)} saveLabel="บันทึก + ทดสอบเครื่อง" saveDisabled={!canSave}
+      />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 13, minHeight: 190 }}>
-        {/* ── ขั้นที่ 1 · อุปกรณ์ ── */}
-        {step === 1 && (
-          <>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
+        {/* ── ซ้าย ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <FormSection icon={<IconCpu size={20} style={{ flexShrink: 0 }} />} title="ข้อมูลอุปกรณ์" desc="ชนิดและรหัสเครื่อง">
             <Field label="ชนิดอุปกรณ์" required><Select options={DEVICE_TYPES} value={type} onChange={setType} /></Field>
             <Field label="IMEI / Serial" required hint={dupDevice ? undefined : 'ระบบตรวจซ้ำอัตโนมัติ'}>
               <TextInput value={imei} onChange={e => setImei(e.target.value)} placeholder="เช่น 861230051234671" style={dupDevice ? { borderColor: RED } : undefined} />
@@ -122,32 +82,10 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
                 </div>
               )}
             </Field>
-          </>
-        )}
+          </FormSection>
 
-        {/* ── ขั้นที่ 2 · ตำแหน่ง ── */}
-        {step === 2 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field label="หมู่บ้าน" required>
-              <select value={villageId} onChange={e => { setVillageId(e.target.value); setHouseId(''); }} style={{ height: 40, borderRadius: 12, padding: '0 12px', border: '1.5px solid rgba(116,116,128,0.15)', fontSize: 13, fontFamily: font, width: '100%' }}>
-                <option value="">— เลือกหมู่บ้าน —</option>
-                {SV_VILLAGES.filter(v => v.status === 'ใช้งาน').map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-              </select>
-            </Field>
-            <Field label="บ้าน" required hint={villageId && houses.length === 0 ? undefined : 'lookup จากบ้านที่สร้างไว้เท่านั้น'}>
-              <select value={houseId} onChange={e => setHouseId(e.target.value)} disabled={!villageId} style={{ height: 40, borderRadius: 12, padding: '0 12px', border: '1.5px solid rgba(116,116,128,0.15)', fontSize: 13, fontFamily: font, width: '100%', opacity: villageId ? 1 : 0.5 }}>
-                <option value="">— เลือกบ้าน —</option>
-                {houses.map(h => <option key={h.id} value={h.id}>บ้าน {h.no}{h.nickname ? ` (${h.nickname})` : ''}</option>)}
-              </select>
-              {villageId && <div style={{ fontSize: 10.5, color: PURPLE, fontFamily: font, marginTop: 2, cursor: 'pointer' }}>ยังไม่มีบ้านนี้? + เพิ่มบ้าน</div>}
-            </Field>
-          </div>
-        )}
-
-        {/* ── ขั้นที่ 3 · ติดตั้ง ── */}
-        {step === 3 && (
-          <>
-            <Field label="การติดตั้ง" required>
+          <FormSection icon={<IconTool size={20} style={{ flexShrink: 0 }} />} title="การติดตั้ง" desc="ติดกับบ้าน หรือ พกติดตัว">
+            <Field label="รูปแบบการติดตั้ง" required>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {[['house', <IconDoor size={13} style={{ verticalAlign: '-2px' }} />, 'ติดกับบ้าน', 'เช่น เรดาร์ติดเพดานห้อง'], ['person', <IconDeviceWatch size={13} style={{ verticalAlign: '-2px' }} />, 'ติดกับคน', 'อุปกรณ์พกติดตัว เห็นว่า "ใคร" ล้ม']].map(([k, ic, t, s]) => (
                   <div key={k} onClick={() => setInstallKind(k)} style={{
@@ -165,32 +103,37 @@ export function AddDeviceModal({ prefill = {}, onClose }) {
               <Field label="ตำแหน่งติดตั้ง" required><Select options={LOCATIONS} value={location} onChange={setLocation} /></Field>
             ) : (
               <Field label="คนในบ้านที่ถืออุปกรณ์" required hint={house && residents.length === 0 ? undefined : 'เมื่อเกิดเหตุ รปภ. เห็นว่าใครล้ม ไม่ใช่แค่บ้านไหน'}>
-                <select value={residentId} onChange={e => setResidentId(e.target.value)} disabled={!houseId} style={{ height: 40, borderRadius: 12, padding: '0 12px', border: '1.5px solid rgba(116,116,128,0.15)', fontSize: 13, fontFamily: font, width: '100%', opacity: houseId ? 1 : 0.5 }}>
-                  <option value="">— เลือกคนในบ้าน —</option>
-                  {residents.map(r => <option key={r.id} value={r.id}>{r.name} ({r.age} ปี)</option>)}
-                </select>
+                <Select
+                  value={residentId} onChange={setResidentId} disabled={!houseId} placeholder="— เลือกคนในบ้าน —"
+                  options={residents.map(r => ({ value: r.id, label: `${r.name} (${r.age} ปี)` }))}
+                />
                 {house && residents.length === 0 && <div style={{ fontSize: 10.5, color: ORANGE, fontFamily: font, marginTop: 2 }}>บ้านนี้ยังไม่มีทะเบียนคน — <span style={{ color: PURPLE, cursor: 'pointer' }}>+ เพิ่มคนในบ้านก่อน</span></div>}
               </Field>
             )}
             <Field label="หมายเหตุ"><TextInput placeholder="(ไม่บังคับ)" /></Field>
-          </>
-        )}
-      </div>
+          </FormSection>
+        </div>
 
-      {/* ── footer ── */}
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', marginTop: 18 }}>
-        <button className="hover-btn" style={btnGhost} onClick={step === 1 ? onClose : goBack}>
-          {step === 1 ? 'ยกเลิก' : <><IconChevronLeft size={14} style={{ verticalAlign: '-2px' }} /> ย้อนกลับ</>}
-        </button>
-        {step < 3 ? (
-          <button className="hover-btn" style={{ ...btnPrimary, opacity: stepOk[step] ? 1 : 0.45 }} onClick={goNext}>
-            ถัดไป <IconChevronRight size={14} style={{ verticalAlign: '-2px' }} />
-          </button>
-        ) : (
-          <button className="hover-btn" style={{ ...btnPrimary, opacity: canSave ? 1 : 0.45 }} onClick={() => canSave && setSaved(true)}>บันทึก + ทดสอบเครื่อง</button>
-        )}
+        {/* ── ขวา ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <FormSection icon={<IconMapPin size={20} style={{ flexShrink: 0 }} />} title="ตำแหน่ง" desc="เลือกหมู่บ้านและบ้านที่ติดตั้ง">
+            <Field label="หมู่บ้าน" required>
+              <Select
+                value={villageId} onChange={v => { setVillageId(v); setHouseId(''); }} placeholder="— เลือกหมู่บ้าน —"
+                options={SV_VILLAGES.filter(v => v.status === 'ใช้งาน').map(v => ({ value: v.id, label: v.name }))}
+              />
+            </Field>
+            <Field label="บ้าน" required hint={villageId && houses.length === 0 ? undefined : 'lookup จากบ้านที่สร้างไว้เท่านั้น'}>
+              <Select
+                value={houseId} onChange={setHouseId} disabled={!villageId} placeholder="— เลือกบ้าน —"
+                options={houses.map(h => ({ value: h.id, label: `บ้าน ${h.no}${h.nickname ? ` (${h.nickname})` : ''}` }))}
+              />
+              {villageId && <div style={{ fontSize: 10.5, color: PURPLE, fontFamily: font, marginTop: 2, cursor: 'pointer' }}>ยังไม่มีบ้านนี้? + เพิ่มบ้าน</div>}
+            </Field>
+          </FormSection>
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }
 
@@ -209,6 +152,9 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false, onGoSection
 
   const COLS = '150px 1.3fr 1.2fr 1.1fr 130px 110px';
 
+  /* เพิ่มอุปกรณ์ = full page (แทน list) แบบหน้าวางแผนเยี่ยมบ้าน */
+  if (adding) return <div className="anim-slide-up"><AddDeviceModal onClose={() => setAdding(false)} /></div>;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
@@ -218,10 +164,7 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false, onGoSection
       <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <button className="hover-btn" style={btnPrimary} onClick={() => setAdding(true)}>+ เพิ่มอุปกรณ์</button>
         <SearchBox value={q} onChange={setQ} placeholder="ค้นหาด้วย IMEI / ชนิด…" width={240} />
-        <select value={villageFilter} onChange={e => setVillageFilter(e.target.value)} className="f-select" style={{ borderRadius: 100, fontFamily: font }}>
-          <option value="ทั้งหมด">ทุกหมู่บ้าน</option>
-          {SV_VILLAGES.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-        </select>
+        <FilterSelect value={villageFilter} onChange={setVillageFilter} options={[{ value: 'ทั้งหมด', label: 'ทุกหมู่บ้าน' }, ...SV_VILLAGES.map(v => ({ value: v.id, label: v.name }))]} />
         <div className="seg">
           {['ทั้งหมด', 'online', 'offline'].map(s => (
             <button key={s} className={`seg-btn${statusFilter === s ? ' active' : ''}`} onClick={() => setStatusFilter(s)}>{s}</button>
@@ -229,7 +172,7 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false, onGoSection
         </div>
       </div>
 
-      <div className="anim-slide-up delay-2" style={{ ...card, padding: 8 }}>
+      <div className="anim-slide-up delay-2" style={{ ...card, padding: 0, overflow: 'hidden' }}>
         {rows.length === 0 ? <EmptyState icon={<IconRadar2 size={26} style={{ flexShrink: 0 }} />} title="ไม่พบอุปกรณ์" sub="ลองปรับคำค้นหรือ filter" /> : (
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 900 }}>
@@ -260,8 +203,6 @@ export default function Devices({ onDrillHouse, autoOpenAdd = false, onGoSection
           </div>
         )}
       </div>
-
-      {adding && <AddDeviceModal onClose={() => setAdding(false)} />}
     </div>
   );
 }

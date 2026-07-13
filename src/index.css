@@ -2,6 +2,9 @@
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* คืนค่า default ที่ Tailwind preflight (มากับ HeroUI) เปลี่ยน — svg/img display:block ทำ icon inline ตกบรรทัด */
+img, svg, video, canvas { display: inline-block; vertical-align: middle; }
+
 :root {
   --font: 'IBM Plex Sans Thai Looped','Inter',system-ui,sans-serif;
   --mono: 'Inter',system-ui,sans-serif;
@@ -369,6 +372,36 @@ body {
 }
 .hover-row:hover {
   background: #F5F3FF !important;
+}
+
+/* ═══ HeroUI dropdown (Select) — สไตล์บ้านเรา (ชนะ * { margin/padding: 0 }) ═══ */
+.hui-pop {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.85);
+  border-radius: 14px;
+  padding: 6px;
+  min-width: var(--trigger-width, 160px);
+  box-shadow: 0 12px 32px rgba(13,10,44,0.16);
+}
+.hui-item {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--black);
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  transition: background 0.12s ease;
+}
+.hui-item[data-hovered], .hui-item[data-focused] {
+  background: rgba(102,88,225,0.08);
+}
+.hui-item[data-selected] {
+  background: rgba(102,88,225,0.12);
+  color: #6658E1;
+  font-weight: 600;
 }
 
 .hover-nav {

@@ -6,6 +6,7 @@ import {
 import {
   font, BLACK, GRAY, GRAY2, PURPLE, GREEN, RED,
   card, btnPrimary, btnGhost, PageHead, Pill, SearchBox, Modal, Field, TextInput, Select, SVMap, THead, TRow, CopyBtn,
+  FormPageHeader, FormSection, FilterSelect,
 } from './shared';
 import { IconBuildingCommunity, IconMapPin, IconConfetti, IconList, IconLayoutGrid, IconMap2, IconCheck, IconChevronLeft, IconChevronRight, IconInfoCircle, IconAddressBook } from '@tabler/icons-react';
 
@@ -68,132 +69,77 @@ function AddVillageModal({ onClose }) {
     );
   }
 
-  const STEPS = [
-    { n: 1, label: 'ข้อมูล & ตำแหน่ง', icon: IconInfoCircle },
-    { n: 2, label: 'ผู้ติดต่อ', icon: IconAddressBook },
-  ];
-  const step1ok = name.trim() && address.trim() && !!type && !!pin;
-  const step2ok = true; // ผู้ติดต่อ/หมายเหตุ ไม่บังคับ
-  const stepOk = { 1: step1ok, 2: step2ok };
-  const canSave = step1ok;
-  const goNext = () => { if (stepOk[step] && step < 2) setStep(step + 1); };
-  const goBack = () => { if (step > 1) setStep(step - 1); };
+  const canSave = name.trim() && address.trim() && !!type && !!pin;
 
   return (
-    <Modal title="+ เพิ่มหมู่บ้าน" onClose={onClose} width={640}>
-      {/* ── stepper ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-        {STEPS.map((s, i) => {
-          const done = s.n < step;
-          const active = s.n === step;
-          const Ic = s.icon;
-          return (
-            <div key={s.n} style={{ display: 'flex', alignItems: 'center', flex: 'none' }}>
-              <div
-                onClick={() => s.n <= step && setStep(s.n)}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: s.n <= step ? 'pointer' : 'default' }}
-              >
-                <div style={{
-                  width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: done ? GREEN : active ? PURPLE : 'rgba(116,116,128,0.12)',
-                  color: done || active ? 'white' : GRAY2,
-                  boxShadow: active ? '0 4px 12px rgba(102,88,225,0.35)' : 'none', transition: 'all .2s',
-                }}>
-                  {done ? <IconCheck size={17} style={{ flexShrink: 0 }} /> : <Ic size={16} style={{ flexShrink: 0 }} />}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 9.5, color: GRAY2, fontFamily: font, lineHeight: 1.1 }}>ขั้นที่ {s.n}</div>
-                  <div style={{ fontSize: 12.5, fontWeight: active || done ? 700 : 500, color: active ? PURPLE : done ? '#1E9E4B' : GRAY, fontFamily: font }}>{s.label}</div>
-                </div>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div style={{ width: 56, height: 2, margin: '0 10px', borderRadius: 2, background: done ? GREEN : 'rgba(116,116,128,0.15)', transition: 'all .2s' }} />
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <div style={{ fontFamily: font }}>
+      <FormPageHeader
+        icon={<IconInfoCircle size={22} style={{ flexShrink: 0 }} />}
+        title="เพิ่มหมู่บ้าน" sub="สร้างหมู่บ้าน/โครงการใหม่เข้าระบบเฝ้าระวัง"
+        onCancel={onClose} onSave={() => setSaved(true)} saveLabel="บันทึกหมู่บ้าน" saveDisabled={!canSave}
+      />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: 260 }}>
-        {/* ── ขั้นที่ 1 · ข้อมูล ── */}
-        {step === 1 && (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 12 }}>
-              <Field label="ชื่อหมู่บ้าน/โครงการ" required hint="พิมพ์ชื่อ ระบบค้นพิกัดให้อัตโนมัติ — กดเลือกเพื่อปักหมุด">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
+        {/* ── ซ้าย: ข้อมูล + ผู้ติดต่อ ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <FormSection icon={<IconInfoCircle size={20} style={{ flexShrink: 0 }} />} title="ข้อมูลหมู่บ้าน" desc="ชื่อ ประเภท และที่อยู่">
+            <Field label="ชื่อหมู่บ้าน/โครงการ" required hint="พิมพ์ชื่อ ระบบค้นพิกัดให้อัตโนมัติ — กดเลือกเพื่อปักหมุด">
+              <div style={{ position: 'relative' }}>
                 <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      value={name} onChange={e => setName(e.target.value)}
-                      placeholder="เช่น เดอะแกรนด์ วิลล่า ขอนแก่น"
-                      style={{ width: '100%', height: 40, borderRadius: 12, padding: '0 34px 0 12px', boxSizing: 'border-box', border: '1.5px solid rgba(116,116,128,0.15)', fontSize: 13, fontFamily: font, outline: 'none' }}
-                    />
-                    {geoLoading && <span style={{ position: 'absolute', right: 12, top: '50%', width: 14, height: 14, marginTop: -7, border: `2px solid ${PURPLE}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'svSpin 0.7s linear infinite' }} />}
-                  </div>
-                  {geoResults.length > 0 && (
-                    <div style={{ position: 'absolute', top: 44, left: 0, right: 0, zIndex: 20, background: 'white', borderRadius: 12, border: '1px solid rgba(13,10,44,0.1)', boxShadow: '0 12px 32px rgba(13,10,44,0.14)', overflow: 'hidden', maxHeight: 220, overflowY: 'auto' }}>
-                      {geoResults.map(r => (
-                        <div key={r.place_id} className="hover-btn" onClick={() => pickGeo(r)} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '9px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(13,10,44,0.05)' }}>
-                          <IconMapPin size={14} color={PURPLE} style={{ flexShrink: 0, marginTop: 2 }} />
-                          <span style={{ fontSize: 12, color: BLACK, fontFamily: font, lineHeight: 1.45 }}>{r.display_name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <input
+                    value={name} onChange={e => setName(e.target.value)}
+                    placeholder="เช่น เดอะแกรนด์ วิลล่า ขอนแก่น"
+                    style={{ width: '100%', height: 44, borderRadius: 12, padding: '0 34px 0 12px', boxSizing: 'border-box', border: '1px solid rgba(116,116,128,0.2)', background: 'rgba(116,116,128,0.03)', fontSize: 14, fontFamily: font, outline: 'none' }}
+                  />
+                  {geoLoading && <span style={{ position: 'absolute', right: 12, top: '50%', width: 14, height: 14, marginTop: -7, border: `2px solid ${PURPLE}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'svSpin 0.7s linear infinite' }} />}
                 </div>
-              </Field>
-              <Field label="ประเภทสถานที่" required>
-                <Select options={TYPES} value={type} onChange={setType} />
-              </Field>
-            </div>
+                {geoResults.length > 0 && (
+                  <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 20, background: 'white', borderRadius: 12, border: '1px solid rgba(13,10,44,0.1)', boxShadow: '0 12px 32px rgba(13,10,44,0.14)', overflow: 'hidden', maxHeight: 220, overflowY: 'auto' }}>
+                    {geoResults.map(r => (
+                      <div key={r.place_id} className="hover-btn" onClick={() => pickGeo(r)} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '9px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(13,10,44,0.05)' }}>
+                        <IconMapPin size={14} color={PURPLE} style={{ flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 12, color: BLACK, fontFamily: font, lineHeight: 1.45 }}>{r.display_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Field>
+            <Field label="ประเภทสถานที่" required>
+              <Select options={TYPES} value={type} onChange={setType} />
+            </Field>
             <Field label="ที่อยู่ + จังหวัด/อำเภอ/ตำบล" required>
               <TextInput value={address} onChange={e => setAddress(e.target.value)} placeholder="เลขที่ ถนน ตำบล อำเภอ จังหวัด" />
             </Field>
+          </FormSection>
 
-            <Field label="ปักหมุดตำแหน่งบนแผนที่" required hint="เลือกจากผลค้นหา · หรือคลิก/ลากหมุดบนแผนที่เพื่อปรับ">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  {pin ? (
-                    <>
-                      <span className="num" style={{ fontSize: 11.5, color: GRAY, fontFamily: font }}>{pin.lat}, {pin.lng}</span>
-                      <CopyBtn text={`${pin.lat}, ${pin.lng}`} label="copy พิกัด" />
-                    </>
-                  ) : (
-                    <span style={{ fontSize: 11.5, color: RED, fontFamily: font }}>ยังไม่ได้ปักหมุด</span>
-                  )}
-                </div>
-                <SVMap picker pin={pin} onPick={setPin} focus={pin} focusNonce={focusNonce} center={[102.836, 16.442]} zoom={12.5} height={230} radius={14} />
-              </div>
-            </Field>
-          </>
-        )}
-
-        {/* ── ขั้นที่ 2 · ผู้ติดต่อ ── */}
-        {step === 2 && (
-          <>
+          <FormSection icon={<IconAddressBook size={20} style={{ flexShrink: 0 }} />} title="ผู้ติดต่อ" desc="ข้อมูลติดต่อนิติบุคคล (ไม่บังคับ)">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="ผู้ติดต่อนิติบุคคล"><TextInput placeholder="ชื่อ (ไม่บังคับ)" /></Field>
               <Field label="เบอร์โทร"><TextInput placeholder="08x-xxx-xxxx (ไม่บังคับ)" /></Field>
             </div>
             <Field label="หมายเหตุ"><TextInput placeholder="(ไม่บังคับ)" /></Field>
-          </>
-        )}
-      </div>
+          </FormSection>
+        </div>
 
-      {/* ── footer ── */}
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', marginTop: 18 }}>
-        <button className="hover-btn" style={btnGhost} onClick={step === 1 ? onClose : goBack}>
-          {step === 1 ? 'ยกเลิก' : <><IconChevronLeft size={14} style={{ verticalAlign: '-2px' }} /> ย้อนกลับ</>}
-        </button>
-        {step < 2 ? (
-          <button className="hover-btn" style={{ ...btnPrimary, opacity: stepOk[step] ? 1 : 0.45 }} onClick={goNext}>
-            ถัดไป <IconChevronRight size={14} style={{ verticalAlign: '-2px' }} />
-          </button>
-        ) : (
-          <button className="hover-btn" style={{ ...btnPrimary, opacity: canSave ? 1 : 0.45, cursor: canSave ? 'pointer' : 'not-allowed' }} onClick={() => canSave && setSaved(true)}>บันทึกหมู่บ้าน</button>
-        )}
+        {/* ── ขวา: ตำแหน่งบนแผนที่ ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <FormSection icon={<IconMapPin size={20} style={{ flexShrink: 0 }} />} title="ตำแหน่งบนแผนที่" desc="เลือกจากผลค้นหา · หรือคลิก/ลากหมุดเพื่อปรับ">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              {pin ? (
+                <>
+                  <span className="num" style={{ fontSize: 12, color: GRAY, fontFamily: font }}>{pin.lat}, {pin.lng}</span>
+                  <CopyBtn text={`${pin.lat}, ${pin.lng}`} label="copy พิกัด" />
+                </>
+              ) : (
+                <span style={{ fontSize: 12, color: RED, fontFamily: font }}>ยังไม่ได้ปักหมุด</span>
+              )}
+            </div>
+            <SVMap picker pin={pin} onPick={setPin} focus={pin} focusNonce={focusNonce} center={[102.836, 16.442]} zoom={12.5} height={360} radius={14} />
+          </FormSection>
+        </div>
       </div>
-    </Modal>
+    </div>
   );
 }
 
@@ -223,6 +169,9 @@ export default function Villages({ onDrillVillage, onGoSection }) {
     };
   });
 
+  /* เพิ่มหมู่บ้าน = full page (แทน list) แบบหน้าวางแผนเยี่ยมบ้าน */
+  if (adding) return <div className="anim-slide-up"><AddVillageModal onClose={() => setAdding(false)} /></div>;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="anim-slide-up">
@@ -232,15 +181,8 @@ export default function Villages({ onDrillVillage, onGoSection }) {
       <div className="anim-slide-up delay-1" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <button className="hover-btn" style={btnPrimary} onClick={() => setAdding(true)}>+ เพิ่มหมู่บ้าน</button>
         <SearchBox value={q} onChange={setQ} placeholder="ค้นหาชื่อหมู่บ้าน / จังหวัด…" width={220} />
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="f-select" style={{ borderRadius: 100, fontFamily: font }}>
-          <option value="ทั้งหมด">ทุกประเภท</option>
-          {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="f-select" style={{ borderRadius: 100, fontFamily: font }}>
-          <option value="ทั้งหมด">ทุกสถานะ</option>
-          <option value="ใช้งาน">ใช้งาน</option>
-          <option value="ระงับ">ระงับ</option>
-        </select>
+        <FilterSelect value={typeFilter} onChange={setTypeFilter} options={[{ value: 'ทั้งหมด', label: 'ทุกประเภท' }, ...TYPES]} />
+        <FilterSelect value={statusFilter} onChange={setStatusFilter} options={[{ value: 'ทั้งหมด', label: 'ทุกสถานะ' }, 'ใช้งาน', 'ระงับ']} />
         <div className="seg" style={{ marginLeft: 'auto' }}>
           <button className={`seg-btn${view === 'table' ? ' active' : ''}`} onClick={() => setView('table')}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconList size={13} style={{ flexShrink: 0 }} /> ตาราง</span></button>
           <button className={`seg-btn${view === 'card' ? ' active' : ''}`} onClick={() => setView('card')}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconLayoutGrid size={13} style={{ flexShrink: 0 }} /> การ์ด</span></button>
@@ -263,7 +205,7 @@ export default function Villages({ onDrillVillage, onGoSection }) {
           <SVMap points={mapPoints} center={[100.9, 15.2]} zoom={5.0} height={520} radius={16} />
         </div>
       ) : view === 'table' ? (
-        <div className="anim-slide-up delay-2" style={{ ...card, padding: '8px 8px' }}>
+        <div className="anim-slide-up delay-2" style={{ ...card, padding: 0, overflow: 'hidden' }}>
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 860 }}>
               <THead cols={COLS} labels={['หมู่บ้าน', 'ประเภท', 'จังหวัด/อำเภอ', 'บ้าน', 'อุปกรณ์', 'รปภ.', 'เหตุ 30 วัน', 'สถานะ']} />
@@ -331,8 +273,6 @@ export default function Villages({ onDrillVillage, onGoSection }) {
           })}
         </div>
       )}
-
-      {adding && <AddVillageModal onClose={() => setAdding(false)} />}
     </div>
   );
 }

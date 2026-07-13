@@ -9,7 +9,7 @@ import {
 } from '../../data/smartVillage';
 import {
   font, BLACK, GRAY, GRAY2, GREEN, RED, ORANGE, BLUE,
-  card, PageHead, Pill, SearchBox, THead, TRow, LivePill, ElapsedSince, EmptyState,
+  card, PageHead, Pill, SearchBox, THead, TRow, LivePill, ElapsedSince, EmptyState, FilterSelect,
 } from './shared';
 
 const STATUS_TABS = ['ทั้งหมด', 'ใหม่', 'รับทราบแล้ว', 'ปิดแล้ว'];
@@ -62,10 +62,7 @@ export default function Alerts({ onDrillHouse, onGoSection }) {
 
       <div className="anim-slide-up delay-2" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <SearchBox value={q} onChange={setQ} placeholder="ค้นหาเลขเคส / บ้าน…" width={230} />
-        <select value={villageFilter} onChange={e => setVillageFilter(e.target.value)} className="f-select" style={{ borderRadius: 100, fontFamily: font }}>
-          <option value="ทั้งหมด">ทุกหมู่บ้าน</option>
-          {SV_VILLAGES.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-        </select>
+        <FilterSelect value={villageFilter} onChange={setVillageFilter} options={[{ value: 'ทั้งหมด', label: 'ทุกหมู่บ้าน' }, ...SV_VILLAGES.map(v => ({ value: v.id, label: v.name }))]} />
         <div className="seg">
           {STATUS_TABS.map(s => (
             <button key={s} className={`seg-btn${tab === s ? ' active' : ''}`} onClick={() => setTab(s)}>
@@ -75,8 +72,8 @@ export default function Alerts({ onDrillHouse, onGoSection }) {
         </div>
       </div>
 
-      <div className="anim-slide-up delay-3" style={{ ...card, padding: 8 }}>
-        {rows.length === 0 ? <EmptyState icon={<IconConfetti size={26} style={{ flexShrink: 0 }} />} title="ไม่มีเหตุการณ์ตามเงื่อนไข" sub="ลองปรับ filter" /> : (
+      <div className="anim-slide-up delay-3" style={{ ...card, padding: 0, overflow: 'hidden' }}>
+        {rows.length === 0 ? <div style={{ padding: 8 }}><EmptyState icon={<IconConfetti size={26} style={{ flexShrink: 0 }} />} title="ไม่มีเหตุการณ์ตามเงื่อนไข" sub="ลองปรับ filter" /></div> : (
           <div style={{ overflowX: 'auto' }}>
             <div style={{ minWidth: 960 }}>
               <THead cols={COLS} labels={['เลขเคส', 'เวลา', 'บ้าน · หมู่บ้าน', 'เหตุ', 'สถานะ', 'การจัดการ / ผล']} />
