@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="900" viewBox="0 0 880 900" font-family="'IBM Plex Sans Thai Looped','Noto Sans Thai','Segoe UI',sans-serif">
+  <defs>
+    <linearGradient id="hdr" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6658E1"/>
+      <stop offset="1" stop-color="#0088FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="880" height="900" fill="#F6F5FA"/>
+  <rect x="20" y="20" width="840" height="860" rx="24" fill="#FFFFFF"/>
+
+  <!-- header -->
+  <rect x="40" y="40" width="800" height="96" rx="20" fill="url(#hdr)"/>
+  <text x="68" y="84" font-size="21" font-weight="700" fill="#FFFFFF">Smart Village — Requirement Checklist</text>
+  <text x="68" y="112" font-size="13" fill="rgba(255,255,255,0.85)">สรุปความคืบหน้า Prototype · อัปเดต 13 ก.ค. 2026</text>
+
+  <!-- section: done -->
+  <text x="48" y="176" font-size="14" font-weight="700" fill="#1F9D4D">เสร็จแล้ว · 13 รายการ</text>
+
+  <g fill="none" stroke="#34C759" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="translate(60,200)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,236)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,272)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,308)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,344)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,380)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,416)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,452)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,488)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,524)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,560)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,596)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+    <g transform="translate(60,632)"><circle r="11" fill="rgba(52,199,89,0.12)" stroke="none"/><path d="M-4.5 0.5 L-1.5 3.5 L4.5 -3"/></g>
+  </g>
+
+  <g font-size="15" fill="#1E1B39">
+    <text x="84" y="205">รองรับเรดาร์ติดเพดาน (RT-W03) และอุปกรณ์ติดตัว (SOS) — แยกชนิดในระบบ</text>
+    <text x="84" y="241">ดูรายการอุปกรณ์รายหลัง — ชนิด, ห้องที่ติดตั้ง, สถานะ online, เห็นล่าสุด</text>
+    <text x="84" y="277">แจ้งเหตุล้มพร้อมพิกัด/ตำแหน่งบนแผนที่ (การ์ดเหตุการณ์ + map focus)</text>
+    <text x="84" y="313">ข้อมูลผู้อยู่อาศัยรายบ้าน + ระบุอุปกรณ์ติดตัวส่วนบุคคล</text>
+    <text x="84" y="349">เรดาร์ระบุระดับห้อง (สถานะ "มีคนในห้อง") — ไม่ระบุตัวบุคคลตามข้อจำกัดอุปกรณ์</text>
+    <text x="84" y="385">รปภ. เข้าผ่านจอมอนิเตอร์ แยก login จากระบบหลัก (Guard Portal)</text>
+    <text x="84" y="421">ทีมส่วนกลาง Atlas ดูผ่าน dashboard (role admin) — ภาพรวม / หมู่บ้าน / อุปกรณ์ / เหตุการณ์</text>
+    <text x="84" y="457">รปภ. เห็นเฉพาะหมู่บ้านตัวเอง · admin เห็นทุกหมู่บ้าน</text>
+    <text x="84" y="493">Visualize สัดส่วนชนิดติดตั้ง (เพดาน/ติดตัว) ต่อหมู่บ้าน</text>
+    <text x="84" y="529">ประวัติเหตุการณ์รายบ้าน (timeline)</text>
+    <text x="84" y="565">สถิติเหตุที่ปิดแล้ว แยกหมู่บ้าน แยกผลลัพธ์</text>
+    <text x="84" y="601">ฟอร์มเพิ่มหมู่บ้าน/เพิ่มอุปกรณ์แบบ full page + ค้นหาพิกัดอัตโนมัติจากชื่อ</text>
+    <text x="84" y="637">สถานะเชื่อมต่อ Family app ต่อบ้าน (เชื่อมแล้ว / รออนุมัติ / ยังไม่เชื่อม)</text>
+  </g>
+
+  <!-- divider -->
+  <line x1="48" y1="664" x2="832" y2="664" stroke="rgba(0,0,0,0.06)"/>
+
+  <!-- section: pending -->
+  <text x="48" y="700" font-size="14" font-weight="700" fill="#D06A1A">ยังไม่ทำ / รอของจริง · 3 รายการ</text>
+
+  <g fill="none" stroke="#E8802A" stroke-width="1.8" stroke-linecap="round">
+    <g transform="translate(60,724)"><circle r="11" fill="rgba(232,128,42,0.12)" stroke="none"/><circle r="6" /><path d="M0 -3.2 L0 0.4 L2.6 1.8"/></g>
+    <g transform="translate(60,760)"><circle r="11" fill="rgba(232,128,42,0.12)" stroke="none"/><circle r="6" /><path d="M0 -3.2 L0 0.4 L2.6 1.8"/></g>
+    <g transform="translate(60,796)"><circle r="11" fill="rgba(232,128,42,0.12)" stroke="none"/><circle r="6" /><path d="M0 -3.2 L0 0.4 L2.6 1.8"/></g>
+  </g>
+
+  <g font-size="15" fill="#1E1B39">
+    <text x="84" y="729">มุมมองแยกระดับชนิดอุปกรณ์สำหรับ admin (ทำแล้วถอดออกตามที่ตกลง — ใช้ visualize ในตารางแทน)</text>
+    <text x="84" y="765">เชื่อมข้อมูลจริงจากอุปกรณ์ — ตอนนี้เป็น mock data ทั้งหมด (prototype)</text>
+    <text x="84" y="801">SOS wearable ของจริง (spec ยังไม่ final ตาม requirement)</text>
+  </g>
+
+  <!-- footer -->
+  <line x1="48" y1="828" x2="832" y2="828" stroke="rgba(0,0,0,0.06)"/>
+  <text x="48" y="858" font-size="13" fill="#615E83">Demo: <tspan fill="#6658E1" font-weight="600">oommiemie.github.io/Atlas-Dashboard</tspan> · login <tspan font-weight="600">admin/admin</tspan> · จอ รปภ. <tspan font-weight="600">guard/guard</tspan></text>
+</svg>

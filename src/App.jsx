@@ -58,6 +58,9 @@ function App() {
 
   const [selectedPatient, setSelectedPatient] = useState(null)
 
+  /* nav ต้องพาออกจากหน้า drill-down เสมอ — ไม่งั้น PatientProfile ค้างทับหน้าใหม่ */
+  const goPage = (id) => { setSelectedPatient(null); setActivePage(id); }
+
   if (!user) return <Login onLogin={setUser} />;
   /* บัญชี รปภ. — เข้าจอเฝ้าระวังตรง ๆ (login เดียวกับ dashboard, ไม่มีหน้า login แยก) */
   if (user.role === 'guard') return <GuardMonitor standalone guardUsername={user.guardUsername} onExit={() => setUser(null)} />;
@@ -110,7 +113,7 @@ function App() {
                   <Fragment key={item.id}>
                   <button
                     className={`hover-nav${isActive && !isParent ? ' sidebar-nav-active' : ''}`}
-                    onClick={() => setActivePage(isParent ? item.children[0].id : item.target || item.id)}
+                    onClick={() => goPage(isParent ? item.children[0].id : item.target || item.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: 8, borderRadius: 100, border: 'none',
@@ -146,7 +149,7 @@ function App() {
                           <button
                             key={c.id}
                             className={`hover-nav${subActive ? ' sidebar-nav-active' : ''}`}
-                            onClick={() => setActivePage(c.id)}
+                            onClick={() => goPage(c.id)}
                             style={{
                               display: 'flex', alignItems: 'center', gap: 8,
                               padding: '6px 10px 6px 14px', borderRadius: 100, border: 'none',

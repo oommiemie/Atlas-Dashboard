@@ -165,7 +165,6 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
                 นิติบุคคล: {village.juristic.name} · {village.juristic.phone}
               </div>
             </div>
-            <button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('ตั้งค่า')}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 10 }}>
             {[
@@ -191,7 +190,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
       </div>
 
       {/* Tabs — seg pill เดียวกับ filter ทั้งระบบ */}
-      <div className="anim-slide-up delay-1" style={{ display: 'flex' }}>
+      <div className="anim-slide-up delay-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div className="seg">
           {['บ้าน', 'รปภ.', 'ตั้งค่า'].map(t => (
             <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
@@ -199,6 +198,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             </button>
           ))}
         </div>
+        <button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('ตั้งค่า')}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
       </div>
 
       {/* ── แท็บบ้าน ── */}

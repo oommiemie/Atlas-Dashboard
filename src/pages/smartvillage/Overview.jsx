@@ -40,7 +40,7 @@ function SvOutcomeCard({ d, idx, hoverIdx, setHoverIdx, total, onClick }) {
     <div
       onMouseEnter={() => setHoverIdx(idx)} onMouseLeave={() => setHoverIdx(null)} onClick={onClick}
       style={{
-        width: 128, position: 'relative', overflow: 'hidden',
+        minWidth: 150, position: 'relative', overflow: 'hidden',
         background: `linear-gradient(145deg, ${d.bg}, rgba(255,255,255,0.95))`,
         border: `1.5px solid ${isActive ? d.color : d.borderC}`,
         borderRadius: 18, padding: '12px 14px',
@@ -81,10 +81,8 @@ function SvOutcomeDonut({ data, onGoSection }) {
         ))}
       </div>
       {/* donut + cards */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {data[0] && <SvOutcomeCard d={data[0]} idx={0} hoverIdx={hoverIdx} setHoverIdx={setHoverIdx} total={total} onClick={() => onGoSection('sv-alerts')} />}
-          <div style={{ position: 'relative', width: 180, height: 180, flexShrink: 0 }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+          <div style={{ position: 'relative', width: 160, height: 160, flexShrink: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -106,14 +104,11 @@ function SvOutcomeDonut({ data, onGoSection }) {
               <span style={{ fontSize: 11, fontWeight: 500, fontFamily: font, marginTop: 6, color: active ? active.color : GRAY, transition: 'color 0.3s ease' }}>{active ? active.name : 'ทั้งหมด'}</span>
             </div>
           </div>
-          {data.length > 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {data.slice(1).map((d, idx) => (
-                <SvOutcomeCard key={idx + 1} d={d} idx={idx + 1} hoverIdx={hoverIdx} setHoverIdx={setHoverIdx} total={total} onClick={() => onGoSection('sv-alerts')} />
-              ))}
-            </div>
-          )}
-        </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+            {data.map((d, idx) => (
+              <SvOutcomeCard key={idx} d={d} idx={idx} hoverIdx={hoverIdx} setHoverIdx={setHoverIdx} total={total} onClick={() => onGoSection('sv-alerts')} />
+            ))}
+          </div>
       </div>
     </div>
   );
@@ -174,15 +169,18 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
   const attention = buildAttention();
   /* breakdown ต้องตามงานตามชนิด — สำหรับ pie */
   const ATT_META = {
-    offline: { label: 'อุปกรณ์ offline', color: ORANGE },
-    nocontact: { label: 'ไม่มีผู้ติดต่อ', color: RED },
-    noguard: { label: 'ไม่มีบัญชี รปภ.', color: PURPLE },
-    nofamily: { label: 'ยังไม่เชื่อม Family', color: '#0088FF' },
+    offline: { name: 'อุปกรณ์ offline', color: ORANGE, dark: '#D06A1A' },
+    nocontact: { name: 'ไม่มีผู้ติดต่อ', color: RED, dark: '#D0381A' },
+    noguard: { name: 'ไม่มีบัญชี รปภ.', color: PURPLE, dark: '#4C3FC4' },
+    nofamily: { name: 'ยังไม่เชื่อม Family', color: '#0088FF', dark: '#0068CC' },
   };
   const attBreakdown = Object.keys(ATT_META)
-    .map(k => ({ k, ...ATT_META[k], count: attention.filter(a => a.kind === k).length }))
+    .map(k => ({
+      k, ...ATT_META[k],
+      bg: `${ATT_META[k].color}14`, borderC: `${ATT_META[k].color}33`,
+      count: attention.filter(a => a.kind === k).length,
+    }))
     .filter(x => x.count > 0);
-  const attTotal = attention.length || 1;
   const totalDevices = SV_DEVICES.length;
   const online = SV_DEVICES.filter(d => d.online).length;
   const installedHouses = SV_HOUSES.filter(h => SV_DEVICES.some(d => d.houseId === h.id)).length;
@@ -350,7 +348,7 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
       </div>
 
       {/* ── ใต้แผนที่: รายละเอียด — ต้องตามงาน + เหตุการณ์ล่าสุด ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
         {/* ต้องตามงาน */}
         <div className="anim-slide-up delay-3" style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Hero banner — pattern เดียวกับหัว "ประวัติการเยี่ยมบ้าน" (PatientProfile) */}
@@ -379,26 +377,7 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
               <div style={{ fontSize: 12, color: GRAY2, fontFamily: font }}>ไม่มีรายการค้าง</div>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: 18, alignItems: 'center', flex: 1, minHeight: 0 }}>
-              <div style={{ width: 150, height: 150, flexShrink: 0 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={attBreakdown} dataKey="count" cx="50%" cy="50%" outerRadius={72} startAngle={90} endAngle={-270} strokeWidth={0} animationDuration={800}>
-                      {attBreakdown.map(b => <Cell key={b.k} fill={b.color} />)}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {attBreakdown.map(b => (
-                  <div key={b.k} className="hover-btn" onClick={() => onGoSection('sv-alerts')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: b.color, flexShrink: 0 }} />
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: BLACK, fontFamily: font, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label}</span>
-                    <span className="num" style={{ fontSize: 13, fontWeight: 700, color: GRAY, flexShrink: 0 }}>{b.count} <span style={{ color: GRAY2, fontWeight: 500 }}>({Math.round(b.count / attTotal * 100)}%)</span></span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SvOutcomeDonut data={attBreakdown} onGoSection={onGoSection} />
           )}
         </div>
 
