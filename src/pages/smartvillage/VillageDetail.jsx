@@ -8,9 +8,10 @@ import {
   card, btnPrimary, btnGhost, btnDanger, Pill, SearchBox, Modal, Field, TextInput, SVMap, THead, TRow, CopyBtn, EmptyState, OnlinePill, VizBar,
 } from './shared';
 import {
-  IconAlertTriangle, IconBuildingCommunity, IconPencil, IconHome, IconAntennaBars5,
-  IconCircleFilled, IconShield, IconUrgent, IconDoor, IconDeviceWatch,
+  IconAlertTriangle, IconBuildingCommunity, IconHome, IconAntennaBars5,
+  IconCircleFilled, IconShield, IconUrgent, IconDoor, IconDeviceWatch, IconMapPinPlus,
 } from '@tabler/icons-react';
+import imgHouseAdd from '../../assets/images/sv-house-add-3d.png';
 
 const genPassword = () => {
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -190,7 +191,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
       </div>
 
       {/* Tabs — seg pill เดียวกับ filter ทั้งระบบ */}
-      <div className="anim-slide-up delay-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <div className="anim-slide-up delay-1" style={{ display: 'flex' }}>
         <div className="seg">
           {['บ้าน', 'รปภ.', 'ตั้งค่า'].map(t => (
             <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
@@ -198,18 +199,23 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             </button>
           ))}
         </div>
-        <button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('ตั้งค่า')}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
       </div>
 
       {/* ── แท็บบ้าน ── */}
       {tab === 'บ้าน' && (
-        <div className="anim-tab-enter" style={{ ...card, padding: 12 }}>
+        <div className="anim-tab-enter" style={{ ...card, padding: 12, position: 'relative', overflow: 'visible' }}>
+          {/* house 3d — ครึ่งบนโผล่ ครึ่งล่างจมหลัง table (Figma 412-2135) */}
+          <img src={imgHouseAdd} alt="" className="sv-house-float" style={{ position: 'absolute', right: 8, top: -26, width: 148, height: 148, objectFit: 'contain', pointerEvents: 'none', zIndex: 1, filter: 'drop-shadow(0 8px 14px rgba(30,27,57,0.18))' }} />
+          {/* speech-bubble ปุ่มเพิ่มบ้าน — ชี้ออกจาก house */}
+          <button className="hover-btn" style={{ ...btnPrimary, position: 'absolute', right: 150, top: 6, zIndex: 4, display: 'inline-flex', alignItems: 'center', gap: 7 }} onClick={() => setModal('house')}>
+            เพิ่มบ้าน <IconMapPinPlus size={16} style={{ flexShrink: 0 }} />
+            <span style={{ position: 'absolute', right: -5, top: '50%', width: 13, height: 13, background: '#8B5CF6', borderRadius: 3, transform: 'translateY(-50%) rotate(45deg)', zIndex: -1 }} />
+          </button>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '4px 4px 12px', flexWrap: 'wrap' }}>
             <SearchBox value={q} onChange={setQ} placeholder="ค้นหาบ้านเลขที่ / ชื่อเรียก…" width={240} />
-            <button className="hover-btn" style={{ ...btnPrimary, marginLeft: 'auto' }} onClick={() => setModal('house')}>+ เพิ่มบ้าน</button>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: 820, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto', position: 'relative', zIndex: 2 }}>
+            <div style={{ minWidth: 820, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden', background: 'white' }}>
               <THead cols={HCOLS} labels={['บ้านเลขที่', 'ชื่อเรียก', 'คนในบ้าน', 'อุปกรณ์', 'ชนิดติดตั้ง', 'สถานะเชื่อม Family', 'เหตุล่าสุด']} />
               {houseRows.map(h => {
                 const devs = devicesOfHouse(h.id);
