@@ -248,7 +248,7 @@ function StatIcon({ type }) {
 /* ── Home Visit History Data ── */
 const homeVisitData = [
   { month: 'มีนาคม 69', visits: [
-    { day: 25, monthShort: 'มี.ค', time: '10:30 น.', visitor: 'พว.สุภาพร วงศ์สว่าง', type: 'เยี่ยมตามนัด', tags: ['Barthel Index', 'ADL', 'Cardiac Rehab'],
+    { day: 25, monthShort: 'มี.ค', time: '10:30 น.', visitor: 'พว.สุภาพร ทดสอบ57', type: 'เยี่ยมตามนัด', tags: ['Barthel Index', 'ADL', 'Cardiac Rehab'],
       detail: {
         hn: 'HN-650001', datetime: '25 มีนาคม 2569 - 10:30 น.',
         mission: 'ติดตามการฟื้นฟูสมรรถภาพหัวใจ (Cardiac Rehabilitation Phase III) ประเมินความสามารถในการออกกำลังกาย ติดตามการรับประทานยาต้านเกล็ดเลือดคู่ (DAPT) และควบคุมปัจจัยเสี่ยง ได้แก่ ความดันโลหิต ไขมันในเลือด ระดับน้ำตาล และส่งเสริมการเลิกบุหรี่',
@@ -272,7 +272,7 @@ const homeVisitData = [
         ],
       },
     },
-    { day: 5, monthShort: 'มี.ค', time: '09:00 น.', visitor: 'พว.สุภาพร วงศ์สว่าง', type: 'เยี่ยมตามนัด', tags: ['Barthel Index', 'Wound Care'],
+    { day: 5, monthShort: 'มี.ค', time: '09:00 น.', visitor: 'พว.สุภาพร ทดสอบ57', type: 'เยี่ยมตามนัด', tags: ['Barthel Index', 'Wound Care'],
       detail: {
         hn: 'HN-650001', datetime: '5 มีนาคม 2569 - 09:00 น.',
         mission: 'ติดตามอาการหลัง PCI สัปดาห์ที่ 2 ประเมินแผล catheter site ติดตามภาวะโลหิตจางจากยาต้านเกล็ดเลือด และเริ่มโปรแกรมฟื้นฟูหัวใจระยะที่ 2',
@@ -298,7 +298,7 @@ const homeVisitData = [
     },
   ]},
   { month: 'กุมภาพันธ์ 69', visits: [
-    { day: 26, monthShort: 'ก.พ', time: '14:00 น.', visitor: 'พว.สุภาพร วงศ์สว่าง', type: 'เยี่ยมหลัง D/C', tags: ['Post-Discharge', 'Med Reconciliation'],
+    { day: 26, monthShort: 'ก.พ', time: '14:00 น.', visitor: 'พว.สุภาพร ทดสอบ57', type: 'เยี่ยมหลัง D/C', tags: ['Post-Discharge', 'Med Reconciliation'],
       detail: {
         hn: 'HN-650001', datetime: '26 กุมภาพันธ์ 2569 - 14:00 น.',
         mission: 'เยี่ยมบ้านภายใน 48 ชม. หลังจำหน่ายจากโรงพยาบาล (D/C 25/02/69) ตรวจสอบความเข้าใจเรื่องยาต้านเกล็ดเลือดคู่ ประเมินความพร้อมของบ้านสำหรับผู้ป่วยโรคหัวใจ และวางแผน Cardiac Rehab ระยะที่ 2',
@@ -322,7 +322,7 @@ const homeVisitData = [
         ],
       },
     },
-    { day: 10, monthShort: 'ก.พ', time: '10:00 น.', visitor: 'พว.กานต์ธิดา เจริญพร', type: 'เยี่ยมก่อน Admit', tags: ['Pre-Admission Assessment'],
+    { day: 10, monthShort: 'ก.พ', time: '10:00 น.', visitor: 'พว.กานต์ธิดา ทดสอบ58', type: 'เยี่ยมก่อน Admit', tags: ['Pre-Admission Assessment'],
       detail: {
         hn: 'HN-650001', datetime: '10 กุมภาพันธ์ 2569 - 10:00 น.',
         mission: 'ประเมินอาการเจ็บหน้าอกที่มีมากขึ้น เตรียมส่งต่อโรงพยาบาลเพื่อตรวจวินิจฉัยเพิ่มเติม',
@@ -348,7 +348,7 @@ const homeVisitData = [
     },
   ]},
   { month: 'มกราคม 69', visits: [
-    { day: 15, monthShort: 'ม.ค', time: '09:30 น.', visitor: 'พว.กานต์ธิดา เจริญพร', type: 'เยี่ยมตามนัด', tags: ['Chronic Disease', 'NCD Screening'],
+    { day: 15, monthShort: 'ม.ค', time: '09:30 น.', visitor: 'พว.กานต์ธิดา ทดสอบ58', type: 'เยี่ยมตามนัด', tags: ['Chronic Disease', 'NCD Screening'],
       detail: {
         hn: 'HN-650001', datetime: '15 มกราคม 2569 - 09:30 น.',
         mission: 'เยี่ยมติดตามโรคเรื้อรัง (DM, HT, Dyslipidemia) ตามโปรแกรม NCD Clinic ประเมินการควบคุมโรค ติดตามการรับประทานยา และคัดกรองภาวะแทรกซ้อน',
@@ -383,33 +383,33 @@ const NOTE_ICONS = {
 /* ── Assessment History Data ── */
 const assessmentData = [
   { month: 'เมษายน 69', items: [
-    { day: 18, monthShort: 'เม.ย', title: 'แบบประเมิน Barthel Index Score', assessor: 'พว.สุภาพร วงศ์สว่าง', status: 'รอประเมิน', img: imgAssessBarthel,
+    { day: 18, monthShort: 'เม.ย', title: 'แบบประเมิน Barthel Index Score', assessor: 'พว.สุภาพร ทดสอบ57', status: 'รอประเมิน', img: imgAssessBarthel,
       score: null, result: null, gradient: null, datetime: '18 เมษายน 2569 (นัดหมาย)' },
-    { day: 18, monthShort: 'เม.ย', title: 'แบบประเมินเกณฑ์การให้คะแนนภาวะหายใจลำบาก', assessor: 'พว.สุภาพร วงศ์สว่าง', status: 'รอประเมิน', img: imgAssessDyspnea,
+    { day: 18, monthShort: 'เม.ย', title: 'แบบประเมินเกณฑ์การให้คะแนนภาวะหายใจลำบาก', assessor: 'พว.สุภาพร ทดสอบ57', status: 'รอประเมิน', img: imgAssessDyspnea,
       score: null, result: null, gradient: null, datetime: '18 เมษายน 2569 (นัดหมาย)' },
   ]},
   { month: 'มีนาคม 69', items: [
-    { day: 25, monthShort: 'มี.ค', title: 'แบบประเมิน Barthel Index Score', assessor: 'พว.สุภาพร วงศ์สว่าง', status: 'ประเมินแล้ว', img: imgAssessBarthel,
+    { day: 25, monthShort: 'มี.ค', title: 'แบบประเมิน Barthel Index Score', assessor: 'พว.สุภาพร ทดสอบ57', status: 'ประเมินแล้ว', img: imgAssessBarthel,
       score: 20, result: 'ไม่พิการ ทำกิจวัตรประจำวันได้เอง', gradient: 'linear-gradient(160deg, #34D65D, #21AB44)', datetime: '25 มีนาคม 2569 เวลา 10:30 น.' },
-    { day: 25, monthShort: 'มี.ค', title: 'แบบประเมินเกณฑ์การให้คะแนนภาวะหายใจลำบาก', assessor: 'พว.สุภาพร วงศ์สว่าง', status: 'ประเมินแล้ว', img: imgAssessDyspnea,
+    { day: 25, monthShort: 'มี.ค', title: 'แบบประเมินเกณฑ์การให้คะแนนภาวะหายใจลำบาก', assessor: 'พว.สุภาพร ทดสอบ57', status: 'ประเมินแล้ว', img: imgAssessDyspnea,
       score: 1, result: 'เหนื่อยเฉพาะออกกำลังกายหนัก (mMRC Grade 1)', gradient: 'linear-gradient(160deg, #34D65D, #21AB44)', datetime: '25 มีนาคม 2569 เวลา 10:30 น.' },
-    { day: 5, monthShort: 'มี.ค', title: 'แบบประเมินกิจวัตรประจำวัน ADL', assessor: 'พว.สุภาพร วงศ์สว่าง', status: 'ประเมินแล้ว', img: imgAssessAdl,
+    { day: 5, monthShort: 'มี.ค', title: 'แบบประเมินกิจวัตรประจำวัน ADL', assessor: 'พว.สุภาพร ทดสอบ57', status: 'ประเมินแล้ว', img: imgAssessAdl,
       score: 18, result: 'พึ่งพาเล็กน้อย ต้องช่วยเรื่องขึ้นบันได', gradient: 'linear-gradient(160deg, #34D65D, #21AB44)', datetime: '5 มีนาคม 2569 เวลา 09:00 น.' },
   ]},
   { month: 'กุมภาพันธ์ 69', items: [
-    { day: 26, monthShort: 'ก.พ', title: 'แบบประเมินกิจวัตรประจำวัน ADL', assessor: 'พว.สุภาพร วงศ์สว่าง', status: 'ประเมินแล้ว', img: imgAssessAdl,
+    { day: 26, monthShort: 'ก.พ', title: 'แบบประเมินกิจวัตรประจำวัน ADL', assessor: 'พว.สุภาพร ทดสอบ57', status: 'ประเมินแล้ว', img: imgAssessAdl,
       score: 14, result: 'พึ่งพาปานกลาง ต้องช่วยเรื่องอาบน้ำ/เดินไกล', gradient: 'linear-gradient(160deg, #E8802A, #D06A1A)', datetime: '26 กุมภาพันธ์ 2569 เวลา 14:00 น.' },
-    { day: 26, monthShort: 'ก.พ', title: 'แบบประเมินการควบคุมโรคหืด', assessor: 'พว.สุภาพร วงศ์สว่าง', status: 'รอประเมิน', img: imgAssessAsthma,
+    { day: 26, monthShort: 'ก.พ', title: 'แบบประเมินการควบคุมโรคหืด', assessor: 'พว.สุภาพร ทดสอบ57', status: 'รอประเมิน', img: imgAssessAsthma,
       score: null, result: null, gradient: null, datetime: '26 กุมภาพันธ์ 2569 (ยกเลิก — ผู้ป่วยยังอ่อนเพลียหลัง D/C)' },
-    { day: 10, monthShort: 'ก.พ', title: 'แบบคัดกรองภาวะเสี่ยงสำหรับผู้ที่มีอายุ 35 ปีขึ้นไป', assessor: 'พว.กานต์ธิดา เจริญพร', status: 'ประเมินแล้ว', img: imgAssessRisk35,
+    { day: 10, monthShort: 'ก.พ', title: 'แบบคัดกรองภาวะเสี่ยงสำหรับผู้ที่มีอายุ 35 ปีขึ้นไป', assessor: 'พว.กานต์ธิดา ทดสอบ58', status: 'ประเมินแล้ว', img: imgAssessRisk35,
       score: 8, result: 'เสี่ยงสูง (DM+HT+สูบบุหรี่+FHx)', gradient: 'linear-gradient(160deg, #FF383C, #CC2D30)', datetime: '10 กุมภาพันธ์ 2569 เวลา 10:00 น.' },
-    { day: 10, monthShort: 'ก.พ', title: 'แบบประเมินเกณฑ์การให้คะแนนภาวะหายใจลำบาก', assessor: 'พว.กานต์ธิดา เจริญพร', status: 'ประเมินแล้ว', img: imgAssessDyspnea,
+    { day: 10, monthShort: 'ก.พ', title: 'แบบประเมินเกณฑ์การให้คะแนนภาวะหายใจลำบาก', assessor: 'พว.กานต์ธิดา ทดสอบ58', status: 'ประเมินแล้ว', img: imgAssessDyspnea,
       score: 2, result: 'เหนื่อยเมื่อเดินเร็วหรือขึ้นทางชัน (mMRC Grade 2)', gradient: 'linear-gradient(160deg, #E8802A, #D06A1A)', datetime: '10 กุมภาพันธ์ 2569 เวลา 10:00 น.' },
   ]},
   { month: 'มกราคม 69', items: [
-    { day: 15, monthShort: 'ม.ค', title: 'แบบประเมิน Barthel Index Score', assessor: 'พว.กานต์ธิดา เจริญพร', status: 'ประเมินแล้ว', img: imgAssessBarthel,
+    { day: 15, monthShort: 'ม.ค', title: 'แบบประเมิน Barthel Index Score', assessor: 'พว.กานต์ธิดา ทดสอบ58', status: 'ประเมินแล้ว', img: imgAssessBarthel,
       score: 20, result: 'ไม่พิการ', gradient: 'linear-gradient(160deg, #34D65D, #21AB44)', datetime: '15 มกราคม 2569 เวลา 09:30 น.' },
-    { day: 15, monthShort: 'ม.ค', title: 'แบบประเมินการควบคุมโรคหืด', assessor: 'พว.กานต์ธิดา เจริญพร', status: 'ประเมินแล้ว', img: imgAssessAsthma,
+    { day: 15, monthShort: 'ม.ค', title: 'แบบประเมินการควบคุมโรคหืด', assessor: 'พว.กานต์ธิดา ทดสอบ58', status: 'ประเมินแล้ว', img: imgAssessAsthma,
       score: 23, result: 'ควบคุมได้ดี ไม่มีอาการหอบ', gradient: 'linear-gradient(160deg, #34D65D, #21AB44)', datetime: '15 มกราคม 2569 เวลา 09:30 น.' },
   ]},
 ];
@@ -425,7 +425,7 @@ const MED_STATUS_ICON = { check: iconMedCheck, x: iconMedX, wait: iconMedHourgla
 
 const prescriptionData = [
   { month: 'มีนาคม 69', items: [
-    { day: 25, monthShort: 'มี.ค', vn: 'VN:690325-001', serviceDate: '25 มี.ค. 2569', sendDate: '25 มี.ค. 2569', sender: 'พว.สุภาพร วงศ์สว่าง',
+    { day: 25, monthShort: 'มี.ค', vn: 'VN:690325-001', serviceDate: '25 มี.ค. 2569', sendDate: '25 มี.ค. 2569', sender: 'พว.สุภาพร ทดสอบ57',
       meds: 'Clopidogrel 75 mg bid, Atorvastatin 40 mg od, Aspirin 81 mg od, Omeprazole 20 mg bid, Spironolactone 25 mg od, Ferrous Fumarate 200 mg tid',
       medList: [
         { name: 'Clopidogrel 75 mg', qty: 60, dose: 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง', schedule: [{ s: 'check' }, { s: 'x' }, null, null] },
@@ -435,7 +435,7 @@ const prescriptionData = [
         { name: 'Spironolactone 25 mg', qty: 30, dose: 'รับประทานครั้งละ 1 เม็ด หลังอาหารเช้า', schedule: [{ s: 'check' }, null, null, null] },
         { name: 'Ferrous Fumarate 200 mg', qty: 90, dose: 'รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร', schedule: [{ s: 'check' }, { s: 'check' }, { s: 'wait' }, null] },
       ] },
-    { day: 5, monthShort: 'มี.ค', vn: 'VN:690305-001', serviceDate: '5 มี.ค. 2569', sendDate: '5 มี.ค. 2569', sender: 'พว.สุภาพร วงศ์สว่าง',
+    { day: 5, monthShort: 'มี.ค', vn: 'VN:690305-001', serviceDate: '5 มี.ค. 2569', sendDate: '5 มี.ค. 2569', sender: 'พว.สุภาพร ทดสอบ57',
       meds: 'Clopidogrel 75 mg bid, Atorvastatin 40 mg od, Aspirin 81 mg od, Omeprazole 20 mg bid, Spironolactone 25 mg od, Ferrous Fumarate 200 mg tid, Isosorbide SL 5 mg prn',
       medList: [
         { name: 'Clopidogrel 75 mg', qty: 60, dose: 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง', schedule: [{ s: 'check' }, { s: 'check' }, null, null] },
@@ -446,7 +446,7 @@ const prescriptionData = [
       ] },
   ]},
   { month: 'กุมภาพันธ์ 69', items: [
-    { day: 26, monthShort: 'ก.พ', vn: 'VN:690226-001', serviceDate: '25 ก.พ. 2569 (D/C)', sendDate: '26 ก.พ. 2569', sender: 'ภก.ธนพล ศรีสมบูรณ์',
+    { day: 26, monthShort: 'ก.พ', vn: 'VN:690226-001', serviceDate: '25 ก.พ. 2569 (D/C)', sendDate: '26 ก.พ. 2569', sender: 'ภก.ธนพล ทดสอบ56',
       meds: 'Clopidogrel 75 mg bid, Aspirin 81 mg od, Atorvastatin 40 mg od, Omeprazole 20 mg bid, Spironolactone 25 mg od, Ferrous Fumarate 200 mg tid, Isosorbide SL 5 mg prn',
       medList: [
         { name: 'Clopidogrel 75 mg', qty: 60, dose: 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง', schedule: [{ s: 'check' }, { s: 'check' }, null, null] },
@@ -455,14 +455,14 @@ const prescriptionData = [
       ] },
   ]},
   { month: 'มกราคม 69', items: [
-    { day: 15, monthShort: 'ม.ค', vn: 'VN:690115-001', serviceDate: '15 ม.ค. 2569', sendDate: '15 ม.ค. 2569', sender: 'ภก.ธนพล ศรีสมบูรณ์',
+    { day: 15, monthShort: 'ม.ค', vn: 'VN:690115-001', serviceDate: '15 ม.ค. 2569', sendDate: '15 ม.ค. 2569', sender: 'ภก.ธนพล ทดสอบ56',
       meds: 'Metformin 500 mg bid, Amlodipine 5 mg od, Simvastatin 20 mg od',
       medList: [
         { name: 'Metformin 500 mg', qty: 60, dose: 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง หลังอาหาร', schedule: [{ s: 'check' }, null, { s: 'check' }, null] },
         { name: 'Amlodipine 5 mg', qty: 30, dose: 'รับประทานครั้งละ 1 เม็ด เช้า', schedule: [{ s: 'check' }, null, null, null] },
         { name: 'Simvastatin 20 mg', qty: 30, dose: 'รับประทานครั้งละ 1 เม็ด ก่อนนอน', schedule: [null, null, null, { s: 'check' }] },
       ] },
-    { day: 2, monthShort: 'ม.ค', vn: 'VN:690102-001', serviceDate: '2 ม.ค. 2569', sendDate: '3 ม.ค. 2569', sender: 'ภก.ธนพล ศรีสมบูรณ์',
+    { day: 2, monthShort: 'ม.ค', vn: 'VN:690102-001', serviceDate: '2 ม.ค. 2569', sendDate: '3 ม.ค. 2569', sender: 'ภก.ธนพล ทดสอบ56',
       meds: 'Metformin 500 mg bid, Amlodipine 5 mg od, Simvastatin 20 mg od, Paracetamol 500 mg prn',
       medList: [
         { name: 'Metformin 500 mg', qty: 60, dose: 'รับประทานครั้งละ 1 เม็ด วันละ 2 ครั้ง หลังอาหาร', schedule: [{ s: 'check' }, null, { s: 'x' }, null] },

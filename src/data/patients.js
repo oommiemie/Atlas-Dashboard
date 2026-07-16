@@ -17,16 +17,16 @@ export const PATIENTS = [
 
 // Medication delivery jobs - uses patients from PATIENTS array
 export const MED_JOBS = [
-  { id: 'JOB001', rx: 'RX20260402001', hn: 'HN001234', assignee: 'สมหญิง รักษ์ชุมชน', status: 'ส่งสำเร็จ', date: '2026-03-27' },
-  { id: 'JOB002', rx: 'RX20260402002', hn: 'HN001235', assignee: 'สมหญิง รักษ์ชุมชน', status: 'กำลังนำส่ง', date: '2026-03-27' },
-  { id: 'JOB003', rx: 'RX20260402003', hn: 'HN001236', assignee: 'สมหญิง รักษ์ชุมชน', status: 'ส่งไม่สำเร็จ', date: '2026-03-27' },
-  { id: 'JOB004', rx: 'RX20260402004', hn: 'HN001237', assignee: 'วิชัย พงษ์สุวรรณ', status: 'รอแพ็กยา', date: '2026-03-27' },
-  { id: 'JOB005', rx: 'RX20260402005', hn: 'HN001238', assignee: 'วิชัย พงษ์สุวรรณ', status: 'รับงานแล้ว', date: '2026-03-27' },
-  { id: 'JOB006', rx: 'RX20260402006', hn: 'HN001239', assignee: 'สมหญิง รักษ์ชุมชน', status: 'พร้อมรับยา', date: '2026-03-27' },
-  { id: 'JOB007', rx: 'RX20260402007', hn: 'HN001240', assignee: 'วิชัย พงษ์สุวรรณ', status: 'รอ Telepharmacy', date: '2026-03-27' },
-  { id: 'JOB008', rx: 'RX20260402008', hn: 'HN001241', assignee: 'สมหญิง รักษ์ชุมชน', status: 'รับยาแล้ว', date: '2026-03-27' },
-  { id: 'JOB009', rx: 'RX20260402009', hn: 'HN001242', assignee: 'วิชัย พงษ์สุวรรณ', status: 'ส่งสำเร็จ', date: '2026-03-27' },
-  { id: 'JOB010', rx: 'RX20260402010', hn: 'HN001243', assignee: 'สมหญิง รักษ์ชุมชน', status: 'ส่งสำเร็จ', date: '2026-03-27' },
+  { id: 'JOB001', rx: 'RX20260402001', hn: 'HN001234', assignee: 'สมหญิง ทดสอบ49', status: 'ส่งสำเร็จ', date: '2026-03-27' },
+  { id: 'JOB002', rx: 'RX20260402002', hn: 'HN001235', assignee: 'สมหญิง ทดสอบ49', status: 'กำลังนำส่ง', date: '2026-03-27' },
+  { id: 'JOB003', rx: 'RX20260402003', hn: 'HN001236', assignee: 'สมหญิง ทดสอบ49', status: 'ส่งไม่สำเร็จ', date: '2026-03-27' },
+  { id: 'JOB004', rx: 'RX20260402004', hn: 'HN001237', assignee: 'วิชัย ทดสอบ50', status: 'รอแพ็กยา', date: '2026-03-27' },
+  { id: 'JOB005', rx: 'RX20260402005', hn: 'HN001238', assignee: 'วิชัย ทดสอบ50', status: 'รับงานแล้ว', date: '2026-03-27' },
+  { id: 'JOB006', rx: 'RX20260402006', hn: 'HN001239', assignee: 'สมหญิง ทดสอบ49', status: 'พร้อมรับยา', date: '2026-03-27' },
+  { id: 'JOB007', rx: 'RX20260402007', hn: 'HN001240', assignee: 'วิชัย ทดสอบ50', status: 'รอ Telepharmacy', date: '2026-03-27' },
+  { id: 'JOB008', rx: 'RX20260402008', hn: 'HN001241', assignee: 'สมหญิง ทดสอบ49', status: 'รับยาแล้ว', date: '2026-03-27' },
+  { id: 'JOB009', rx: 'RX20260402009', hn: 'HN001242', assignee: 'วิชัย ทดสอบ50', status: 'ส่งสำเร็จ', date: '2026-03-27' },
+  { id: 'JOB010', rx: 'RX20260402010', hn: 'HN001243', assignee: 'สมหญิง ทดสอบ49', status: 'ส่งสำเร็จ', date: '2026-03-27' },
 ];
 
 // Telepharmacy items

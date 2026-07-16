@@ -26,7 +26,7 @@ const SEED_CONVERSATIONS = [
     lastMessage: 'พรุ่งนี้สะดวกให้เข้าเยี่ยมช่วงบ่ายครับ', time: 'เมื่อวาน', unread: 1, online: true,
   },
   {
-    id: 'juristic-grand', name: 'นิติบุคคล เดอะแกรนด์ วิลล่า', sub: 'คุณอรทัย แสงมณี',
+    id: 'juristic-grand', name: 'นิติบุคคล เดอะแกรนด์ วิลล่า', sub: 'คุณอรทัย ทดสอบ64',
     lastMessage: 'รับทราบค่ะ จะแจ้ง รปภ. ให้ทราบ', time: 'เมื่อวาน', unread: 0, online: false,
   },
 ];

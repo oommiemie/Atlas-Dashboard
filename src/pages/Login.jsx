@@ -3,9 +3,9 @@ import { useState } from 'react';
 const font = "'IBM Plex Sans Thai Looped', sans-serif";
 
 const ACCOUNTS = [
-  { username: 'admin', password: 'admin', role: 'admin', name: 'สมชาย ใจดี', title: 'ผู้ดูแลระบบ', hospital: null },
+  { username: 'admin', password: 'admin', role: 'admin', name: 'สมชาย ทดสอบ51', title: 'ผู้ดูแลระบบ', hospital: null },
   { username: 'hospital', password: 'hospital', role: 'hospital', name: 'โรงพยาบาลขอนแก่น', title: 'รพ.ศูนย์ขอนแก่น', hospital: 'ขอนแก่น' },
-  { username: 'guard', password: 'guard', role: 'guard', name: 'สมศักดิ์ เข้มแข็ง', title: 'รปภ. หมู่บ้าน', guardUsername: 'vlg001-somsak' },
+  { username: 'guard', password: 'guard', role: 'guard', name: 'สมศักดิ์ ทดสอบ59', title: 'รปภ. หมู่บ้าน', guardUsername: 'vlg001-somsak' },
 ];
 
 const ROLE_LABEL = { admin: 'Admin', hospital: 'Hospital', guard: 'รปภ.' };

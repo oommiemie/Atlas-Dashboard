@@ -9,7 +9,7 @@ export const SV_VILLAGES = [
     name: 'เดอะแกรนด์ วิลล่า ขอนแก่น', type: 'หมู่บ้านจัดสรร',
     province: 'ขอนแก่น', district: 'เมืองขอนแก่น', address: '199 ถ.มิตรภาพ ต.ในเมือง',
     lat: 16.4419, lng: 102.8360, guardPost: { lat: 16.4404, lng: 102.8357 },
-    juristic: { name: 'คุณอรทัย แสงมณี (นิติบุคคล)', phone: '084-221-8890' },
+    juristic: { name: 'คุณอรทัย ทดสอบ64 (นิติบุคคล)', phone: '084-221-8890' },
     status: 'ใช้งาน', note: 'โครงการนำร่อง เฟส 1',
   },
   {
@@ -17,7 +17,7 @@ export const SV_VILLAGES = [
     name: 'ศุภฤกษ์ การ์เด้นโฮม', type: 'หมู่บ้านจัดสรร',
     province: 'นนทบุรี', district: 'บางบัวทอง', address: '88/8 ถ.บางกรวย-ไทรน้อย',
     lat: 13.9173, lng: 100.4243, guardPost: { lat: 13.9161, lng: 100.4240 },
-    juristic: { name: 'คุณธนกร พูลสวัสดิ์', phone: '081-334-7712' },
+    juristic: { name: 'คุณธนกร ทดสอบ65', phone: '081-334-7712' },
     status: 'ใช้งาน', note: '',
   },
   {
@@ -25,7 +25,7 @@ export const SV_VILLAGES = [
     name: 'เดอะริเวอร์ เรสซิเดนซ์', type: 'คอนโด/อาคาร',
     province: 'เชียงใหม่', district: 'เมืองเชียงใหม่', address: '45 ถ.เจริญประเทศ ต.ช้างคลาน',
     lat: 18.7756, lng: 98.9986, guardPost: { lat: 18.7749, lng: 98.9980 },
-    juristic: { name: 'คุณพิมพ์ลดา วงศ์คำ', phone: '086-990-1123' },
+    juristic: { name: 'คุณพิมพ์ลดา ทดสอบ66', phone: '086-990-1123' },
     status: 'ใช้งาน', note: 'ติดตั้งเฉพาะชั้นผู้สูงอายุ (ชั้น 3)',
   },
   {
@@ -33,7 +33,7 @@ export const SV_VILLAGES = [
     name: 'ชุมชนบ้านหนองใหญ่', type: 'ชุมชน',
     province: 'ขอนแก่น', district: 'น้ำพอง', address: 'หมู่ 4 ต.หนองใหญ่',
     lat: 16.7062, lng: 102.8452, guardPost: { lat: 16.7050, lng: 102.8448 },
-    juristic: { name: 'ผู้ใหญ่บ้าน สมพงษ์ ทองดี', phone: '087-445-2201' },
+    juristic: { name: 'ผู้ใหญ่บ้าน สมพงษ์ ทดสอบ67', phone: '087-445-2201' },
     status: 'ใช้งาน', note: 'โครงการร่วมกับ อบต. — ยังไม่มีบัญชี รปภ.',
   },
   {
@@ -41,7 +41,7 @@ export const SV_VILLAGES = [
     name: 'พาราไดซ์ ฮิลล์ พัทยา', type: 'หมู่บ้านจัดสรร',
     province: 'ชลบุรี', district: 'บางละมุง', address: '311 ม.5 ถ.พัทยาเหนือ',
     lat: 12.9581, lng: 100.8930, guardPost: { lat: 12.9570, lng: 100.8926 },
-    juristic: { name: 'คุณวีระ ชัยมงคล', phone: '089-112-8845' },
+    juristic: { name: 'คุณวีระ ทดสอบ68', phone: '089-112-8845' },
     status: 'ระงับ', note: 'พักบริการชั่วคราว — รอต่อสัญญา',
   },
 ];
@@ -112,7 +112,7 @@ export const SV_HOUSES = [
     houseCode: 'ATLS-2H7N-4QF9',
     residents: [],
     contacts: [
-      { id: 'c-7', name: 'สายใจ มีสุข', relation: 'เจ้าของบ้าน', phone: '081-777-8899', note: '' },
+      { id: 'c-7', name: 'สายใจ ทดสอบ69', relation: 'เจ้าของบ้าน', phone: '081-777-8899', note: '' },
     ],
     familyLinks: [
       { id: 'fl-5', groupName: 'ครอบครัวทดสอบ***', members: 2, status: 'เชื่อมแล้ว', source: 'ลูกบ้านเชื่อมเอง', date: '28 มิ.ย. 2569' },
@@ -165,7 +165,7 @@ export const SV_HOUSES = [
     id: 'h-301', villageId: 'vlg-003', no: '304', nickname: 'ห้องคุณยายบัวคำ',
     lat: 18.7758, lng: 98.9989, note: 'ชั้น 3 ปีกตะวันออก', houseCode: 'ATLS-3T8Q-2GK5',
     residents: [{ id: 'r-11', name: 'บัวคำ ทดสอบ19', age: 86, gender: 'หญิง', note: 'ติดเตียงบางช่วง มีผู้ดูแลมาเช้า-เย็น', wearable: false }],
-    contacts: [{ id: 'c-12', name: 'พิมพ์ลดา วงศ์คำ', relation: 'หลาน', phone: '086-990-1123', note: '' }],
+    contacts: [{ id: 'c-12', name: 'พิมพ์ลดา ทดสอบ66', relation: 'หลาน', phone: '086-990-1123', note: '' }],
     familyLinks: [{ id: 'fl-9', groupName: 'ครอบครัวทดสอบ***', members: 5, status: 'เชื่อมแล้ว', source: 'ทีมงานเชื่อมให้', date: '25 มิ.ย. 2569' }],
   },
   {
@@ -200,7 +200,7 @@ export const SV_HOUSES = [
     id: 'h-501', villageId: 'vlg-005', no: '66/2', nickname: '',
     lat: 12.9585, lng: 100.8938, note: '', houseCode: 'ATLS-8Q2W-5YU3',
     residents: [{ id: 'r-15', name: 'อนงค์ ทดสอบ23', age: 71, gender: 'หญิง', note: '', wearable: false }],
-    contacts: [{ id: 'c-16', name: 'วีระ ชัยมงคล', relation: 'นิติบุคคล', phone: '089-112-8845', note: '' }],
+    contacts: [{ id: 'c-16', name: 'วีระ ทดสอบ68', relation: 'นิติบุคคล', phone: '089-112-8845', note: '' }],
     familyLinks: [],
   },
 ];
@@ -231,11 +231,11 @@ export const SV_DEVICES = [
 ];
 
 export const SV_GUARDS = [
-  { id: 'g-1', villageId: 'vlg-001', name: 'สมศักดิ์ เข้มแข็ง', username: 'vlg001-somsak', phone: '082-334-5511', status: 'ใช้งาน', lastLogin: 'วันนี้ 07:02', shift: 'กะเช้า' },
-  { id: 'g-2', villageId: 'vlg-001', name: 'สมหมาย กล้าหาญ', username: 'vlg001-sommai', phone: '083-445-6622', status: 'ใช้งาน', lastLogin: 'เมื่อวาน 19:05', shift: 'กะดึก' },
-  { id: 'g-3', villageId: 'vlg-002', name: 'วิรัตน์ มั่นคง', username: 'vlg002-wirat', phone: '084-556-7733', status: 'ใช้งาน', lastLogin: 'วันนี้ 06:55', shift: 'กะเช้า' },
-  { id: 'g-4', villageId: 'vlg-003', name: 'ประยุทธ ยืนยง', username: 'vlg003-prayut', phone: '085-667-8844', status: 'ระงับ', lastLogin: '25 มิ.ย. 2569', shift: 'กะเช้า' },
-  { id: 'g-5', villageId: 'vlg-005', name: 'ชาญ รักษาดี', username: 'vlg005-chan', phone: '086-778-9955', status: 'ระงับ', lastLogin: '1 มิ.ย. 2569', shift: 'กะเช้า' },
+  { id: 'g-1', villageId: 'vlg-001', name: 'สมศักดิ์ ทดสอบ59', username: 'vlg001-somsak', phone: '082-334-5511', status: 'ใช้งาน', lastLogin: 'วันนี้ 07:02', shift: 'กะเช้า' },
+  { id: 'g-2', villageId: 'vlg-001', name: 'สมหมาย ทดสอบ60', username: 'vlg001-sommai', phone: '083-445-6622', status: 'ใช้งาน', lastLogin: 'เมื่อวาน 19:05', shift: 'กะดึก' },
+  { id: 'g-3', villageId: 'vlg-002', name: 'วิรัตน์ ทดสอบ61', username: 'vlg002-wirat', phone: '084-556-7733', status: 'ใช้งาน', lastLogin: 'วันนี้ 06:55', shift: 'กะเช้า' },
+  { id: 'g-4', villageId: 'vlg-003', name: 'ประยุทธ ทดสอบ62', username: 'vlg003-prayut', phone: '085-667-8844', status: 'ระงับ', lastLogin: '25 มิ.ย. 2569', shift: 'กะเช้า' },
+  { id: 'g-5', villageId: 'vlg-005', name: 'ชาญ ทดสอบ63', username: 'vlg005-chan', phone: '086-778-9955', status: 'ระงับ', lastLogin: '1 มิ.ย. 2569', shift: 'กะเช้า' },
 ];
 
 /* วงจรเหตุ: ใหม่ → รับทราบแล้ว → ปิดแล้ว (ผล: ช่วยเหลือแล้ว / แจ้งเตือนผิดพลาด / เหตุทดสอบ) */
@@ -254,48 +254,48 @@ export const SV_ALERTS = [
     id: 'al-002', no: 'AC-260703-001', villageId: 'vlg-002', houseId: 'h-201', deviceId: 'dev-09',
     date: 'วันนี้', time: '08:12', minAgo: 92, status: 'รับทราบแล้ว',
     detectType: 'ตรวจพบการล้ม', location: 'ห้องนอน', recovered: true,
-    ackBy: 'วิรัตน์ มั่นคง (รปภ.)', ackAt: '08:14',
+    ackBy: 'วิรัตน์ ทดสอบ61 (รปภ.)', ackAt: '08:14',
   },
   {
     id: 'al-003', no: 'AC-260701-001', villageId: 'vlg-001', houseId: 'h-106', deviceId: 'dev-08',
     date: '1 ก.ค. 2569', time: '22:47', status: 'ปิดแล้ว',
     detectType: 'ตรวจพบการล้ม', location: 'ห้องนอน', recovered: false,
-    ackBy: 'สมหมาย กล้าหาญ (รปภ.)', ackAt: '22:48', closedBy: 'สมหมาย กล้าหาญ (รปภ.)', closedAt: '23:10',
+    ackBy: 'สมหมาย ทดสอบ60 (รปภ.)', ackAt: '22:48', closedBy: 'สมหมาย ทดสอบ60 (รปภ.)', closedAt: '23:10',
     result: 'ช่วยเหลือแล้ว', note: 'ครูวิชัยลื่นข้างเตียง ญาติ+รปภ.ช่วยพยุง เรียก EMS ตรวจ ปลอดภัยดี',
   },
   {
     id: 'al-004', no: 'AC-260628-001', villageId: 'vlg-002', houseId: 'h-203', deviceId: 'dev-11',
     date: '28 มิ.ย. 2569', time: '14:20', status: 'ปิดแล้ว',
     detectType: 'กดปุ่ม SOS', location: 'ติดตัว — เกษม ทดสอบ18', recovered: false,
-    ackBy: 'วิรัตน์ มั่นคง (รปภ.)', ackAt: '14:21', closedBy: 'Central (สมชาย ใจดี)', closedAt: '14:38',
+    ackBy: 'วิรัตน์ ทดสอบ61 (รปภ.)', ackAt: '14:21', closedBy: 'Central (สมชาย ทดสอบ51)', closedAt: '14:38',
     result: 'ช่วยเหลือแล้ว', note: 'ใจสั่น เวียนหัว — ประสานลูกสาวพาส่ง รพ.',
   },
   {
     id: 'al-005', no: 'AC-260626-002', villageId: 'vlg-001', houseId: 'h-104', deviceId: 'dev-06',
     date: '26 มิ.ย. 2569', time: '06:03', status: 'ปิดแล้ว',
     detectType: 'ตรวจพบการล้ม', location: 'ห้องน้ำ', recovered: true,
-    ackBy: 'สมศักดิ์ เข้มแข็ง (รปภ.)', ackAt: '06:05', closedBy: 'สมศักดิ์ เข้มแข็ง (รปภ.)', closedAt: '06:15',
+    ackBy: 'สมศักดิ์ ทดสอบ59 (รปภ.)', ackAt: '06:05', closedBy: 'สมศักดิ์ ทดสอบ59 (รปภ.)', closedAt: '06:15',
     result: 'แจ้งเตือนผิดพลาด', note: 'ป้าแตงโมนั่งยองซักผ้านานจนเครื่องแจ้ง — ตรวจแล้วปกติดี',
   },
   {
     id: 'al-006', no: 'AC-260626-001', villageId: 'vlg-003', houseId: 'h-301', deviceId: 'dev-13',
     date: '26 มิ.ย. 2569', time: '11:32', status: 'ปิดแล้ว',
     detectType: 'ตรวจพบการล้ม', location: 'ห้องนอน', recovered: false,
-    ackBy: 'Central (สมชาย ใจดี)', ackAt: '11:35', closedBy: 'Central (สมชาย ใจดี)', closedAt: '11:36',
+    ackBy: 'Central (สมชาย ทดสอบ51)', ackAt: '11:35', closedBy: 'Central (สมชาย ทดสอบ51)', closedAt: '11:36',
     result: 'เหตุทดสอบ', note: 'ทดสอบหลังติดตั้ง — โหมดทดสอบเหตุ',
   },
   {
     id: 'al-007', no: 'AC-260618-001', villageId: 'vlg-002', houseId: 'h-201', deviceId: 'dev-09',
     date: '18 มิ.ย. 2569', time: '16:44', status: 'ปิดแล้ว',
     detectType: 'ตรวจพบการล้ม', location: 'ห้องนอน', recovered: false,
-    ackBy: 'วิรัตน์ มั่นคง (รปภ.)', ackAt: '16:45', closedBy: 'วิรัตน์ มั่นคง (รปภ.)', closedAt: '16:50',
+    ackBy: 'วิรัตน์ ทดสอบ61 (รปภ.)', ackAt: '16:45', closedBy: 'วิรัตน์ ทดสอบ61 (รปภ.)', closedAt: '16:50',
     result: 'เหตุทดสอบ', note: 'ทดสอบหลังติดตั้งเสร็จ',
   },
   {
     id: 'al-008', no: 'AC-260612-001', villageId: 'vlg-001', houseId: 'h-101', deviceId: 'dev-02',
     date: '12 มิ.ย. 2569', time: '05:18', status: 'ปิดแล้ว',
     detectType: 'ตรวจพบการล้ม', location: 'ห้องน้ำ', recovered: false,
-    ackBy: 'สมศักดิ์ เข้มแข็ง (รปภ.)', ackAt: '05:20', closedBy: 'สมศักดิ์ เข้มแข็ง (รปภ.)', closedAt: '05:41',
+    ackBy: 'สมศักดิ์ ทดสอบ59 (รปภ.)', ackAt: '05:20', closedBy: 'สมศักดิ์ ทดสอบ59 (รปภ.)', closedAt: '05:41',
     result: 'ช่วยเหลือแล้ว', note: 'ยายสมศรีล้มในห้องน้ำ ฟกช้ำเล็กน้อย แจ้งลูกสาวแล้ว',
   },
 ];

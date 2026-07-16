@@ -452,7 +452,7 @@ function JobDetailModal({ job, onClose }) {
               <SectionTitle title="ข้อมูลการมอบหมาย" />
               <div style={{ marginTop: 12 }}>
                 <p style={{ fontSize: 12, color: GRAY, margin: 0 }}>ผู้รับผิดชอบ</p>
-                <p style={{ fontSize: 14, fontWeight: 500, color: BLACK, margin: '2px 0 10px' }}>สมหญิง รักษ์ชุมชน</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: BLACK, margin: '2px 0 10px' }}>สมหญิง ทดสอบ49</p>
                 <p style={{ fontSize: 12, color: GRAY, margin: 0 }}>วันที่กำหนดส่ง</p>
                 <p style={{ fontSize: 14, fontWeight: 500, color: BLACK, margin: '2px 0 0' }}>2 เมษายน 2569</p>
               </div>

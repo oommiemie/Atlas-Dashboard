@@ -53,7 +53,7 @@ function AddGuardModal({ village, onClose }) {
     <Modal title="+ เพิ่มบัญชี รปภ." sub={`${village.name} · บัญชีรายบุคคล เพื่อ audit ได้ว่าใครรับทราบ/ปิดเหตุ`} onClose={onClose} width={480}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Field label="ชื่อ-นามสกุล" required>
-          <TextInput value={name} onChange={e => setName(e.target.value)} placeholder="เช่น สมชาย เข้มแข็ง" />
+          <TextInput value={name} onChange={e => setName(e.target.value)} placeholder="เช่น ทดลอง ทดสอบ" />
         </Field>
         <Field label="username" required hint={`ระบบเติม prefix รหัสหมู่บ้านให้อัตโนมัติ · unique ทั้งระบบ`}>
           <TextInput value={name ? uname : ''} readOnly placeholder={`${village.code.toLowerCase()}-…`} style={{ background: 'rgba(116,116,128,0.05)' }} />
