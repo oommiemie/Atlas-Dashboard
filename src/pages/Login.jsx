@@ -4,7 +4,7 @@ const font = "'IBM Plex Sans Thai Looped', sans-serif";
 
 const ACCOUNTS = [
   { username: 'admin', password: 'admin', role: 'admin', name: 'สมชาย ทดสอบ51', title: 'ผู้ดูแลระบบ', hospital: null },
-  { username: 'hospital', password: 'hospital', role: 'hospital', name: 'โรงพยาบาลขอนแก่น', title: 'รพ.ศูนย์ขอนแก่น', hospital: 'ขอนแก่น' },
+  { username: 'hospital', password: 'hospital', role: 'hospital', name: 'โรงพยาบาล BMS2', title: 'รพ.ศูนย์ BMS2', hospital: 'ขอนแก่น' },
   { username: 'guard', password: 'guard', role: 'guard', name: 'สมศักดิ์ ทดสอบ59', title: 'รปภ. หมู่บ้าน', guardUsername: 'vlg001-somsak' },
 ];
 

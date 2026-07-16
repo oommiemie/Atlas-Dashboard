@@ -24,12 +24,12 @@ export const USAGE_CHART_DATA = [
 ];
 
 export const HOSPITAL_COMPARISON = [
-  { name: 'รพ.ศิริราช', visited: 245, notVisited: 82, pending: 53 },
-  { name: 'รพ.รามาธิบดี', visited: 198, notVisited: 67, pending: 45 },
-  { name: 'รพ.จุฬาลงกรณ์', visited: 176, notVisited: 94, pending: 62 },
-  { name: 'รพ.สกลนคร', visited: 152, notVisited: 108, pending: 38 },
-  { name: 'รพ.ขอนแก่น', visited: 210, notVisited: 75, pending: 55 },
-  { name: 'รพ.เชียงใหม่', visited: 189, notVisited: 61, pending: 48 },
+  { name: 'รพ.BMS1', visited: 245, notVisited: 82, pending: 53 },
+  { name: 'รพ.BGS1', visited: 198, notVisited: 67, pending: 45 },
+  { name: 'รพ.HFT1', visited: 176, notVisited: 94, pending: 62 },
+  { name: 'รพ.HFT2', visited: 152, notVisited: 108, pending: 38 },
+  { name: 'รพ.BMS2', visited: 210, notVisited: 75, pending: 55 },
+  { name: 'รพ.BGS2', visited: 189, notVisited: 61, pending: 48 },
 ];
 
 export const DISEASE_GROUPS = [
@@ -40,11 +40,11 @@ export const DISEASE_GROUPS = [
 ];
 
 export const CRITICAL_CASES = [
-  { id: 1, name: 'นางสาวพิมพ์ใจ ทดสอบ37', group: 'ผู้ป่วยติดเตียง', hospital: 'รพ.ศิริราช', severity: 'normal' },
-  { id: 2, name: 'นายสมศักดิ์ ทดสอบ38', group: 'ผู้สูงอายุติดบ้าน', hospital: 'รพ.รามาธิบดี', severity: 'normal' },
-  { id: 3, name: 'นางมาลี ทดสอบ39', detail: 'BP Systolic: 182 mmHg', hospital: 'รพ.จุฬาลงกรณ์', severity: 'high' },
-  { id: 4, name: 'นายประเสริฐ ทดสอบ40', detail: 'Glucose: 312 mg/dL', hospital: 'รพ.สกลนคร', severity: 'high' },
-  { id: 5, name: 'นางบุญมี ทดสอบ41', detail: 'SpO2: 88% HR: 128 bpm', hospital: 'รพ.ขอนแก่น', severity: 'critical' },
+  { id: 1, name: 'นางสาวพิมพ์ใจ ทดสอบ37', group: 'ผู้ป่วยติดเตียง', hospital: 'รพ.BMS1', severity: 'normal' },
+  { id: 2, name: 'นายสมศักดิ์ ทดสอบ38', group: 'ผู้สูงอายุติดบ้าน', hospital: 'รพ.BGS1', severity: 'normal' },
+  { id: 3, name: 'นางมาลี ทดสอบ39', detail: 'BP Systolic: 182 mmHg', hospital: 'รพ.HFT1', severity: 'high' },
+  { id: 4, name: 'นายประเสริฐ ทดสอบ40', detail: 'Glucose: 312 mg/dL', hospital: 'รพ.HFT2', severity: 'high' },
+  { id: 5, name: 'นางบุญมี ทดสอบ41', detail: 'SpO2: 88% HR: 128 bpm', hospital: 'รพ.BMS2', severity: 'critical' },
 ];
 
 export const CGM_PATIENTS = [
@@ -71,9 +71,9 @@ export const PROVINCES_TOP10 = [
 ];
 
 const HOSPITAL_NAMES = [
-  'รพ.ศิริราช', 'รพ.รามาธิบดี', 'รพ.จุฬาลงกรณ์', 'รพ.สกลนคร', 'รพ.ขอนแก่น',
-  'รพ.เชียงใหม่', 'รพ.สุราษฎร์ธานี', 'รพ.อำนาจเจริญ', 'รพ.ชลบุรี', 'รพ.นครราชสีมา',
-  'รพ.เชียงราย', 'รพ.สมุทรปราการ', 'รพ.ระยอง', 'รพ.ภูเก็ต',
+  'รพ.BMS1', 'รพ.BGS1', 'รพ.HFT1', 'รพ.HFT2', 'รพ.BMS2',
+  'รพ.BGS2', 'รพ.BGS4', 'รพ.BMS5', 'รพ.BGS3', 'รพ.BMS3',
+  'รพ.HFT3', 'รพ.HFT5', 'รพ.HFT4', 'รพ.BMS4',
 ];
 
 export const FEATURE_USAGE = HOSPITAL_NAMES.map((hospital, i) => ({

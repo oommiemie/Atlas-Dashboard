@@ -57,16 +57,16 @@ export const HOME_VISITS = [
 
 // VitalSign patients - uses subset from PATIENTS
 export const VITALSIGN_PATIENTS = [
-  { hn: 'HN001234', bp: '145/92', hr: 82, temp: 36.8, spo2: 97, glucose: 142, severity: 65, hospital: 'รพ.สต.ในเมือง' },
-  { hn: 'HN001235', bp: '160/100', hr: 78, temp: 37.1, spo2: 95, glucose: 180, severity: 80, hospital: 'รพ.สต.หนองไผ่' },
-  { hn: 'HN001236', bp: '130/85', hr: 90, temp: 37.5, spo2: 93, glucose: 220, severity: 90, hospital: 'รพ.สต.บ้านนา' },
-  { hn: 'HN001237', bp: '135/88', hr: 76, temp: 36.5, spo2: 98, glucose: 110, severity: 40, hospital: 'รพ.สต.ในเมือง' },
-  { hn: 'HN001238', bp: '120/80', hr: 72, temp: 36.6, spo2: 99, glucose: 95, severity: 25, hospital: 'รพ.สต.หนองนค' },
-  { hn: 'HN001239', bp: '155/95', hr: 85, temp: 36.9, spo2: 96, glucose: 165, severity: 75, hospital: 'รพ.สต.บายบา' },
-  { hn: 'HN001240', bp: '118/75', hr: 80, temp: 36.4, spo2: 99, glucose: 88, severity: 15, hospital: 'รพ.สต.ในเมือง' },
-  { hn: 'HN001241', bp: '140/90', hr: 88, temp: 36.7, spo2: 97, glucose: 148, severity: 55, hospital: 'รพ.สต.หนองไผ่' },
-  { hn: 'HN001242', bp: '125/82', hr: 70, temp: 37.8, spo2: 94, glucose: 132, severity: 85, hospital: 'รพ.สต.บ้านนา' },
-  { hn: 'HN001243', bp: '138/86', hr: 84, temp: 36.6, spo2: 96, glucose: 155, severity: 60, hospital: 'รพ.สต.ท่าศาลา' },
+  { hn: 'HN001234', bp: '145/92', hr: 82, temp: 36.8, spo2: 97, glucose: 142, severity: 65, hospital: 'รพ.สต.BGS5' },
+  { hn: 'HN001235', bp: '160/100', hr: 78, temp: 37.1, spo2: 95, glucose: 180, severity: 80, hospital: 'รพ.สต.HFT6' },
+  { hn: 'HN001236', bp: '130/85', hr: 90, temp: 37.5, spo2: 93, glucose: 220, severity: 90, hospital: 'รพ.สต.BMS6' },
+  { hn: 'HN001237', bp: '135/88', hr: 76, temp: 36.5, spo2: 98, glucose: 110, severity: 40, hospital: 'รพ.สต.BGS5' },
+  { hn: 'HN001238', bp: '120/80', hr: 72, temp: 36.6, spo2: 99, glucose: 95, severity: 25, hospital: 'รพ.สต.BGS6' },
+  { hn: 'HN001239', bp: '155/95', hr: 85, temp: 36.9, spo2: 96, glucose: 165, severity: 75, hospital: 'รพ.สต.HFT7' },
+  { hn: 'HN001240', bp: '118/75', hr: 80, temp: 36.4, spo2: 99, glucose: 88, severity: 15, hospital: 'รพ.สต.BGS5' },
+  { hn: 'HN001241', bp: '140/90', hr: 88, temp: 36.7, spo2: 97, glucose: 148, severity: 55, hospital: 'รพ.สต.HFT6' },
+  { hn: 'HN001242', bp: '125/82', hr: 70, temp: 37.8, spo2: 94, glucose: 132, severity: 85, hospital: 'รพ.สต.BMS6' },
+  { hn: 'HN001243', bp: '138/86', hr: 84, temp: 36.6, spo2: 96, glucose: 155, severity: 60, hospital: 'รพ.สต.BMS7' },
 ];
 
 // Helper to get patient by HN

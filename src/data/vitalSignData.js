@@ -45,22 +45,22 @@ export const VS_MAP_PATIENTS = [
 ];
 
 export const VS_TOP_PATIENTS = [
-  { rank: 1, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'critical', value: 'BP 180/110' },
-  { rank: 2, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'critical', value: 'BP 175/105' },
-  { rank: 3, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'abnormal', value: 'BP 160/95' },
-  { rank: 4, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'abnormal', value: 'HR 110 bpm' },
-  { rank: 5, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'abnormal', value: 'Temp 38.5°C' },
-  { rank: 6, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'abnormal', value: 'BP 155/92' },
-  { rank: 7, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'warning', value: 'HR 95 bpm' },
-  { rank: 8, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'warning', value: 'BP 145/88' },
-  { rank: 9, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'warning', value: 'Temp 37.8°C' },
-  { rank: 10, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.ทดสอบ BMS', status: 'normal', value: 'BP 120/80' },
+  { rank: 1, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'critical', value: 'BP 180/110' },
+  { rank: 2, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'critical', value: 'BP 175/105' },
+  { rank: 3, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'abnormal', value: 'BP 160/95' },
+  { rank: 4, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'abnormal', value: 'HR 110 bpm' },
+  { rank: 5, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'abnormal', value: 'Temp 38.5°C' },
+  { rank: 6, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'abnormal', value: 'BP 155/92' },
+  { rank: 7, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'warning', value: 'HR 95 bpm' },
+  { rank: 8, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'warning', value: 'BP 145/88' },
+  { rank: 9, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'warning', value: 'Temp 37.8°C' },
+  { rank: 10, name: 'คุณทดลอง ทดสอบ', hospital: 'รพ.BMS1', status: 'normal', value: 'BP 120/80' },
 ];
 
 export const VS_TABLE_PATIENTS = Array.from({ length: 15 }, (_, i) => ({
   id: i + 1,
   name: 'คุณทดลอง ทดสอบ',
-  hospital: 'รพ.ทดสอบ BMS',
+  hospital: 'รพ.BMS1',
   bp: '120/80',
   hr: '72',
   temp: '36.5',
