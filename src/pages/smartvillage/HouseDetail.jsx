@@ -457,7 +457,7 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
       {modal === 'resident' && (
         <Modal title="+ เพิ่มคนในบ้าน" onClose={() => setModal(null)} width={480}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Field label="ชื่อ-นามสกุล หรือชื่อเรียก" required><TextInput placeholder="เช่น สมศรี บุญมาก" /></Field>
+            <Field label="ชื่อ-นามสกุล หรือชื่อเรียก" required><TextInput placeholder="เช่น ทดลอง ทดสอบ" /></Field>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <Field label="อายุ/ปีเกิด"><TextInput placeholder="เช่น 78" /></Field>
               <Field label="เพศ"><TextInput placeholder="หญิง/ชาย" /></Field>
@@ -474,7 +474,7 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
         <Modal title="+ เพิ่มผู้ติดต่อ" sub="ลำดับผู้ติดต่อ = ลำดับที่ รปภ. เห็นตอนเกิดเหตุ" onClose={() => setModal(null)} width={480}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12 }}>
-              <Field label="ชื่อ" required><TextInput placeholder="เช่น น้ำฝน บุญมาก" /></Field>
+              <Field label="ชื่อ" required><TextInput placeholder="เช่น สมมุติ ทดสอบ2" /></Field>
               <Field label="ความสัมพันธ์"><TextInput placeholder="ลูก/หลาน/เพื่อนบ้าน/นิติฯ" /></Field>
             </div>
             <Field label="เบอร์โทร" required><TextInput placeholder="08x-xxx-xxxx" /></Field>

@@ -18,11 +18,11 @@ const nowTime = () => new Date().toLocaleTimeString('th-TH', { hour: '2-digit', 
 /* ── รายชื่อห้องแชต (โครงเดียวกับ Conversation ใน ChatContext ต้นทาง) ── */
 const SEED_CONVERSATIONS = [
   {
-    id: 'fam-boonmak', name: 'ครอบครัวบุญมาก', sub: 'บ้าน 42/1 · เดอะแกรนด์ วิลล่า',
+    id: 'fam-boonmak', name: 'ครอบครัวทดสอบ11', sub: 'บ้าน 42/1 · เดอะแกรนด์ วิลล่า',
     lastMessage: 'คุณยายอาการดีขึ้นแล้วค่ะ ขอบคุณมากนะคะ 🙏', time: '10:04', unread: 2, online: true,
   },
   {
-    id: 'fam-srisuk', name: 'ครอบครัวศรีสุข', sub: 'บ้าน 42/5 · เดอะแกรนด์ วิลล่า',
+    id: 'fam-srisuk', name: 'ครอบครัวทดสอบ12', sub: 'บ้าน 42/5 · เดอะแกรนด์ วิลล่า',
     lastMessage: 'พรุ่งนี้สะดวกให้เข้าเยี่ยมช่วงบ่ายครับ', time: 'เมื่อวาน', unread: 1, online: true,
   },
   {

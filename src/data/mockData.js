@@ -40,21 +40,21 @@ export const DISEASE_GROUPS = [
 ];
 
 export const CRITICAL_CASES = [
-  { id: 1, name: 'นางสาวพิมพ์ใจ สุขสวัสดิ์', group: 'ผู้ป่วยติดเตียง', hospital: 'รพ.ศิริราช', severity: 'normal' },
-  { id: 2, name: 'นายสมศักดิ์ วงศ์ประเสริฐ', group: 'ผู้สูงอายุติดบ้าน', hospital: 'รพ.รามาธิบดี', severity: 'normal' },
-  { id: 3, name: 'นางมาลี ทองคำ', detail: 'BP Systolic: 182 mmHg', hospital: 'รพ.จุฬาลงกรณ์', severity: 'high' },
-  { id: 4, name: 'นายประเสริฐ แก้วมณี', detail: 'Glucose: 312 mg/dL', hospital: 'รพ.สกลนคร', severity: 'high' },
-  { id: 5, name: 'นางบุญมี จันทร์เพ็ง', detail: 'SpO2: 88% HR: 128 bpm', hospital: 'รพ.ขอนแก่น', severity: 'critical' },
+  { id: 1, name: 'นางสาวพิมพ์ใจ ทดสอบ37', group: 'ผู้ป่วยติดเตียง', hospital: 'รพ.ศิริราช', severity: 'normal' },
+  { id: 2, name: 'นายสมศักดิ์ ทดสอบ38', group: 'ผู้สูงอายุติดบ้าน', hospital: 'รพ.รามาธิบดี', severity: 'normal' },
+  { id: 3, name: 'นางมาลี ทดสอบ39', detail: 'BP Systolic: 182 mmHg', hospital: 'รพ.จุฬาลงกรณ์', severity: 'high' },
+  { id: 4, name: 'นายประเสริฐ ทดสอบ40', detail: 'Glucose: 312 mg/dL', hospital: 'รพ.สกลนคร', severity: 'high' },
+  { id: 5, name: 'นางบุญมี ทดสอบ41', detail: 'SpO2: 88% HR: 128 bpm', hospital: 'รพ.ขอนแก่น', severity: 'critical' },
 ];
 
 export const CGM_PATIENTS = [
-  { id: 1, name: 'นางวิภา เจริญสุข', avg: 215, readings: 42180, status: 'high' },
-  { id: 2, name: 'นายธนกร ศรีสมบูรณ์', avg: 62, readings: 18750, status: 'low' },
-  { id: 3, name: 'นางสาวรัตนา พลอยงาม', avg: 108, readings: 35420, status: 'normal' },
-  { id: 4, name: 'นายวิชัย อินทรภักดี', avg: 95, readings: 28960, status: 'normal' },
-  { id: 5, name: 'นางพรทิพย์ สว่างจิต', avg: 112, readings: 31840, status: 'normal' },
-  { id: 6, name: 'นายสุรชัย มานะกิจ', avg: 102, readings: 26510, status: 'normal' },
-  { id: 7, name: 'นางกัลยา ธรรมรักษ์', avg: 248, readings: 39200, status: 'high' },
+  { id: 1, name: 'นางวิภา ทดสอบ42', avg: 215, readings: 42180, status: 'high' },
+  { id: 2, name: 'นายธนกร ทดสอบ43', avg: 62, readings: 18750, status: 'low' },
+  { id: 3, name: 'นางสาวรัตนา ทดสอบ44', avg: 108, readings: 35420, status: 'normal' },
+  { id: 4, name: 'นายวิชัย ทดสอบ45', avg: 95, readings: 28960, status: 'normal' },
+  { id: 5, name: 'นางพรทิพย์ ทดสอบ46', avg: 112, readings: 31840, status: 'normal' },
+  { id: 6, name: 'นายสุรชัย ทดสอบ47', avg: 102, readings: 26510, status: 'normal' },
+  { id: 7, name: 'นางกัลยา ทดสอบ48', avg: 248, readings: 39200, status: 'high' },
 ];
 
 export const PROVINCES_TOP10 = [

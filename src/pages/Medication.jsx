@@ -609,7 +609,7 @@ function TelepharmacyModal({ item, onClose }) {
               <div style={{ display: 'flex', gap: 16 }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <span style={{ fontSize: 12, lineHeight: '12px' }}>ชื่อ</span>
-                  <span style={{ fontSize: 14, fontWeight: 500 }}>สมศรี ดีใจ</span>
+                  <span style={{ fontSize: 14, fontWeight: 500 }}>สมศรี ทดสอบ2</span>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <span style={{ fontSize: 12, lineHeight: '12px' }}>HN</span>
