@@ -292,7 +292,7 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
           </div>
           <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
             <div style={{ position: 'absolute', inset: 0 }}>
-              <SVMap points={mapPoints} center={[100.9, 15.2]} zoom={5.0} height="100%" radius={0} />
+              <SVMap points={mapPoints} center={[100.9, 15.2]} zoom={5.0} height="100%" radius={0} lockThailand />
             </div>
           </div>
         </main>

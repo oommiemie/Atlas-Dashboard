@@ -551,7 +551,10 @@ function applyRoute(map, route) {
   if (map.isStyleLoaded()) apply(); else map.once('load', apply);
 }
 
-export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = false, onPick, pin, radius = 24, guardPost, route, navPosition = 'top-left', labels = false, focus, focusNonce = 0 }) {
+/* กรอบประเทศไทย (มี padding เล็กน้อย) — [[W,S],[E,N]] */
+export const TH_BOUNDS = [[95.5, 4.5], [106.5, 21.5]];
+
+export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = false, onPick, pin, radius = 24, guardPost, route, navPosition = 'top-left', labels = false, focus, focusNonce = 0, lockThailand = false, minZoom }) {
   const el = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -614,6 +617,8 @@ export function SVMap({ points = [], center, zoom = 5.1, height = 300, picker = 
     const map = new maplibregl.Map({
       container: el.current, style: CARTO_STYLE,
       center: center || [100.8, 14.8], zoom, attributionControl: false,
+      ...(lockThailand ? { maxBounds: TH_BOUNDS } : {}),
+      ...(minZoom != null ? { minZoom } : (lockThailand ? { minZoom: 4.8 } : {})),
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), navPosition);
     if (picker) {

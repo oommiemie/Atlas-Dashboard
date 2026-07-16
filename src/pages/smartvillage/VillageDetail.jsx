@@ -1,5 +1,5 @@
 /* ═══ Smart Village — รายละเอียดหมู่บ้าน (แท็บ บ้าน | รปภ. | ตั้งค่า) — spec 5.3 ═══ */
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   getVillage, housesOf, guardsOf, devicesOfHouse, alertsOfHouse, villageStats, villageStatus, SV_STATUS_META,
 } from '../../data/smartVillage';
@@ -10,8 +10,11 @@ import {
 import {
   IconAlertTriangle, IconBuildingCommunity, IconHome, IconAntennaBars5,
   IconCircleFilled, IconShield, IconUrgent, IconDoor, IconDeviceWatch, IconMapPinPlus,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import imgHouseAdd from '../../assets/images/sv-house-add-3d.png';
+import imgGuardAdd from '../../assets/images/sv-guard-add-3d.png';
+import vidScenery from '../../assets/images/sv-village-scene.mp4';
 
 const genPassword = () => {
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -123,6 +126,11 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
   const [tab, setTab] = useState('บ้าน');
   const [q, setQ] = useState('');
   const [modal, setModal] = useState(null); // 'house' | 'guard' | 'suspend' | 'reset:<id>'
+  const [fyi, setFyi] = useState(false);
+
+  // slow smooth forward loop
+  const vidRef = useRef(null);
+  useEffect(() => { if (vidRef.current) vidRef.current.playbackRate = 0.4; }, []);
 
   const houseRows = houses.filter(h => (h.no + h.nickname).toLowerCase().includes(q.toLowerCase()));
   const HCOLS = '110px 1.2fr 70px 110px 130px 1.1fr 1fr';
@@ -143,11 +151,58 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
     }),
   ];
 
+  const statCards = [
+    ['บ้าน', stats.houses, <IconHome size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', 'rgba(139,92,246,0.3)'],
+    ['ติดตั้งแล้ว', stats.installedHouses, <IconAntennaBars5 size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)', 'rgba(25,165,137,0.3)'],
+    ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, <IconCircleFilled size={13} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', 'rgba(59,130,246,0.3)'],
+    ['บัญชี รปภ.', stats.guards, <IconShield size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)', 'rgba(19,152,216,0.3)'],
+    ['เหตุ 30 วัน', stats.alerts30d, <IconUrgent size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', 'rgba(232,128,42,0.3)'],
+  ];
+
+  const toolbar = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+      <div className="seg">
+        {['บ้าน', 'รปภ.', 'ตั้งค่า'].map(t => (
+          <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
+            {t === 'บ้าน' ? `บ้าน (${houses.length})` : t === 'รปภ.' ? `รปภ. (${guards.length})` : t}
+          </button>
+        ))}
+      </div>
+      {tab === 'บ้าน' && (
+        <SearchBox value={q} onChange={setQ} placeholder="ค้นหาบ้านเลขที่ / ชื่อเรียก…" width={240} />
+      )}
+      {tab === 'รปภ.' && (
+        <div style={{ position: 'relative' }}>
+          <button className="hover-btn" onClick={() => setFyi(f => !f)} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px',
+            borderRadius: 100, border: '1px solid rgba(102,88,225,0.25)', cursor: 'pointer',
+            background: fyi ? 'rgba(102,88,225,0.12)' : 'rgba(102,88,225,0.06)', color: PURPLE,
+            fontFamily: font, fontSize: 12, fontWeight: 600,
+          }}>
+            <IconInfoCircle size={15} style={{ flexShrink: 0 }} /> FYI
+          </button>
+          {fyi && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 20, width: 320,
+              background: 'white', borderRadius: 14, padding: '12px 14px',
+              border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(13,10,44,0.14)',
+              fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.6,
+            }}>
+              บัญชีรายบุคคล (กะเช้า/กะดึก) · central สร้าง-ระงับ-รีเซ็ตรหัสผ่านเท่านั้น เพื่อ audit ว่าใครรับทราบ/ปิดเหตุ
+              <span style={{ position: 'absolute', top: -6, left: 16, width: 12, height: 12, background: 'white', borderLeft: '1px solid rgba(0,0,0,0.06)', borderTop: '1px solid rgba(0,0,0,0.06)', transform: 'rotate(45deg)' }} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Header */}
-      <div className="anim-slide-up" style={{ ...card, display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Header + Map — row เดียวกัน, สอง widget แยก card */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16, alignItems: 'stretch' }}>
+      <div className="anim-slide-up" style={{ ...card, background: '#F0F0F0', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'flex-start', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <div style={{
               width: 54, height: 54, borderRadius: 18, fontSize: 24, flexShrink: 0,
@@ -167,54 +222,51 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
               </div>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 10 }}>
-            {[
-              ['บ้าน', stats.houses, <IconHome size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', 'rgba(139,92,246,0.3)'],
-              ['ติดตั้งแล้ว', stats.installedHouses, <IconAntennaBars5 size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)', 'rgba(25,165,137,0.3)'],
-              ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, <IconCircleFilled size={13} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', 'rgba(59,130,246,0.3)'],
-              ['บัญชี รปภ.', stats.guards, <IconShield size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)', 'rgba(19,152,216,0.3)'],
-              ['เหตุ 30 วัน', stats.alerts30d, <IconUrgent size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', 'rgba(232,128,42,0.3)'],
-            ].map(([l, v, ic, grad, shadow]) => (
-              <div key={l} className="hover-stat" style={{
-                background: grad, border: '1px solid rgba(255,255,255,0.7)', borderRadius: 18, padding: '12px 14px',
-                color: 'white', boxShadow: `0 4px 14px ${shadow}`, minWidth: 0,
-                display: 'flex', flexDirection: 'column', gap: 6,
-              }}>
-                <div style={{ width: 30, height: 30, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ic}</div>
-                <span style={{ fontSize: 10.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: font, letterSpacing: 0.22, whiteSpace: 'nowrap' }}>{l}</span>
-                <span className="num" style={{ fontSize: 20, fontWeight: 700, color: 'white', lineHeight: '20px' }}>{v}</span>
-              </div>
-            ))}
-          </div>
         </div>
-        <SVMap points={mapPoints} center={[village.lng, village.lat]} zoom={14.6} height={200} radius={16} />
+        {/* ฉากหมู่บ้าน — video bg, absolute ไม่ดัน height card */}
+        <video ref={vidRef} src={vidScenery} autoPlay loop muted playsInline aria-hidden style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, width: '100%', height: 'auto',
+          transform: 'translateY(55%)',
+          pointerEvents: 'none', zIndex: 0,
+          borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
+          maskImage: 'linear-gradient(to bottom, transparent 0%, black 40%)',
+        }} />
       </div>
 
-      {/* Tabs — seg pill เดียวกับ filter ทั้งระบบ */}
-      <div className="anim-slide-up delay-1" style={{ display: 'flex' }}>
-        <div className="seg">
-          {['บ้าน', 'รปภ.', 'ตั้งค่า'].map(t => (
-            <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
-              {t === 'บ้าน' ? `บ้าน (${houses.length})` : t === 'รปภ.' ? `รปภ. (${guards.length})` : t}
-            </button>
-          ))}
-        </div>
+      {/* Map — widget แยก, row เดียวกับ banner */}
+      <div className="anim-slide-up" style={{ ...card, padding: 0, overflow: 'hidden' }}>
+        <SVMap points={mapPoints} center={[village.lng, village.lat]} zoom={14.6} height={200} radius={24} />
+      </div>
+      </div>
+
+      {/* Stats — ย้ายลงมาเหนือ table card */}
+      <div className="anim-slide-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 10 }}>
+        {statCards.map(([l, v, ic, grad, shadow]) => (
+          <div key={l} className="hover-stat" style={{
+            background: grad, border: '1px solid rgba(255,255,255,0.7)', borderRadius: 18, padding: '12px 14px',
+            color: 'white', boxShadow: `0 4px 14px ${shadow}`, minWidth: 0,
+            display: 'flex', flexDirection: 'column', gap: 6,
+          }}>
+            <div style={{ width: 30, height: 30, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ic}</div>
+            <span style={{ fontSize: 10.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: font, letterSpacing: 0.22, whiteSpace: 'nowrap' }}>{l}</span>
+            <span className="num" style={{ fontSize: 20, fontWeight: 700, color: 'white', lineHeight: '20px' }}>{v}</span>
+          </div>
+        ))}
       </div>
 
       {/* ── แท็บบ้าน ── */}
       {tab === 'บ้าน' && (
         <div className="anim-tab-enter" style={{ ...card, padding: 12, position: 'relative', overflow: 'visible' }}>
+          {toolbar}
           {/* house 3d — ครึ่งบนโผล่ ครึ่งล่างจมหลัง table (Figma 412-2135) */}
-          <img src={imgHouseAdd} alt="" className="sv-house-float" style={{ position: 'absolute', right: 8, top: -26, width: 148, height: 148, objectFit: 'contain', pointerEvents: 'none', zIndex: 1, filter: 'drop-shadow(0 8px 14px rgba(30,27,57,0.18))' }} />
+          <img src={imgHouseAdd} alt="" className="sv-house-float" style={{ position: 'absolute', right: 8, top: -14, width: 138, height: 138, objectFit: 'contain', pointerEvents: 'none', zIndex: 1, filter: 'drop-shadow(0 8px 14px rgba(30,27,57,0.18))' }} />
           {/* speech-bubble ปุ่มเพิ่มบ้าน — ชี้ออกจาก house */}
-          <button className="hover-btn" style={{ ...btnPrimary, position: 'absolute', right: 150, top: 6, zIndex: 4, display: 'inline-flex', alignItems: 'center', gap: 7 }} onClick={() => setModal('house')}>
+          <button className="hover-btn sv-bubble-out" style={{ ...btnPrimary, position: 'absolute', right: 138, top: 10, zIndex: 4, display: 'inline-flex', alignItems: 'center', gap: 7 }} onClick={() => setModal('house')}>
             เพิ่มบ้าน <IconMapPinPlus size={16} style={{ flexShrink: 0 }} />
             <span style={{ position: 'absolute', right: -5, top: '50%', width: 13, height: 13, background: '#8B5CF6', borderRadius: 3, transform: 'translateY(-50%) rotate(45deg)', zIndex: -1 }} />
           </button>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '4px 4px 12px', flexWrap: 'wrap' }}>
-            <SearchBox value={q} onChange={setQ} placeholder="ค้นหาบ้านเลขที่ / ชื่อเรียก…" width={240} />
-          </div>
-          <div style={{ overflowX: 'auto', position: 'relative', zIndex: 2 }}>
+          <div style={{ overflowX: 'auto', position: 'relative', zIndex: 2, marginTop: 4 }}>
             <div style={{ minWidth: 820, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden', background: 'white' }}>
               <THead cols={HCOLS} labels={['บ้านเลขที่', 'ชื่อเรียก', 'คนในบ้าน', 'อุปกรณ์', 'ชนิดติดตั้ง', 'สถานะเชื่อม Family', 'เหตุล่าสุด']} />
               {houseRows.map(h => {
@@ -263,13 +315,15 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
 
       {/* ── แท็บ รปภ. ── */}
       {tab === 'รปภ.' && (
-        <div className="anim-tab-enter" style={{ ...card, padding: 12 }}>
-          <div style={{ display: 'flex', padding: '4px 4px 12px' }}>
-            <div style={{ fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.6 }}>
-              บัญชีรายบุคคล (กะเช้า/กะดึก) · central สร้าง-ระงับ-รีเซ็ตรหัสผ่านเท่านั้น เพื่อ audit ว่าใครรับทราบ/ปิดเหตุ
-            </div>
-            <button className="hover-btn" style={{ ...btnPrimary, marginLeft: 'auto', flexShrink: 0 }} onClick={() => setModal('guard')}>+ เพิ่มบัญชี รปภ.</button>
-          </div>
+        <div className="anim-tab-enter" style={{ ...card, padding: 12, position: 'relative', overflow: 'visible' }}>
+          {toolbar}
+          {/* guard 3d — โผล่ครึ่งบน ครึ่งล่างจมหลัง table (Figma 418-7517) */}
+          <img src={imgGuardAdd} alt="" className="sv-house-float" style={{ position: 'absolute', right: 10, top: 2, width: 78, height: 'auto', objectFit: 'contain', pointerEvents: 'none', zIndex: 1, filter: 'drop-shadow(0 8px 14px rgba(30,27,57,0.18))' }} />
+          {/* speech-bubble ปุ่มเพิ่มบัญชี — ชี้ออกจาก guard */}
+          <button className="hover-btn sv-bubble-out" style={{ ...btnPrimary, position: 'absolute', right: 92, top: 8, zIndex: 4, display: 'inline-flex', alignItems: 'center', gap: 7 }} onClick={() => setModal('guard')}>
+            เพิ่มบัญชี รปภ. <IconShield size={16} style={{ flexShrink: 0 }} />
+            <span style={{ position: 'absolute', right: -5, top: '50%', width: 13, height: 13, background: '#8B5CF6', borderRadius: 3, transform: 'translateY(-50%) rotate(45deg)', zIndex: -1 }} />
+          </button>
           {guards.length === 0 ? (
             <EmptyState
               icon={<IconShield size={15} />} warn
@@ -278,8 +332,8 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
               cta={<button className="hover-btn" style={btnPrimary} onClick={() => setModal('guard')}>+ เพิ่มบัญชีแรก</button>}
             />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <div style={{ minWidth: 860, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto', position: 'relative', zIndex: 2 }}>
+              <div style={{ minWidth: 860, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden', background: 'white' }}>
                 <THead cols={GCOLS} labels={['ชื่อ-นามสกุล', 'username', 'เบอร์โทร', 'สถานะ', 'เข้าใช้ล่าสุด', 'การกระทำ']} />
                 {guards.map(g => (
                   <TRow key={g.id} cols={GCOLS}>
@@ -306,6 +360,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
       {/* ── แท็บตั้งค่า ── */}
       {tab === 'ตั้งค่า' && (
         <div className="anim-tab-enter" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16, alignItems: 'start' }}>
+          <div style={{ gridColumn: '1 / -1' }}>{toolbar}</div>
           <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ fontSize: 14.5, fontWeight: 700, color: BLACK, fontFamily: font }}>แก้ไขข้อมูลหมู่บ้าน</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 12 }}>

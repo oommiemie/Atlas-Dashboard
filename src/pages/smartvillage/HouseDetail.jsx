@@ -13,6 +13,8 @@ import {
   IconDoor, IconPhone, IconPhoneOff, IconGripVertical, IconLink, IconDownload, IconRefresh,
   IconUsersGroup, IconKeyboard, IconHistory, IconCircleCheck, IconPlayerStopFilled, IconArrowLeft,
 } from '@tabler/icons-react';
+import { IconClockHour3 } from '@tabler/icons-react';
+import imgFallScene from '../../assets/images/sv-fall-scene.png';
 
 const AVATAR_COLORS = ['linear-gradient(135deg,#8B81F2,#6658E1)', 'linear-gradient(135deg,#4FC3F7,#1398D8)', 'linear-gradient(135deg,#F2A254,#E8802A)'];
 
@@ -150,26 +152,6 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: 'calc(100vh - 112px)', minHeight: 560 }}>
-      {/* เหตุ active ของบ้านนี้ */}
-      {activeAlert && (
-        <div className="anim-slide-up" style={{
-          borderRadius: 20, padding: '14px 18px', color: 'white',
-          background: 'linear-gradient(149deg, #E8432A 0%, #D0381A 100%)',
-          boxShadow: '0 4px 14px rgba(232,67,42,0.3)',
-          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-        }}>
-          <span style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IconUrgent size={20} style={{ flexShrink: 0 }} /></span>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 700, fontFamily: font }}>{activeAlert.detectType} — {activeAlert.location} · <ElapsedSince minAgo={activeAlert.minAgo} /></div>
-            <div style={{ fontSize: 11.5, fontFamily: font, opacity: 0.92, marginTop: 2 }}>
-              {activeAlert.status === 'ใหม่'
-                ? <><IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> ยังไม่มีผู้รับทราบ — siren ที่ป้อมยามยังดังอยู่</>
-                : <><IconCheck size={12} style={{ verticalAlign: '-2px' }} /> {activeAlert.ackBy} รับทราบเมื่อ {activeAlert.ackAt} น.</>}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Layout ยกเครื่อง: profile rail ซ้ายเต็มความสูง + scroll เฉพาะขวา ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '340px minmax(0, 1fr)', gap: 16, flex: 1, minHeight: 0 }}>
 
@@ -224,7 +206,51 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
         </div>
 
         {/* ══ ขวา: งานหลัก — scroll เฉพาะฝั่งนี้ ══ */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0, minHeight: 0, overflowY: 'auto', paddingRight: 4, paddingBottom: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0, minHeight: 0, overflowY: 'auto', paddingRight: 24, marginRight: -20, paddingLeft: 24, marginLeft: -24, paddingBottom: 4, paddingTop: activeAlert ? 26 : 0, marginTop: activeAlert ? -26 : 0 }}>
+        {/* เหตุ active ของบ้านนี้ — banner ในคอลัมน์ขวา */}
+        {activeAlert && (
+          <div className="sv-fall-banner" style={{
+            borderRadius: 24, padding: '14px 18px',
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.55) 0%, rgba(243,111,96,0.5) 166%)',
+            backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            border: '1px solid rgba(255,255,255,0.6)',
+            position: 'relative', overflow: 'visible', flexShrink: 0, minHeight: 108,
+            display: 'flex', flexDirection: 'column', gap: 8,
+          }}>
+            {/* ข้อความ — ขนาดเดียวกับ widget อื่น (Figma 420-7648 แบบ compact) */}
+            <div style={{ maxWidth: '60%', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', zIndex: 2, flex: 1 }}>
+              <div style={{ fontSize: 14.5, fontWeight: 700, color: '#E0301E', fontFamily: font, lineHeight: 1.25 }}>{activeAlert.detectType}</div>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center', color: '#E0301E', fontSize: 12, fontFamily: font }}>
+                  <IconMapPin size={15} style={{ flexShrink: 0 }} /> ตำแหน่ง <span style={{ fontWeight: 700 }}>{activeAlert.location}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center', color: '#E0301E', fontSize: 12, fontFamily: font }}>
+                  <IconClockHour3 size={15} style={{ flexShrink: 0 }} /> ตรวจพบเมื่อ <span className="num" style={{ fontWeight: 700 }}>{activeAlert.time} น.</span>
+                </div>
+              </div>
+              <div style={{ marginTop: 'auto', display: 'flex', gap: 4, alignItems: 'center', fontSize: 11.5, fontFamily: font, color: 'rgba(0,0,0,0.6)' }}>
+                {activeAlert.status === 'ใหม่'
+                  ? <span style={{ color: '#E0301E', fontWeight: 600 }}><IconAlertTriangle size={13} style={{ verticalAlign: '-2px', animation: 'svShake 0.9s infinite' }} /> ยังไม่มีผู้รับทราบ — siren ที่ป้อมยามยังดังอยู่ · <span style={{ animation: 'svBlink 1.2s infinite', display: 'inline-block' }}><ElapsedSince minAgo={activeAlert.minAgo} /></span></span>
+                  : <><IconCheck size={14} color={GREEN} style={{ flexShrink: 0 }} /> {activeAlert.ackBy} รับทราบเมื่อ {activeAlert.ackAt} น.</>}
+              </div>
+            </div>
+            {/* watermark ลาย warning เอียง — pattern มุมขวา, clip ในกรอบ banner */}
+            <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: 24, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+              {[
+                { right: -18, top: -22, size: 92, rot: -18, op: 0.10 },
+                { right: 78, top: 26, size: 56, rot: 14, op: 0.09 },
+                { right: 176, top: -14, size: 44, rot: -24, op: 0.08 },
+                { right: 20, top: 64, size: 40, rot: 22, op: 0.08 },
+                { right: 130, top: 78, size: 64, rot: -12, op: 0.07 },
+                { right: 240, top: 52, size: 36, rot: 18, op: 0.06 },
+              ].map((w, i) => (
+                <IconAlertTriangle key={i} size={w.size} color="#E0301E" style={{ position: 'absolute', right: w.right, top: w.top, opacity: w.op, transform: `rotate(${w.rot}deg)` }} />
+              ))}
+            </div>
+            {/* รูปรวม scene (Figma 420-7660) — เล็กลง ชิดล่างขวา หัวล้นบนนิด */}
+            <img src={imgFallScene} alt="" aria-hidden className="sv-bubble-out" style={{ position: 'absolute', right: 14, bottom: 0, height: 'calc(100% + 26px)', width: 'auto', maxWidth: '38%', objectFit: 'contain', objectPosition: 'bottom right', pointerEvents: 'none', zIndex: 1 }} />
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, alignItems: 'start' }}>
         {/* (ข) คนในบ้าน */}
         <div className="anim-slide-up delay-1" style={{ ...card }}>

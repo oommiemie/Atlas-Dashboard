@@ -464,6 +464,12 @@ body {
   100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
 }
 .sv-house-float { animation: svHouseDrop 0.9s cubic-bezier(.22,1,.36,1) both; will-change: transform; }
+@keyframes svBubbleOut {
+  0%   { opacity: 0; transform: translateX(26px) scale(0.55); }
+  70%  { opacity: 1; transform: translateX(-4px) scale(1.05); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.sv-bubble-out { animation: svBubbleOut 0.55s cubic-bezier(.22,1,.36,1) 0.5s both; transform-origin: right center; will-change: transform; }
 @keyframes bubblePop {
   0% { opacity: 0; transform: scale(0); }
   60% { transform: scale(1.1); }
@@ -676,6 +682,20 @@ div:hover > .row-tooltip { opacity: 1 !important; }
 @keyframes svSirenGlow {
   0%, 100% { box-shadow: 0 8px 40px rgba(255,56,60,0.45), inset 0 0 0 1.5px rgba(255,255,255,0.25); }
   50% { box-shadow: 0 8px 64px rgba(255,56,60,0.8), inset 0 0 0 1.5px rgba(255,255,255,0.45); }
+}
+/* banner เตือนล้ม — เข้าหน้า: เด้งลงมา + glow ฉุกเฉินวนต่อเนื่อง */
+@keyframes svFallBannerIn {
+  0%   { opacity: 0; transform: translateY(-26px) scale(0.97); }
+  60%  { opacity: 1; transform: translateY(4px) scale(1.005); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes svFallGlow {
+  0%, 100% { box-shadow: 0 2px 10px rgba(13,10,44,0.06), 0 0 0 0 rgba(224,48,30,0.35); }
+  50%      { box-shadow: 0 4px 22px rgba(224,48,30,0.28), 0 0 0 5px rgba(224,48,30,0); }
+}
+.sv-fall-banner {
+  animation: svFallBannerIn 0.65s cubic-bezier(.22,1,.36,1) both,
+             svFallGlow 1.6s ease-in-out 0.65s infinite;
 }
 @keyframes svShake {
   0%, 100% { transform: rotate(0deg); }
