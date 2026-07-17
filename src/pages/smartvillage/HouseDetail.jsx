@@ -1,5 +1,5 @@
 /* ═══ Smart Village — รายละเอียดบ้าน (ศูนย์รวมทุกอย่างของบ้านหลังเดียว) — spec 5.4 ═══ */
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   getVillage, getHouse, devicesOfHouse, alertsOfHouse, ALERT_RESULT_META, ALERT_STATUS_META,
 } from '../../data/smartVillage';
@@ -15,30 +15,39 @@ import {
 } from '@tabler/icons-react';
 import { IconClockHour3 } from '@tabler/icons-react';
 import imgFallScene from '../../assets/images/sv-fall-scene.png';
+import imgFamily3d from '../../assets/images/sv-family-3d.png';
+import imgDevice3d from '../../assets/images/sv-device-3d.png';
+import imgContact3d from '../../assets/images/sv-contact-3d.png';
+import imgHistory3d from '../../assets/images/sv-history-3d.png';
+import vidScenery from '../../assets/images/sv-village-scene.mp4';
+import imgHouse3d from '../../assets/images/sv-house-3d.png';
+import imgNote3d from '../../assets/images/sv-note-3d.png';
+import imgLocation3d from '../../assets/images/sv-location-3d.png';
 
 const AVATAR_COLORS = ['linear-gradient(135deg,#8B81F2,#6658E1)', 'linear-gradient(135deg,#4FC3F7,#1398D8)', 'linear-gradient(135deg,#F2A254,#E8802A)'];
 
-/* ── หัวการ์ดสไตล์ vital card (หน้า PatientProfile): gradient จัดเต็ม + icon box + pill ขาวโปร่ง + เลขใหญ่ + icon ใหญ่จางขวาล่าง ── */
-function VitalHead({ grad, shadow, icon, bigIcon, title, pillLabel, value, unit, action }) {
+/* ── หัวการ์ดแนวนอนสไตล์ hero banner (PatientProfile tab เยี่ยมบ้าน): icon ซ้าย · title+sub ซ้อน · action pill ขวา ── */
+function VitalHead({ grad, shadow, icon, bigIcon, img, imgW = 128, imgMB = -16, title, value, unit, action }) {
   return (
     <div style={{
-      background: grad, borderRadius: 18, padding: '14px 16px', color: 'white',
-      position: 'relative', overflow: 'hidden', boxShadow: `0 6px 18px ${shadow}`,
-      display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14,
+      background: grad, borderRadius: 16, padding: 16, color: 'white',
+      position: 'relative', boxShadow: `0 6px 18px ${shadow}`,
+      display: 'flex', gap: 14, alignItems: 'center', marginBottom: 14,
     }}>
-      <div style={{ position: 'absolute', right: -14, bottom: -18, opacity: 0.22, transform: 'rotate(-12deg)', pointerEvents: 'none' }}>{bigIcon}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 13, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
-        <span style={{ fontSize: 14, fontWeight: 700, fontFamily: font, flex: 1, minWidth: 0 }}>{title}</span>
-        {pillLabel && (
-          <span style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(6px)', borderRadius: 100, padding: '4px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, whiteSpace: 'nowrap' }}>{pillLabel}</span>
-        )}
-        {action}
+      {/* watermark bigIcon — clip ในกรอบ banner */}
+      <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: 16, overflow: 'hidden', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', right: -14, bottom: -22, opacity: 0.18, transform: 'rotate(-12deg)' }}>{bigIcon}</div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, position: 'relative' }}>
-        <span className="num" style={{ fontSize: 28, fontWeight: 800, lineHeight: 1 }}>{value}</span>
-        {unit && <span style={{ fontSize: 12, fontFamily: font, opacity: 0.85 }}>{unit}</span>}
+      {img
+        ? <img src={img} alt="" aria-hidden style={{ width: imgW, height: 'auto', flexShrink: 0, alignSelf: 'flex-end', marginBottom: imgMB, marginTop: -28, marginLeft: -4, objectFit: 'contain', pointerEvents: 'none', position: 'relative', WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 94%)', maskImage: 'linear-gradient(to bottom, black 60%, transparent 94%)' }} />
+        : <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>}
+      <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+        <div style={{ fontSize: 16, fontWeight: 700, fontFamily: font, lineHeight: 1.3 }}>{title}</div>
+        <div style={{ fontSize: 12, fontFamily: font, marginTop: 3, opacity: 0.9 }}>
+          <span className="num" style={{ fontWeight: 700 }}>{value}</span>{unit ? ` ${unit}` : ''}
+        </div>
       </div>
+      {action && <div style={{ flexShrink: 0, position: 'relative' }}>{action}</div>}
     </div>
   );
 }
@@ -132,6 +141,9 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
   const alerts = alertsOfHouse(houseId);
   const activeAlert = alerts.find(a => a.status !== 'ปิดแล้ว');
   const [modal, setModal] = useState(null);
+  const [tab, setTab] = useState(0);
+  const vidRef = useRef(null);
+  useEffect(() => { if (vidRef.current) vidRef.current.playbackRate = 0.4; }, []);
 
   /* ลากจัดลำดับผู้ติดต่อ — ลำดับนี้คือลำดับที่ รปภ. เห็นตอนเกิดเหตุ */
   const [contacts, setContacts] = useState(house.contacts);
@@ -153,18 +165,13 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: 'calc(100vh - 112px)', minHeight: 560 }}>
       {/* ── Layout ยกเครื่อง: profile rail ซ้ายเต็มความสูง + scroll เฉพาะขวา ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '340px minmax(0, 1fr)', gap: 16, flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '400px minmax(0, 1fr)', gap: 16, flex: 1, minHeight: 0 }}>
 
         {/* ══ ซ้าย: โปรไฟล์บ้าน — เต็มความสูง ══ */}
-        <div className="anim-slide-up" style={{ ...card, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div className="anim-slide-up" style={{ ...card, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative' }}>
           <SVMap points={[{ lat: house.lat, lng: house.lng, name: `บ้าน ${house.no}`, color: activeAlert ? RED : PURPLE, big: true, status: activeAlert ? 'alert' : 'ok' }]} center={[house.lng, house.lat]} zoom={16.5} height={180} radius={0} />
-          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, overflowY: 'auto' }}>
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative', zIndex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: 16, flexShrink: 0,
-                background: 'linear-gradient(180deg,#8B81F2,#6658E1)', boxShadow: '0 6px 16px rgba(102,88,225,0.35)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}><IconHome size={24} color="white" style={{ flexShrink: 0 }} /></div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: BLACK, fontFamily: font, lineHeight: 1.3 }}>บ้าน {house.no}</h2>
                 {house.nickname && <div style={{ fontSize: 13, color: GRAY, fontFamily: font }}>{house.nickname}</div>}
@@ -172,37 +179,46 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
               <button className="hover-btn" style={{ ...btnGhost, padding: '5px 12px', fontSize: 11.5, flexShrink: 0 }}><IconPencil size={12} style={{ verticalAlign: '-2px' }} /> แก้ไข</button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.5 }}>
-              <div><IconHome size={12} style={{ verticalAlign: '-2px' }} /> {village.name} · {village.province}</div>
-              {house.note && <div><IconNote size={12} style={{ verticalAlign: '-2px' }} /> {house.note}</div>}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span className="num"><IconMapPin size={12} style={{ verticalAlign: '-2px' }} /> {house.lat}, {house.lng}</span>
-                <CopyBtn text={`${house.lat}, ${house.lng}`} label="copy" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* card หมู่บ้าน — bg ขาว, รูปบ้าน 3D ล้นซ้าย (Figma 437-7809) */}
+              <div style={{ background: 'white', borderRadius: 16, padding: '12px 14px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'relative', zIndex: 1, paddingRight: 84 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.6)', fontFamily: font }}>หมู่บ้าน</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: BLACK, fontFamily: font, lineHeight: 1.35, wordBreak: 'break-word' }}>{village.name} · {village.province}</div>
+                </div>
+                <img src={imgHouse3d} alt="" aria-hidden style={{ position: 'absolute', right: -6, bottom: -8, width: 84, height: 'auto', objectFit: 'contain', pointerEvents: 'none', zIndex: 0, WebkitMaskImage: 'linear-gradient(to bottom, black 45%, transparent 96%)', maskImage: 'linear-gradient(to bottom, black 45%, transparent 96%)' }} />
+              </div>
+              {/* card โน้ต — bg ขาว, รูปสมุด+ดินสอ 3D มุมขวาล่าง (Figma 437-7816) */}
+              {house.note && (
+                <div style={{ background: 'white', borderRadius: 16, padding: '12px 14px', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', zIndex: 1, paddingRight: 84 }}>
+                    <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.6)', fontFamily: font }}>โน้ต</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: BLACK, fontFamily: font, lineHeight: 1.35, wordBreak: 'break-word' }}>{house.note}</div>
+                  </div>
+                  <img src={imgNote3d} alt="" aria-hidden style={{ position: 'absolute', right: 4, bottom: -8, width: 70, height: 'auto', objectFit: 'contain', pointerEvents: 'none', zIndex: 0, WebkitMaskImage: 'linear-gradient(to bottom, black 45%, transparent 96%)', maskImage: 'linear-gradient(to bottom, black 45%, transparent 96%)' }} />
+                </div>
+              )}
+              {/* card พิกัด — bg ขาว, รูปแผนที่+หมุด 3D มุมขวาล่าง (Figma 437-7823) */}
+              <div style={{ background: 'white', borderRadius: 16, padding: '12px 14px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 10, paddingRight: 78 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.6)', fontFamily: font }}>พิกัด</div>
+                    <div className="num" style={{ fontSize: 14, fontWeight: 500, color: BLACK, fontFamily: font, lineHeight: 1.35 }}>{house.lat}, {house.lng}</div>
+                  </div>
+                  <CopyBtn text={`${house.lat}, ${house.lng}`} label="copy" />
+                </div>
+                <img src={imgLocation3d} alt="" aria-hidden style={{ position: 'absolute', right: 2, bottom: -8, width: 60, height: 'auto', objectFit: 'contain', pointerEvents: 'none', zIndex: 0, WebkitMaskImage: 'linear-gradient(to bottom, black 45%, transparent 96%)', maskImage: 'linear-gradient(to bottom, black 45%, transparent 96%)' }} />
               </div>
             </div>
 
-            {/* mini stat cards 2×2 */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {[
-                ['คนในบ้าน', house.residents.length, <IconUsers size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', 'rgba(139,92,246,0.3)'],
-                ['อุปกรณ์', devices.length, <IconAntennaBars5 size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)', 'rgba(25,165,137,0.3)'],
-                ['ผู้ติดต่อ', house.contacts.length, <IconPhone size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', 'rgba(59,130,246,0.3)'],
-                ['Family', linked.length, <IconLink size={14} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)', 'rgba(19,152,216,0.3)'],
-              ].map(([l, v, ic, grad, shadow]) => (
-                <div key={l} className="hover-stat" style={{
-                  background: grad, border: '1px solid rgba(255,255,255,0.7)', borderRadius: 16, padding: '10px 12px',
-                  color: 'white', boxShadow: `0 4px 14px ${shadow}`, minWidth: 0,
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 9, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ic}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="num" style={{ fontSize: 17, fontWeight: 700, color: 'white', lineHeight: '18px' }}>{v}</div>
-                    <div style={{ fontSize: 9.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: font, whiteSpace: 'nowrap' }}>{l}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
+          {/* วิดีโอฉากหมู่บ้าน — absolute ชิดล่างสุด, อยู่หลัง list */}
+          <video ref={vidRef} src={vidScenery} autoPlay loop muted playsInline aria-hidden style={{
+            position: 'absolute', left: 0, right: 0, bottom: -60, width: '100%', height: 'auto', display: 'block',
+            pointerEvents: 'none', zIndex: 0,
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 45%)',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 45%)',
+          }} />
         </div>
 
         {/* ══ ขวา: งานหลัก — scroll เฉพาะฝั่งนี้ ══ */}
@@ -251,16 +267,38 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
             <img src={imgFallScene} alt="" aria-hidden className="sv-bubble-out" style={{ position: 'absolute', right: 14, bottom: 0, height: 'calc(100% + 26px)', width: 'auto', maxWidth: '38%', objectFit: 'contain', objectPosition: 'bottom right', pointerEvents: 'none', zIndex: 1 }} />
           </div>
         )}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, alignItems: 'start' }}>
+        {/* ── Tabs แยกตามหัวข้อ widget — pill style เดียวกับหน้า PatientProfile ── */}
+        <div style={{ background: 'rgba(255,255,255,0.5)', borderRadius: 100, padding: 4, display: 'inline-flex', gap: 4, alignSelf: 'flex-start', flexShrink: 0 }}>
+          {['คนในบ้าน', 'อุปกรณ์', 'ผู้ติดต่อเมื่อเกิดเหตุ', 'การเชื่อมครอบครัว', 'ประวัติเหตุการณ์'].map((t, i) => (
+            <button
+              key={i}
+              className="hover-btn"
+              onClick={() => setTab(i)}
+              style={{
+                padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer',
+                fontSize: 12, fontWeight: tab === i ? 600 : 400, fontFamily: font,
+                background: tab === i ? '#0088FF' : 'transparent',
+                color: tab === i ? '#fff' : BLACK,
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
         {/* (ข) คนในบ้าน */}
-        <div className="anim-slide-up delay-1" style={{ ...card }}>
+        {tab === 0 && (
+        <div className="anim-slide-up" style={{ ...card }}>
           <VitalHead
             grad="linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)" shadow="rgba(139,92,246,0.35)"
-            icon={<IconUsers size={19} color="white" style={{ flexShrink: 0 }} />}
+            icon={<IconUsers size={26} color="white" style={{ flexShrink: 0 }} />}
             bigIcon={<IconUsers size={110} color="white" style={{ flexShrink: 0 }} />}
+            img={imgFamily3d}
             title="คนในบ้าน"
             value={house.residents.length} unit="คน"
-            action={<button className="hover-btn" onClick={() => setModal('resident')} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, color: PURPLE, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่มคน</button>}
+            action={<button className="hover-btn" onClick={() => setModal('resident')} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '9px 16px', fontSize: 12, fontWeight: 700, fontFamily: font, color: PURPLE, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่มคน</button>}
           />
           {house.residents.length === 0 ? (
             <EmptyState icon={<IconUser size={15} />} title="ยังไม่มีทะเบียนคนในบ้าน" sub="จำเป็นสำหรับอุปกรณ์ติดตัวคน และช่วยผู้ช่วยเหลือรู้ว่าในบ้านมีใครบ้าง" />
@@ -283,16 +321,19 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
             </div>
           )}
         </div>
+        )}
 
         {/* (ค) อุปกรณ์ */}
-        <div className="anim-slide-up delay-1" style={{ ...card }}>
+        {tab === 1 && (
+        <div className="anim-slide-up" style={{ ...card }}>
           <VitalHead
             grad="linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)" shadow="rgba(25,165,137,0.35)"
-            icon={<IconAntennaBars5 size={19} color="white" style={{ flexShrink: 0 }} />}
+            icon={<IconAntennaBars5 size={26} color="white" style={{ flexShrink: 0 }} />}
             bigIcon={<IconRadar2 size={110} color="white" style={{ flexShrink: 0 }} />}
+            img={imgDevice3d} imgW={104}
             title="อุปกรณ์"
             value={`${devices.filter(d => d.online).length}/${devices.length}`} unit="online"
-            action={<button className="hover-btn" onClick={onAddDevice} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, color: '#0D7C66', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่มอุปกรณ์</button>}
+            action={<button className="hover-btn" onClick={onAddDevice} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '9px 16px', fontSize: 12, fontWeight: 700, fontFamily: font, color: '#0D7C66', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่มอุปกรณ์</button>}
           />
           {devices.length === 0 ? (
             <EmptyState icon={<IconAntennaBars5 size={15} />} warn title="ยังไม่ติดตั้งอุปกรณ์" sub="บ้านนี้ยังไม่มีการเฝ้าระวัง" />
@@ -319,16 +360,19 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
             </div>
           )}
         </div>
+        )}
 
         {/* (ง) ผู้ติดต่อเมื่อเกิดเหตุ */}
-        <div className="anim-slide-up delay-2" style={{ ...card }}>
+        {tab === 2 && (
+        <div className="anim-slide-up" style={{ ...card }}>
           <VitalHead
             grad="linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)" shadow="rgba(59,130,246,0.35)"
-            icon={<IconPhone size={19} color="white" style={{ flexShrink: 0 }} />}
+            icon={<IconPhone size={26} color="white" style={{ flexShrink: 0 }} />}
             bigIcon={<IconPhone size={110} color="white" style={{ flexShrink: 0 }} />}
+            img={imgContact3d} imgW={76} imgMB={6}
             title="ผู้ติดต่อเมื่อเกิดเหตุ"
             value={contacts.length} unit="รายการ"
-            action={<button className="hover-btn" onClick={() => setModal('contact')} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: font, color: '#1D4ED8', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่ม</button>}
+            action={<button className="hover-btn" onClick={() => setModal('contact')} style={{ background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 100, padding: '9px 16px', fontSize: 12, fontWeight: 700, fontFamily: font, color: '#1D4ED8', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ เพิ่ม</button>}
           />
           {contacts.length === 0 ? (
             <EmptyState icon={<IconPhoneOff size={15} />} warn title="ยังไม่มีผู้ติดต่อ" sub="เมื่อเกิดเหตุ รปภ. จะไม่รู้ว่าต้องโทรหาใคร — ควรเพิ่มอย่างน้อย 1 รายการ"
@@ -367,13 +411,16 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
             </div>
           )}
         </div>
+        )}
 
         {/* (จ) การเชื่อมครอบครัว */}
-        <div className="anim-slide-up delay-2" style={{ ...card }}>
+        {tab === 3 && (
+        <div className="anim-slide-up" style={{ ...card }}>
           <VitalHead
             grad="linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)" shadow="rgba(19,152,216,0.35)"
-            icon={<IconLink size={19} color="white" style={{ flexShrink: 0 }} />}
+            icon={<IconLink size={26} color="white" style={{ flexShrink: 0 }} />}
             bigIcon={<IconUsersGroup size={110} color="white" style={{ flexShrink: 0 }} />}
+            img={imgFamily3d}
             title="การเชื่อมครอบครัว"
             value={linked.length} unit="กลุ่ม"
           />
@@ -418,11 +465,19 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
             </button>
           </div>
         </div>
-        </div>
+        )}
 
         {/* (ฉ) ประวัติเหตุการณ์ของบ้าน */}
-        <div className="anim-slide-up delay-3" style={{ ...card }}>
-        <SectionTitle icon={<IconHistory size={15} />} title="ประวัติเหตุการณ์ของบ้าน" sub={`${alerts.length} เหตุการณ์`} />
+        {tab === 4 && (
+        <div className="anim-slide-up" style={{ ...card }}>
+        <VitalHead
+          grad="linear-gradient(149deg, #8B81F2 0%, #6658E1 100%)" shadow="rgba(102,88,225,0.35)"
+          icon={<IconHistory size={26} color="white" style={{ flexShrink: 0 }} />}
+          bigIcon={<IconHistory size={110} color="white" style={{ flexShrink: 0 }} />}
+          img={imgHistory3d} imgW={84}
+          title="ประวัติเหตุการณ์ของบ้าน"
+          value={alerts.length} unit="เหตุการณ์"
+        />
         {alerts.length === 0 ? (
           <EmptyState icon={<IconCircleCheck size={15} />} title="ยังไม่เคยมีเหตุ" sub="บ้านนี้ไม่เคยมีการแจ้งเหตุ" />
         ) : (
@@ -472,6 +527,7 @@ export default function HouseDetail({ villageId, houseId, onAddDevice }) {
           </div>
         )}
         </div>
+        )}
         </div>
       </div>
 
