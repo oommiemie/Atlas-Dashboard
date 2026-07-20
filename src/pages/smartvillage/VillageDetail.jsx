@@ -10,11 +10,14 @@ import {
 import {
   IconAlertTriangle, IconBuildingCommunity, IconHome, IconAntennaBars5,
   IconCircleFilled, IconShield, IconUrgent, IconDoor, IconDeviceWatch, IconMapPinPlus,
-  IconInfoCircle,
+  IconInfoCircle, IconBan,
 } from '@tabler/icons-react';
 import imgHouseAdd from '../../assets/images/sv-house-add-3d.png';
 import imgGuardAdd from '../../assets/images/sv-guard-add-3d.png';
 import vidScenery from '../../assets/images/sv-village-scene.mp4';
+import imgHouse3d from '../../assets/images/sv-house-3d.png';
+import imgDevice3d from '../../assets/images/sv-device-3d.png';
+import imgWarn3d from '../../assets/images/sv-warn-3d.png';
 
 const genPassword = () => {
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -65,6 +68,12 @@ function AddGuardModal({ village, onClose }) {
         <Field label="รหัสผ่าน" hint="ระบบสร้างให้อัตโนมัติ เพื่อป้องกันรหัสอ่อน — จะแสดงครั้งเดียวหลังบันทึก">
           <TextInput value="สร้างอัตโนมัติหลังกดบันทึก" readOnly style={{ background: 'rgba(116,116,128,0.05)', color: GRAY2 }} />
         </Field>
+        <div style={{ display: 'flex', gap: 10, background: 'rgba(102,88,225,0.06)', border: '1px solid rgba(102,88,225,0.14)', borderRadius: 14, padding: '11px 13px' }}>
+          <IconInfoCircle size={16} color={PURPLE} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div style={{ fontSize: 11.5, color: GRAY, fontFamily: font, lineHeight: 1.6 }}>
+            <span style={{ fontWeight: 700, color: PURPLE }}>หมายเหตุ</span> — บัญชีรายบุคคล (กะเช้า/กะดึก) · central สร้าง-ระงับ-รีเซ็ตรหัสผ่านเท่านั้น เพื่อ audit ว่าใครรับทราบ/ปิดเหตุ
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button className="hover-btn" style={btnGhost} onClick={onClose}>ยกเลิก</button>
           <button className="hover-btn" style={{ ...btnPrimary, opacity: name ? 1 : 0.45 }} onClick={() => name && setCreated(true)}>สร้างบัญชี</button>
@@ -104,6 +113,31 @@ function AddHouseModal({ village, onClose }) {
   );
 }
 
+/* ── ระงับหมู่บ้าน — ต้องพิมพ์ชื่อหมู่บ้านให้ตรงก่อนยืนยัน (กัน action พลาด) ── */
+function SuspendVillageModal({ village, guards, devices, onClose, onConfirm }) {
+  const [typed, setTyped] = useState('');
+  const match = typed.trim() === village.name;
+  return (
+    <Modal title="ยืนยันการระงับหมู่บ้าน?" onClose={onClose} width={460}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ fontSize: 13, color: GRAY, fontFamily: font, lineHeight: 1.7 }}>
+          ผลกระทบ: <b>รปภ. {guards} บัญชี login ไม่ได้ทันที</b> และ<b>ไม่รับเหตุใหม่</b>จากอุปกรณ์ {devices} เครื่อง — ครอบครัวที่เชื่อมไว้จะไม่ได้รับแจ้งเตือนจากระบบหมู่บ้าน (แจ้งเตือนฝั่งแอปยังทำงาน)
+        </div>
+        <div style={{ fontSize: 11.5, color: ORANGE, fontFamily: font, background: 'rgba(232,128,42,0.08)', borderRadius: 12, padding: '9px 12px', lineHeight: 1.6 }}>
+          <IconAlertTriangle size={12} style={{ verticalAlign: '-2px' }} /> พิมพ์ชื่อหมู่บ้าน <b style={{ color: RED }}>{village.name}</b> ให้ตรงเพื่อยืนยัน
+        </div>
+        <Field label="ชื่อหมู่บ้าน" required>
+          <TextInput value={typed} onChange={e => setTyped(e.target.value)} placeholder={village.name} autoFocus />
+        </Field>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button className="hover-btn" style={btnGhost} onClick={onClose}>ยกเลิก</button>
+          <button className="hover-btn" disabled={!match} style={{ ...btnPrimary, background: 'linear-gradient(135deg,#E0262B,#FF5A3C)', boxShadow: '0 4px 12px rgba(255,56,60,0.3)', opacity: match ? 1 : 0.4, cursor: match ? 'pointer' : 'not-allowed' }} onClick={() => match && (onConfirm ? onConfirm() : onClose())}>ระงับหมู่บ้าน</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 /* ── ยืนยันการระงับ ── */
 function ConfirmModal({ title, body, confirmLabel, onClose, danger = true }) {
   return (
@@ -126,7 +160,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
   const [tab, setTab] = useState('บ้าน');
   const [q, setQ] = useState('');
   const [modal, setModal] = useState(null); // 'house' | 'guard' | 'suspend' | 'reset:<id>'
-  const [fyi, setFyi] = useState(false);
+  const [suspended, setSuspended] = useState(false);
 
   // slow smooth forward loop
   const vidRef = useRef(null);
@@ -152,11 +186,10 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
   ];
 
   const statCards = [
-    ['บ้าน', stats.houses, <IconHome size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', 'rgba(139,92,246,0.3)'],
-    ['ติดตั้งแล้ว', stats.installedHouses, <IconAntennaBars5 size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(183deg, #26C1A2 6%, #0D7C66 112%)', 'rgba(25,165,137,0.3)'],
-    ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, <IconCircleFilled size={13} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', 'rgba(59,130,246,0.3)'],
-    ['บัญชี รปภ.', stats.guards, <IconShield size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)', 'rgba(19,152,216,0.3)'],
-    ['เหตุ 30 วัน', stats.alerts30d, <IconUrgent size={15} color="white" style={{ flexShrink: 0 }} />, 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', 'rgba(232,128,42,0.3)'],
+    ['บ้าน', stats.houses, null, 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', 'rgba(139,92,246,0.3)', imgHouse3d, 92, null, -6],
+    ['อุปกรณ์ online', `${stats.online}/${stats.devices}`, null, 'linear-gradient(149deg, #3B82F6 0%, #1D4ED8 100%)', 'rgba(59,130,246,0.3)', imgDevice3d, 98, `ติดตั้งแล้ว ${stats.installedHouses} หลัง`, -6],
+    ['บัญชี รปภ.', stats.guards, null, 'linear-gradient(149deg, #34B4E3 0%, #1398D8 100%)', 'rgba(19,152,216,0.3)', imgGuardAdd, 58, null, -34, 16],
+    ['เหตุ 30 วัน', stats.alerts30d, null, 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', 'rgba(232,128,42,0.3)', imgWarn3d, 80, null, -6],
   ];
 
   const toolbar = (
@@ -171,34 +204,27 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
       {tab === 'บ้าน' && (
         <SearchBox value={q} onChange={setQ} placeholder="ค้นหาบ้านเลขที่ / ชื่อเรียก…" width={240} />
       )}
-      {tab === 'รปภ.' && (
-        <div style={{ position: 'relative' }}>
-          <button className="hover-btn" onClick={() => setFyi(f => !f)} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px',
-            borderRadius: 100, border: '1px solid rgba(102,88,225,0.25)', cursor: 'pointer',
-            background: fyi ? 'rgba(102,88,225,0.12)' : 'rgba(102,88,225,0.06)', color: PURPLE,
-            fontFamily: font, fontSize: 12, fontWeight: 600,
-          }}>
-            <IconInfoCircle size={15} style={{ flexShrink: 0 }} /> FYI
-          </button>
-          {fyi && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 8px)', left: 0, zIndex: 20, width: 320,
-              background: 'white', borderRadius: 14, padding: '12px 14px',
-              border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 8px 24px rgba(13,10,44,0.14)',
-              fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.6,
-            }}>
-              บัญชีรายบุคคล (กะเช้า/กะดึก) · central สร้าง-ระงับ-รีเซ็ตรหัสผ่านเท่านั้น เพื่อ audit ว่าใครรับทราบ/ปิดเหตุ
-              <span style={{ position: 'absolute', top: -6, left: 16, width: 12, height: 12, background: 'white', borderLeft: '1px solid rgba(0,0,0,0.06)', borderTop: '1px solid rgba(0,0,0,0.06)', transform: 'rotate(45deg)' }} />
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* แถบสถานะระงับ — แสดงเมื่อหมู่บ้านถูกระงับ */}
+      {suspended && (
+        <div className="anim-slide-up" style={{
+          display: 'flex', alignItems: 'center', gap: 12, borderRadius: 16, padding: '12px 16px',
+          background: 'rgba(146,145,165,0.12)', border: '1px solid rgba(146,145,165,0.3)',
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 11, background: 'rgba(146,145,165,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <IconBan size={20} color={GRAY} style={{ flexShrink: 0 }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: BLACK, fontFamily: font }}>หมู่บ้านนี้ถูกระงับ</div>
+            <div style={{ fontSize: 11.5, color: GRAY, fontFamily: font, marginTop: 1 }}>บัญชี รปภ. login ไม่ได้ · ระบบไม่รับเหตุใหม่จากอุปกรณ์ — ข้อมูลบ้าน/อุปกรณ์ยังอยู่ครบ</div>
+          </div>
+          <button className="hover-btn" style={{ ...btnPrimary, flexShrink: 0 }} onClick={() => setSuspended(false)}>เปิดใช้หมู่บ้านอีกครั้ง</button>
+        </div>
+      )}
       {/* Header + Map — row เดียวกัน, สอง widget แยก card */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16, alignItems: 'stretch' }}>
       <div className="anim-slide-up" style={{ ...card, background: '#F0F0F0', position: 'relative', overflow: 'hidden' }}>
@@ -212,7 +238,9 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <h2 style={{ fontSize: 19, fontWeight: 700, color: BLACK, fontFamily: font }}>{village.name}</h2>
-                <Pill color={SV_STATUS_META[st].color} bg={`${SV_STATUS_META[st].color}1F`}>{SV_STATUS_META[st].label}</Pill>
+                {suspended
+                  ? <Pill color={GRAY2} bg="rgba(146,145,165,0.18)"><IconBan size={12} style={{ flexShrink: 0 }} /> ระงับแล้ว</Pill>
+                  : <Pill color={SV_STATUS_META[st].color} bg={`${SV_STATUS_META[st].color}1F`}>{SV_STATUS_META[st].label}</Pill>}
               </div>
               <div style={{ fontSize: 12, color: GRAY, fontFamily: font, marginTop: 4 }}>
                 {village.type} · {village.address} อ.{village.district} จ.{village.province}
@@ -242,15 +270,16 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
 
       {/* Stats — ย้ายลงมาเหนือ table card */}
       <div className="anim-slide-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(104px, 1fr))', gap: 10 }}>
-        {statCards.map(([l, v, ic, grad, shadow]) => (
+        {statCards.map(([l, v, ic, grad, shadow, img, imgW, sub, imgB = -6, imgR = -4]) => (
           <div key={l} className="hover-stat" style={{
             background: grad, border: '1px solid rgba(255,255,255,0.7)', borderRadius: 18, padding: '12px 14px',
             color: 'white', boxShadow: `0 4px 14px ${shadow}`, minWidth: 0,
-            display: 'flex', flexDirection: 'column', gap: 6,
+            display: 'flex', flexDirection: 'column', gap: 5, position: 'relative', overflow: 'hidden', minHeight: 92,
           }}>
-            <div style={{ width: 30, height: 30, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ic}</div>
-            <span style={{ fontSize: 10.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: font, letterSpacing: 0.22, whiteSpace: 'nowrap' }}>{l}</span>
-            <span className="num" style={{ fontSize: 20, fontWeight: 700, color: 'white', lineHeight: '20px' }}>{v}</span>
+            <span style={{ fontSize: 10.5, fontWeight: 500, color: 'rgba(255,255,255,0.75)', fontFamily: font, letterSpacing: 0.22, whiteSpace: 'nowrap', position: 'relative', zIndex: 1 }}>{l}</span>
+            <span className="num" style={{ fontSize: 22, fontWeight: 700, color: 'white', lineHeight: '22px', position: 'relative', zIndex: 1, marginTop: 'auto' }}>{v}</span>
+            {sub && <span style={{ fontSize: 9.5, fontWeight: 500, color: 'rgba(255,255,255,0.72)', fontFamily: font, whiteSpace: 'nowrap', position: 'relative', zIndex: 1 }}>{sub}</span>}
+            {img && <img src={img} alt="" aria-hidden style={{ position: 'absolute', right: imgR, bottom: imgB, width: imgW, height: 'auto', objectFit: 'contain', pointerEvents: 'none', zIndex: 0, opacity: 0.92, WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 95%)', maskImage: 'linear-gradient(to bottom, black 50%, transparent 95%)' }} />}
           </div>
         ))}
       </div>
@@ -377,14 +406,24 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
             </Field>
             <button className="hover-btn" style={{ ...btnPrimary, alignSelf: 'flex-end' }}>บันทึกการแก้ไข</button>
           </div>
-          <div style={{ ...card, border: '1px solid rgba(255,56,60,0.25)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 700, color: RED, fontFamily: font }}><IconAlertTriangle size={15} style={{ verticalAlign: '-2px' }} /> ระงับหมู่บ้าน</div>
-            <div style={{ fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.7 }}>
-              เมื่อระงับ: บัญชี รปภ. ทั้งหมดจะ login ไม่ได้ และระบบจะไม่รับเหตุใหม่จากอุปกรณ์ในหมู่บ้านนี้
-              <br />ไม่มีการลบถาวร เพราะมีบ้าน {stats.houses} หลังและอุปกรณ์ {stats.devices} เครื่องผูกอยู่
+          {suspended ? (
+            <div style={{ ...card, border: '1px solid rgba(146,145,165,0.3)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 14.5, fontWeight: 700, color: BLACK, fontFamily: font }}><IconBan size={15} style={{ verticalAlign: '-2px' }} /> หมู่บ้านถูกระงับอยู่</div>
+              <div style={{ fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.7 }}>
+                บัญชี รปภ. login ไม่ได้ และระบบไม่รับเหตุใหม่จากอุปกรณ์ — เปิดใช้อีกครั้งเพื่อกลับมาทำงานตามปกติ
+              </div>
+              <button className="hover-btn" style={{ ...btnPrimary, alignSelf: 'flex-start' }} onClick={() => setSuspended(false)}>เปิดใช้หมู่บ้านอีกครั้ง</button>
             </div>
-            <button className="hover-btn" style={{ ...btnDanger, alignSelf: 'flex-start' }} onClick={() => setModal('suspend')}>ระงับหมู่บ้านนี้…</button>
-          </div>
+          ) : (
+            <div style={{ ...card, border: '1px solid rgba(255,56,60,0.25)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 14.5, fontWeight: 700, color: RED, fontFamily: font }}><IconAlertTriangle size={15} style={{ verticalAlign: '-2px' }} /> ระงับหมู่บ้าน</div>
+              <div style={{ fontSize: 12, color: GRAY, fontFamily: font, lineHeight: 1.7 }}>
+                เมื่อระงับ: บัญชี รปภ. ทั้งหมดจะ login ไม่ได้ และระบบจะไม่รับเหตุใหม่จากอุปกรณ์ในหมู่บ้านนี้
+                <br />ไม่มีการลบถาวร เพราะมีบ้าน {stats.houses} หลังและอุปกรณ์ {stats.devices} เครื่องผูกอยู่
+              </div>
+              <button className="hover-btn" style={{ ...btnDanger, alignSelf: 'flex-start' }} onClick={() => setModal('suspend')}>ระงับหมู่บ้านนี้…</button>
+            </div>
+          )}
         </div>
       )}
 
@@ -392,11 +431,7 @@ export default function VillageDetail({ villageId, onDrillHouse }) {
       {modal === 'house' && <AddHouseModal village={village} onClose={() => setModal(null)} />}
       {modal === 'guard' && <AddGuardModal village={village} onClose={() => setModal(null)} />}
       {modal === 'suspend' && (
-        <ConfirmModal
-          title="ยืนยันการระงับหมู่บ้าน?"
-          body={<>ผลกระทบ: <b>รปภ. {guards.length} บัญชี login ไม่ได้ทันที</b> และ<b>ไม่รับเหตุใหม่</b>จากอุปกรณ์ {stats.devices} เครื่อง — ครอบครัวที่เชื่อมไว้จะไม่ได้รับแจ้งเตือนจากระบบหมู่บ้าน (แจ้งเตือนฝั่งแอปยังทำงาน)</>}
-          confirmLabel="ระงับหมู่บ้าน" onClose={() => setModal(null)}
-        />
+        <SuspendVillageModal village={village} guards={guards.length} devices={stats.devices} onClose={() => setModal(null)} onConfirm={() => { setSuspended(true); setModal(null); }} />
       )}
       {modal === 'suspend-guard' && (
         <ConfirmModal title="ยืนยันระงับบัญชี รปภ.?" body="บัญชีนี้จะ login เข้าจอมอนิเตอร์ไม่ได้จนกว่าจะเปิดใช้อีกครั้ง" confirmLabel="ระงับบัญชี" onClose={() => setModal(null)} />

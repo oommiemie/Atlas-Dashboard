@@ -15,3 +15,4 @@ id = "ใส่_KV_NAMESPACE_ID_ตรงนี้"
 
 # secrets ตั้งผ่าน dashboard หรือ `npx wrangler secret put <NAME>`:
 #   GROQ_API_KEY, GEMINI_API_KEY, LINE_TOKEN, LINE_SECRET, LINE_GROUP_ID
+#   GITHUB_WEBHOOK_SECRET  ← แจ้งเตือน push (ต้องตรงกับ Secret ที่ตั้งใน GitHub webhook)
