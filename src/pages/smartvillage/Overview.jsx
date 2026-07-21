@@ -14,7 +14,7 @@ import {
 } from '../../data/smartVillage';
 import {
   font, BLACK, GRAY, GRAY2, RED, GREEN, ORANGE, PURPLE,
-  card, btnPrimary, btnGhost, PageHead, Pill, LivePill, SVMap, SectionTitle, ElapsedSince, EmptyState,
+  card, btnPrimary, btnGhost, PageHead, Pill, LivePill, SVMap, SectionTitle, ElapsedSince, EmptyState, VizBar,
 } from './shared';
 import {
   IconAlertTriangleFilled, IconBuildingCommunity, IconHome,
@@ -139,6 +139,42 @@ function StatCard({ icon, label, value, unit, growth, bg }) {
           ? <CountUp end={value} style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }} />
           : <span style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }}>{value}</span>}
         {unit && <span style={{ fontSize: 12, lineHeight: '12px' }}>{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+/* Stacked bar viz — สถิติเหตุที่ปิดแล้ว แยกหมู่บ้าน · tooltip ใช้ VizBar (การ์ดขาว portal เดียวกับตารางบ้าน) */
+function SvClosedBars({ rows, cols, onDrill }) {
+  const maxTotal = Math.max(...rows.map(r => r.total), 1);
+  return (
+    <div style={{ background: 'white', border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {rows.map(r => (
+        <div key={r.id} className="hover-row" onClick={() => onDrill(r.id)} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
+            <span style={{ fontSize: 12.5, fontWeight: 500, color: BLACK, fontFamily: font, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</span>
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexShrink: 0 }}>
+              {r.vals.map((v, j) => v > 0 && (
+                <span key={j} className="num" style={{ fontSize: 11, fontWeight: 600, color: cols[j].color }}>{v}</span>
+              ))}
+              <span className="num" style={{ fontSize: 13, fontWeight: 700, color: BLACK }}>{r.total}</span>
+            </span>
+          </div>
+          {/* แท่ง + tooltip VizBar — ความยาวสเกลตาม total/maxTotal */}
+          <VizBar
+            title={`${r.name} — เหตุที่ปิดแล้ว`}
+            maxWidth={Math.max(48, (r.total / maxTotal) * 460)}
+            segments={cols.map((c, j) => ({ label: c.label, value: r.vals[j], color: c.color }))}
+          />
+        </div>
+      ))}
+      {/* legend สี */}
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', paddingTop: 4, borderTop: '1px solid rgba(0,0,0,0.04)', marginTop: 2 }}>
+        {cols.map(c => (
+          <span key={c.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: GRAY, fontFamily: font, marginTop: 8 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 3, background: c.color }} />{c.key}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -354,7 +390,7 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
           {/* Hero banner — pattern เดียวกับหัว "ประวัติการเยี่ยมบ้าน" (PatientProfile) */}
           <div style={{
             background: 'linear-gradient(175deg, #E8802A 0%, #D06A1A 100%)',
-            borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
+            borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden', minHeight: 104,
             backdropFilter: 'blur(10px)', boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
             display: 'flex', gap: 16, alignItems: 'center',
           }}>
@@ -382,48 +418,30 @@ export default function Overview({ onDrillHouse, onDrillVillage, onGoSection, on
         </div>
 
         {/* ประวัติเหตุที่ปิดแล้ว — ตารางผลการปิดเหตุ แยกหมู่บ้าน (แบบ FeatureTable) */}
-        <div className="anim-slide-up delay-4" style={{ ...card, display: 'flex', flexDirection: 'column' }}>
-          <SectionTitle
-            icon={<IconHistory size={15} style={{ flexShrink: 0 }} />} title="สถิติเหตุที่ปิดแล้ว แยกหมู่บ้าน" sub={`${closedAll.length} เหตุทั้งหมด`}
-            right={<button className="hover-btn" style={{ ...btnGhost, padding: '6px 14px', fontSize: 12 }} onClick={() => onGoSection('sv-alerts')}>ดูทั้งหมด →</button>}
-          />
-          <div style={{ overflowX: 'auto' }}>
-            <div style={{ minWidth: 420, background: 'white', border: '1px solid rgba(0,0,0,0.05)', borderRadius: 14, overflow: 'hidden' }}>
-              {/* header */}
-              <div style={{ display: 'grid', gridTemplateColumns: `1.6fr repeat(${OUTCOME_COLS.length}, 1fr) 0.8fr`, gap: 10, padding: 16, background: 'rgba(139,92,246,0.1)', fontWeight: 700, fontSize: 12, color: BLACK, fontFamily: font }}>
-                <span>หมู่บ้าน</span>
-                {OUTCOME_COLS.map(c => <span key={c.key} style={{ textAlign: 'center' }}>{c.label}</span>)}
-                <span style={{ textAlign: 'center' }}>รวม</span>
+        <div className="anim-slide-up delay-4" style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Hero banner — pattern เดียวกับ "ต้องตามงาน" */}
+          <div style={{
+            background: 'linear-gradient(175deg, #8B5CF6 0%, #7C3AED 100%)',
+            borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden', minHeight: 104,
+            backdropFilter: 'blur(10px)', boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
+            display: 'flex', gap: 16, alignItems: 'center',
+          }}>
+            <img src={imgAlert3d} alt="" style={{ position: 'absolute', left: -6, top: '50%', transform: 'translateY(-50%)', width: 144, height: 144, objectFit: 'contain', pointerEvents: 'none' }} />
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 130, gap: 10 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'white', fontFamily: font }}>สถิติเหตุที่ปิดแล้ว แยกหมู่บ้าน</div>
+                <div style={{ fontSize: 12, color: 'white', fontFamily: font, marginTop: 4 }}>{closedAll.length} เหตุทั้งหมด</div>
               </div>
-              {/* rows */}
-              {closedByVillage.map(r => {
-                const maxVal = Math.max(...r.vals);
-                return (
-                  <div key={r.id} className="hover-row" onClick={() => onDrillVillage(r.id)} style={{ display: 'grid', gridTemplateColumns: `1.6fr repeat(${OUTCOME_COLS.length}, 1fr) 0.8fr`, gap: 10, padding: 16, fontSize: 12, fontFamily: font, color: BLACK, cursor: 'pointer', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                    <span style={{ fontWeight: 500, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name}</span>
-                    {r.vals.map((v, j) => {
-                      const c = OUTCOME_COLS[j];
-                      const hi = v > 0 && v === maxVal;
-                      return (
-                        <span key={j} style={{ textAlign: 'center' }}>
-                          <span className="num" style={{ display: 'inline-block', padding: '2px 9px', borderRadius: 8, background: hi ? `${c.color}18` : 'transparent', color: hi ? c.color : (v ? BLACK : GRAY2), fontWeight: hi ? 700 : 500 }}>{v}</span>
-                        </span>
-                      );
-                    })}
-                    <span className="num" style={{ textAlign: 'center', fontWeight: 700 }}>{r.total}</span>
-                  </div>
-                );
-              })}
-              {/* legend สี */}
-              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', padding: '10px 14px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                {OUTCOME_COLS.map(c => (
-                  <span key={c.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: GRAY, fontFamily: font }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: c.color }} />{c.key}
-                  </span>
-                ))}
-              </div>
+              <button className="hover-btn" onClick={() => onGoSection('sv-alerts')} style={{
+                backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
+                border: '1px solid white', borderRadius: 100, padding: '4px 16px',
+                height: 36, display: 'flex', alignItems: 'center', flexShrink: 0, cursor: 'pointer',
+                fontSize: 12, fontWeight: 600, fontFamily: font, color: BLACK, whiteSpace: 'nowrap',
+              }}>ดูทั้งหมด →</button>
             </div>
           </div>
+          {/* Visualization — stacked bar ต่อหมู่บ้าน + tooltip ตอน hover segment */}
+          <SvClosedBars rows={closedByVillage} cols={OUTCOME_COLS} onDrill={onDrillVillage} />
         </div>
       </div>
     </div>

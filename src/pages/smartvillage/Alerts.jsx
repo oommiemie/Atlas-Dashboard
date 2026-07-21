@@ -40,22 +40,28 @@ export default function Alerts({ onDrillHouse, onGoSection }) {
         <PageHead thai="เหตุการณ์" right={<LivePill />} section="sv-alerts" onGoSection={onGoSection} />
       </div>
 
-      {/* สรุปสถานะ — anatomy เดียวกับ StatCards หน้า Dashboard */}
+      {/* สรุปสถานะ — anatomy เดียวกับ StatCard หน้าภาพรวม */}
       <div className="anim-slide-up delay-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
         {[
-          ['ใหม่ (ยังไม่มีผู้รับทราบ)', counts['ใหม่'], 'linear-gradient(149deg, #E8432A 0%, #D0381A 100%)', '0 4px 14px rgba(232,67,42,0.3)', <IconAlertTriangleFilled size={20} style={{ flexShrink: 0 }} />],
-          ['รับทราบแล้ว (กำลังช่วยเหลือ)', counts['รับทราบแล้ว'], 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', '0 4px 14px rgba(232,128,42,0.3)', <IconRun size={20} style={{ flexShrink: 0 }} />],
-          ['ปิดแล้ว (30 วัน)', counts['ปิดแล้ว'], 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', '0 4px 14px rgba(139,92,246,0.3)', <IconCircleCheckFilled size={20} style={{ flexShrink: 0 }} />],
-        ].map(([l, v, g, sh, ic], i) => (
-          <div key={l} className="hover-stat" style={{
-            background: g, borderRadius: 24, padding: 16, color: 'white',
-            overflow: 'hidden', position: 'relative', boxShadow: sh,
-            display: 'flex', flexDirection: 'column', gap: 8,
-            animation: `cardPop 0.5s cubic-bezier(.22,1,.36,1) ${i * 80}ms both`,
+          ['ใหม่ (ยังไม่มีผู้รับทราบ)', counts['ใหม่'], 'เหตุ', 'linear-gradient(149deg, #E8432A 0%, #D0381A 100%)', <IconAlertTriangleFilled size={20} color="white" style={{ flexShrink: 0 }} />],
+          ['รับทราบแล้ว (กำลังช่วยเหลือ)', counts['รับทราบแล้ว'], 'เหตุ', 'linear-gradient(149deg, #E8802A 0%, #D06A1A 100%)', <IconRun size={20} color="white" style={{ flexShrink: 0 }} />],
+          ['ปิดแล้ว (30 วัน)', counts['ปิดแล้ว'], 'เหตุ', 'linear-gradient(149deg, #8B5CF6 0%, #7C3AED 100%)', <IconCircleCheckFilled size={20} color="white" style={{ flexShrink: 0 }} />],
+        ].map(([l, v, unit, g, ic]) => (
+          <div key={l} className="hover-stat anim-slide-up" style={{
+            background: g, border: '1px solid rgba(255,255,255,0.7)',
+            borderRadius: 24, padding: 16, color: 'white', fontFamily: font,
+            position: 'relative', overflow: 'hidden', height: 130,
+            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+            boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
           }}>
-            <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ic}</div>
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,0.6)', fontFamily: font, letterSpacing: 0.22 }}>{l}</span>
-            <CountUp end={v} style={{ fontSize: 26, fontWeight: 700, color: 'white', fontFamily: font, lineHeight: '26px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: 40 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ic}</div>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'white', letterSpacing: 0.22 }}>{l}</span>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+              <CountUp end={v} style={{ fontSize: 26, fontWeight: 700, lineHeight: '26px' }} />
+              <span style={{ fontSize: 12, lineHeight: '12px' }}>{unit}</span>
+            </div>
           </div>
         ))}
       </div>
