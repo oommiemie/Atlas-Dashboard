@@ -18,6 +18,7 @@ export const PatientContext = createContext(null);
 export const UserContext = createContext(null);
 
 import imgSidebarBg from './assets/images/sidebar-bg.jpg'
+import imgLogo from './assets/images/logo-atlas-dashboard.png'
 import imgProfile from './assets/images/profile.png'
 import iconSidebarChart from './assets/icons/sidebar-chart.svg'
 import iconSidebarHeart from './assets/icons/sidebar-heart.svg'
@@ -89,7 +90,9 @@ function App() {
           }}>
             {/* Logo */}
             <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: 16 }}>
-              <div style={{ width: 48, height: 48, borderRadius: 16, background: 'white', boxShadow: '0 0 24px 4px rgba(143,134,251,0.35)', flexShrink: 0 }} />
+              <div style={{ width: 48, height: 48, borderRadius: 16, background: 'white', boxShadow: '0 0 24px 4px rgba(143,134,251,0.35)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                <img src={imgLogo} alt="Atlas Dashboard" style={{ width: 42, height: 42, objectFit: 'contain' }} />
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, color: 'white', width: 91 }}>
                 <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>ATLAS</span>
                 <span style={{ fontSize: 14, fontFamily: "'Inter', sans-serif", letterSpacing: 2.24 }}>Dashboard</span>

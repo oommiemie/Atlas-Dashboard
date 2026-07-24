@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import imgLogo from '../assets/images/logo-atlas-dashboard.png';
 
 const font = "'IBM Plex Sans Thai Looped', sans-serif";
 
@@ -164,7 +165,7 @@ export default function Login({ onLogin }) {
             margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             animation: 'loginPulse 3s ease-in-out infinite',
           }}>
-            <span style={{ fontSize: 36, fontWeight: 800, fontFamily: "'Inter', sans-serif", color: 'white' }}>A</span>
+            <img src={imgLogo} alt="Atlas Dashboard" style={{ width: 62, height: 62, objectFit: 'contain' }} />
           </div>
 
           <h1 style={{
