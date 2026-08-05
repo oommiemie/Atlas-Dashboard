@@ -1,4 +1,4 @@
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 

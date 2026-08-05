@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PATIENTS, getAvatar } from '../data/patients';
 
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 const PURPLE = '#6658E1';

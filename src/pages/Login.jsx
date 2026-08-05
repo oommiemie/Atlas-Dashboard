@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import imgLogo from '../assets/images/logo-atlas-dashboard.png';
 
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 
 const ACCOUNTS = [
   { username: 'admin', password: 'admin', role: 'admin', name: 'สมชาย ทดสอบ51', title: 'ผู้ดูแลระบบ', hospital: null },
@@ -169,12 +169,12 @@ export default function Login({ onLogin }) {
           </div>
 
           <h1 style={{
-            fontSize: 42, fontWeight: 800, color: 'white', fontFamily: "'Inter', sans-serif",
+            fontSize: 42, fontWeight: 800, color: 'white', fontFamily: "'Sarabun', sans-serif",
             margin: 0, letterSpacing: 4, animation: 'loginTitle 0.8s cubic-bezier(.22,1,.36,1) 0.2s both',
           }}>ATLAS</h1>
           <p style={{
             fontSize: 16, color: 'rgba(255,255,255,0.5)', letterSpacing: 6,
-            fontFamily: "'Inter', sans-serif", margin: '4px 0 0',
+            fontFamily: "'Sarabun', sans-serif", margin: '4px 0 0',
             animation: 'loginTitle 0.8s cubic-bezier(.22,1,.36,1) 0.4s both',
           }}>DASHBOARD</p>
 

@@ -99,7 +99,7 @@ function LinkFamilyModal({ onClose }) {
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Field label="รหัสครอบครัว" required hint="รูปแบบ FAM-XXXX-XXXX">
-            <TextInput value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="FAM-____-____" style={{ fontFamily: 'Inter', letterSpacing: 1.5, fontWeight: 600 }} />
+            <TextInput value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="FAM-____-____" style={{ fontFamily: 'Sarabun', letterSpacing: 1.5, fontWeight: 600 }} />
           </Field>
           <button className="hover-btn" style={{ ...btnPrimary, justifyContent: 'center', opacity: code.length >= 8 ? 1 : 0.45 }} onClick={() => code.length >= 8 && setStep(2)}>ตรวจสอบรหัส</button>
         </div>

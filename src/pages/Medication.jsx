@@ -28,7 +28,7 @@ import iconTeleXmark from '../assets/icons/tele-xmark.svg';
 import iconTeleChevron from '../assets/icons/tele-chevron-down.svg';
 
 /* ── shared styles ── */
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 

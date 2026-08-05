@@ -1,14 +1,15 @@
 import { useState, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import { CallContext } from '../App';
 import { getAvatar } from '../data/patients';
-import { LineChart, Line, Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
+import { Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, ReferenceArea, ReferenceLine, ReferenceDot } from 'recharts';
 import logoHomeCare from '../assets/images/logo-atlas-homecare.png';
 import logoMyAtlas from '../assets/images/logo-my-atlas.png';
 import imgCardAllergy from '../assets/images/card-allergy.png';
 import imgCardDisease from '../assets/images/card-disease.png';
 import imgCardAddress from '../assets/images/card-address.png';
 
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 
@@ -22,14 +23,74 @@ const glassCard = {
 };
 
 /* ── Tooltip ── */
-const Tip = ({ active, payload, label }) => {
+/* ranges: เกณฑ์ปกติราย dataKey — ใช้ตีตราค่าใน tooltip ว่าปกติ/สูง/ต่ำกว่าเกณฑ์ */
+const Tip = ({ active, payload, label, ranges, unit, source }) => {
   if (!active || !payload?.length) return null;
+  const judge = (key, v) => {
+    const r = ranges?.[key];
+    if (!r || typeof v !== 'number') return null;
+    if (v > r[1]) return { text: 'สูงกว่าเกณฑ์', color: '#FF383C' };
+    if (v < r[0]) return { text: 'ต่ำกว่าเกณฑ์', color: '#E8802A' };
+    return { text: 'ปกติ', color: '#34C759' };
+  };
+  /* recharts ใส่ <Area> ที่วาดพื้นใต้เส้นเข้ามาใน payload ด้วย (tooltipType="none" ไม่เป็นผล)
+     รายการนั้นใช้ชื่อ dataKey ดิบ เช่น "v" — กรองทิ้งเมื่อมีรายการของเส้นจริงที่มีชื่ออ่านได้แล้ว */
+  const rows = payload.filter(p => p.name !== p.dataKey
+    || !payload.some(q => q.dataKey === p.dataKey && q.name !== q.dataKey));
+  const dotColor = (c) => (!c || String(c).startsWith('url')) ? '#34C759' : c;
   return (
-    <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 12, padding: '8px 12px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.04)', fontFamily: font }}>
-      <p style={{ fontSize: 10, fontWeight: 600, color: GRAY, marginBottom: 3 }}>{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} style={{ fontSize: 11, fontWeight: 700, color: p.color }}>{p.name}: {p.value}</p>
-      ))}
+    <div style={{
+      /* พื้นขาวเกือบทึบ — อ่านรายละเอียดชัด ไม่ให้กราฟข้างหลังทะลุรบกวน (เบลอไว้เก็บขอบที่เหลือ 2%) */
+      background: 'rgba(255,255,255,0.98)',
+      backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+      borderRadius: 16, padding: '10px 14px 11px', minWidth: 158,
+      boxShadow: '0 12px 32px rgba(30,27,57,0.16), 0 2px 8px rgba(30,27,57,0.06)',
+      border: '1px solid rgba(30,27,57,0.05)', fontFamily: font,
+    }}>
+      {/* หัว: เวลา/วันที่ */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, paddingBottom: 6, marginBottom: 6, borderBottom: '1px solid rgba(30,27,57,0.07)' }}>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="5" cy="5" r="4.2" stroke="#9291A5" strokeWidth="1.1" />
+          <path d="M5 2.8V5l1.6 1" stroke="#9291A5" strokeWidth="1.1" strokeLinecap="round" />
+        </svg>
+        <span style={{ fontSize: 10, fontWeight: 600, color: GRAY, letterSpacing: 0.2 }}>{label}</span>
+      </div>
+      {rows.map((p, i) => {
+        const st = judge(p.dataKey, p.value);
+        const c = dotColor(p.color);
+        return (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '3px 0' }}>
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+              background: `linear-gradient(180deg, ${c}, ${c})`,
+              boxShadow: `0 0 0 2.5px ${c}22`,
+            }} />
+            <span style={{ fontSize: 10.5, color: GRAY, flex: 1, paddingRight: 8, whiteSpace: 'nowrap' }}>{p.name}</span>
+            <span className="num" style={{ fontSize: 14, fontWeight: 800, color: '#1E1B39', lineHeight: 1 }}>
+              {Array.isArray(p.value) ? `${p.value[1]}/${p.value[0]}` : p.value}
+            </span>
+            {unit && <span style={{ fontSize: 9, color: '#9291A5', marginLeft: 1 }}>{unit}</span>}
+            {st && (
+              <span style={{
+                fontSize: 8.5, fontWeight: 700, color: st.color, background: `${st.color}14`,
+                border: `1px solid ${st.color}30`, padding: '2px 7px', borderRadius: 100,
+                marginLeft: 4, whiteSpace: 'nowrap',
+              }}>{st.text}</span>
+            )}
+          </div>
+        );
+      })}
+      {/* ที่มาของค่า — รายจุดจากข้อมูล (src) ก่อน ถ้าไม่มีใช้ที่มารวมของกราฟ (source) */}
+      {(payload[0]?.payload?.src || source) && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5, paddingTop: 6, marginTop: 5, borderTop: '1px dashed rgba(30,27,57,0.08)' }}>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+            <rect x="1" y="2.2" width="8" height="5.6" rx="1.4" stroke="#9291A5" strokeWidth="1.1" />
+            <path d="M3.2 8.8h3.6" stroke="#9291A5" strokeWidth="1.1" strokeLinecap="round" />
+            <circle cx="5" cy="5" r="1.1" fill="#9291A5" />
+          </svg>
+          <span style={{ fontSize: 9, color: '#9291A5', lineHeight: 1.5 }}>ที่มา: {payload[0]?.payload?.src || source}</span>
+        </div>
+      )}
     </div>
   );
 };
@@ -44,6 +105,7 @@ const VITAL_ROW_ICONS = {
   'ส่วนสูง': ppRowHeight,
   'น้ำหนัก': ppRowWeight,
   'รอบเอว': ppRowWaist,
+  'CGM': ppRowDrop, // ค่าน้ำตาลเหมือนกัน ใช้ไอคอนหยดร่วมกัน
 };
 
 /* ── VitalRow helper ── */
@@ -68,6 +130,311 @@ function VitalRow({ label, value, unit, color = '#34C759', time = '10:00 น.' }
   );
 }
 
+/* ══════ ป๊อปอัพ "ดูเพิ่มเติม" ของ vital ทุกใบ — ดูย้อนหลังแบบ สัปดาห์/เดือน/ปี พร้อมกราฟ ══════ */
+/* config ต่อ metric: เส้น เกณฑ์ โซนปกติ และพารามิเตอร์สร้างข้อมูลย้อนหลัง (last = ค่าล่าสุดต้องตรงหัวการ์ด) */
+const DETAIL_CFG = {
+  'ความดันโลหิต': {
+    unit: 'mmHg', domain: [60, 180], ticks: [60, 90, 120, 150, 180],
+    refs: [{ y: 140, color: '#FF383C', label: 'เกณฑ์ 140' }, { y: 90, color: '#4A3AFF', label: 'เกณฑ์ 90' }],
+    lines: [
+      { key: 'systolic', name: 'Systolic', color: '#FF383C', color2: '#992224', range: [90, 140], last: 150, base: 134, spread: 9, seed: 1 },
+      { key: 'diastolic', name: 'Diastolic', color: '#4A3AFF', color2: '#2C2399', range: [60, 90], last: 77, base: 84, spread: 6, seed: 5 },
+    ],
+  },
+  'ชีพจร': {
+    unit: 'bpm', domain: [50, 120], ticks: [60, 80, 100, 120],
+    zones: [{ y1: 60, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 60–100' }],
+    refs: [{ y: 100, color: '#FF383C', label: 'เกณฑ์ 100', hideLegend: true }],
+    lines: [{ key: 'v', name: 'ชีพจร', color: '#FF383C', color2: '#992224', range: [60, 100], last: 103, base: 85, spread: 8, seed: 2 }],
+  },
+  'อุณหภูมิ': {
+    unit: '°C', domain: [35, 39], ticks: [35, 36, 37, 38, 39], decimals: 1,
+    zones: [{ y1: 36, y2: 37.5, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 36–37.5' }],
+    lines: [{ key: 'v', name: 'อุณหภูมิ', color: '#E8802A', color2: '#B45309', range: [36, 37.5], last: 36, base: 36.6, spread: 0.45, seed: 3 }],
+  },
+  'ออกซิเจน': {
+    unit: '%', domain: [88, 100], ticks: [88, 92, 96, 100],
+    zones: [{ y1: 95, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ ≥ 95' }],
+    lines: [{ key: 'v', name: 'ออกซิเจน', color: '#1398D8', color2: '#0B6E9E', range: [95, 100], last: 98, base: 97, spread: 1.6, seed: 4 }],
+  },
+  'น้ำตาล': {
+    unit: 'mg/dl', domain: [60, 220], ticks: [60, 100, 140, 180, 220],
+    zones: [{ y1: 70, y2: 180, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 70–180' }],
+    lines: [{ key: 'v', name: 'น้ำตาล', color: '#8B5CF6', color2: '#6D28D9', range: [70, 180], last: 142, base: 130, spread: 16, seed: 6 }],
+  },
+  'CGM': {
+    unit: 'mg/dl', domain: [60, 220], ticks: [60, 100, 140, 180, 220],
+    zones: [{ y1: 70, y2: 180, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 70–180' }],
+    lines: [{ key: 'v', name: 'ค่าเฉลี่ยรายวัน (CGM)', color: '#34C759', color2: '#0F7B37', range: [70, 180], last: 142, base: 128, spread: 18, seed: 7 }],
+  },
+};
+
+const DETAIL_PERIODS = ['วัน', 'สัปดาห์', 'เดือน', 'ปี'];
+
+/* ป้ายแกนเวลา: สัปดาห์ = 7 วันจบ 25 มี.ค. · เดือน = 30 วันย้อนหลัง · ปี = 12 เดือนจบ มี.ค. 69 */
+function detailLabels(period) {
+  if (period === 'วัน') return Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+  if (period === 'สัปดาห์') return ['19 มี.ค.', '20 มี.ค.', '21 มี.ค.', '22 มี.ค.', '23 มี.ค.', '24 มี.ค.', '25 มี.ค.'];
+  if (period === 'เดือน') return Array.from({ length: 30 }, (_, i) => i < 5 ? `${24 + i} ก.พ.` : `${i - 4} มี.ค.`);
+  return ['เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.'];
+}
+
+/* ซีรีส์ deterministic: แกว่งรอบ base แล้วค่อยๆ ไต่ให้จุดสุดท้าย = ค่าล่าสุดบนการ์ดพอดี */
+function genDetailData(cfg, period) {
+  const labels = detailLabels(period);
+  const n = labels.length;
+  const wave = (i, s) => Math.sin(i * 0.9 + s) + 0.6 * Math.sin(i * 0.37 + s * 1.7);
+  return labels.map((lb, i) => {
+    const row = { day: lb };
+    cfg.lines.forEach(l => {
+      const raw = l.base + wave(i + l.seed * 3, l.seed) * l.spread;
+      const endRaw = l.base + wave(n - 1 + l.seed * 3, l.seed) * l.spread;
+      const v = raw + (l.last - endRaw) * (i / (n - 1));
+      row[l.key] = cfg.decimals ? +v.toFixed(1) : Math.round(v);
+    });
+    return row;
+  });
+}
+
+function MetricDetailModal({ metric, onClose }) {
+  const [period, setPeriod] = useState('วัน');
+  const [selIdx, setSelIdx] = useState(null);   // จุดที่กดบนกราฟ — null = ค่าล่าสุดจริง
+  const cfg = DETAIL_CFG[metric.label];
+  const data = genDetailData(cfg, period);
+  const fmt = v => cfg.decimals ? (+v).toFixed(1) : Math.round(v);
+  const stats = cfg.lines.map(l => {
+    const vals = data.map(d => d[l.key]);
+    return {
+      name: l.name, color: l.color, color2: l.color2,
+      last: fmt(vals[vals.length - 1]), avg: fmt(vals.reduce((a, b) => a + b, 0) / vals.length),
+      max: fmt(Math.max(...vals)), min: fmt(Math.min(...vals)),
+    };
+  });
+  const zoneLegends = (cfg.zones || []).filter(z => z.legendLabel);
+  const loneRefs = (cfg.refs || []).filter(r => !r.hideLegend);
+  const statusBg = metric.status === 'normal' ? '#34C759' : metric.status === 'critical' ? '#E02A2E' : '#E8802A';
+  /* ค่า/สถานะที่แสดงบนหัว — โฟกัสจุดล่าสุดเป็นค่าเริ่มต้น แล้วย้ายตามจุดที่กด */
+  const lastIdx = data.length - 1;
+  const effIdx = selIdx != null ? selIdx : lastIdx;
+  const isLatest = effIdx === lastIdx;
+  const selRow = !isLatest ? data[effIdx] : null;
+  const dispValue = selRow
+    ? (cfg.lines.length > 1 ? cfg.lines.map(l => fmt(selRow[l.key])).join('/') : String(fmt(selRow[cfg.lines[0].key])))
+    : metric.value;
+  const outHigh = selRow && cfg.lines.some(l => l.range && selRow[l.key] > l.range[1]);
+  const outLow = selRow && cfg.lines.some(l => l.range && selRow[l.key] < l.range[0]);
+  const dispStatus = selRow
+    ? (outHigh ? { text: 'สูงกว่าเกณฑ์', color: '#FF383C' } : outLow ? { text: 'ต่ำกว่าเกณฑ์', color: '#E8802A' } : { text: 'ปกติ', color: '#34C759' })
+    : { text: metric.badge, color: (metric.status === 'normal' ? '#34C759' : metric.status === 'critical' ? '#E02A2E' : '#E8802A') };
+  const periodDesc = period === 'วัน' ? 'วันนี้ 25 มี.ค. 69 · รายชั่วโมง'
+    : period === 'สัปดาห์' ? '7 วันย้อนหลัง · 19 – 25 มี.ค. 69'
+    : period === 'เดือน' ? '30 วันย้อนหลัง · 24 ก.พ. – 25 มี.ค. 69'
+    : '12 เดือนย้อนหลัง · เม.ย. 68 – มี.ค. 69';
+  /* render ผ่าน portal ที่ body — ไม่งั้น backdrop-filter ของ .main-inner จะขัง fixed overlay ให้ครอบแค่โซน main */
+  return createPortal(
+    <div className="anim-backdrop" onClick={onClose} style={{
+      position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(30,27,57,0.45)',
+      backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+    }}>
+      {/* โครงตาม Figma 542:3284 — การ์ดขาว 600px ร่องเนื้อหาเป็นการ์ดซ้อน */}
+      <div className="anim-scale-in" onClick={e => e.stopPropagation()} style={{
+        width: 600, maxWidth: '94vw', maxHeight: '90vh', overflowY: 'auto',
+        background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(30px)',
+        borderRadius: 24, padding: 16, fontFamily: font,
+        boxShadow: '0 24px 80px rgba(30,27,57,0.35)',
+        display: 'flex', flexDirection: 'column', gap: 14,
+      }}>
+        {/* ═ Header: กล่องไอคอนสีประจำ metric + ชื่อ · ปุ่มปิดวงกลม ═ */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 14, flexShrink: 0,
+            background: cfg.lines[0].color2 || cfg.lines[0].color,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {VITAL_ROW_ICONS[metric.label] && <img src={VITAL_ROW_ICONS[metric.label]} alt="" style={{ width: 20, height: 20, filter: 'brightness(10)' }} />}
+          </div>
+          <div style={{ flex: 1, fontSize: 16, fontWeight: 700, color: '#1E1B39' }}>{metric.label}</div>
+          <button onClick={onClose} className="hover-btn" style={{
+            width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer', flexShrink: 0,
+            background: 'rgba(142,142,147,0.1)', color: '#8E8E93', fontSize: 13, fontFamily: font,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>✕</button>
+        </div>
+        <div style={{ height: 1, background: 'rgba(30,27,57,0.07)' }} />
+
+        {/* ═ แท็บช่วงเวลา (fillterDate): pill กว้าง 80 · active ฟ้า #0088FF ═ */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'flex', padding: 4, borderRadius: 100,
+            background: 'rgba(116,116,128,0.06)', border: '1px solid rgba(120,120,128,0.1)',
+          }}>
+            {DETAIL_PERIODS.map(p => (
+              <button key={p} className="hover-btn" onClick={() => { setPeriod(p); setSelIdx(null); }} style={{
+                width: 80, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer',
+                fontSize: 12, fontFamily: font, transition: 'all 0.2s ease',
+                background: period === p ? '#0088FF' : 'transparent',
+                color: period === p ? 'white' : '#1E1B39',
+                fontWeight: period === p ? 600 : 400,
+              }}>{p}</button>
+            ))}
+          </div>
+          <span style={{ fontSize: 11, color: '#9291A5' }}>{periodDesc}</span>
+        </div>
+
+        {/* ═ การ์ดเนื้อหา: Value+Unit → Status → Date Record → Chart → Criterion ═ */}
+        <div style={{
+          background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(30,27,57,0.06)',
+          borderRadius: 24, padding: 16, display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            {/* ค่าใหญ่สีตามสถานะของจุดที่เลือก (default = ค่าล่าสุด) */}
+            <span className="num" style={{ fontSize: 20, fontWeight: 700, color: dispStatus.color, transition: 'color 0.2s ease' }}>{dispValue}</span>
+            <span style={{ fontSize: 12, color: '#000' }}>{metric.unit}</span>
+            {selRow && (
+              <button className="hover-btn" onClick={() => setSelIdx(null)} style={{
+                marginLeft: 6, border: 'none', cursor: 'pointer', borderRadius: 100, padding: '3px 10px',
+                background: 'rgba(0,136,255,0.1)', color: '#0088FF', fontSize: 10.5, fontWeight: 600, fontFamily: font,
+              }}>↺ กลับค่าล่าสุด</button>
+            )}
+          </div>
+          {dispStatus.text && (
+            <span style={{
+              alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: dispStatus.color, color: 'white', borderRadius: 100, padding: '4px 11px',
+              fontSize: 11, fontWeight: 600, transition: 'background 0.2s ease',
+            }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="6" fill="white" fillOpacity="0.25" />
+                <circle cx="6" cy="3.4" r="0.9" fill="white" />
+                <rect x="5.2" y="5" width="1.6" height="4" rx="0.8" fill="white" />
+              </svg>
+              {dispStatus.text}
+            </span>
+          )}
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(0,0,0,0.7)' }}>
+            {/* โชว์เวลาเฉพาะมุมมองรายวัน — สัปดาห์/เดือน/ปี ตัด · HH:MM ทิ้ง */}
+            {selRow ? `ข้อมูล ณ ${selRow.day}` : `อัพเดทล่าสุด ${period === 'วัน' ? metric.updated : metric.updated.split(' · ')[0]}`}
+            <span style={{ color: '#9291A5', fontWeight: 400 }}> · แตะจุดบนกราฟเพื่อดูค่าแต่ละจุด</span>
+          </div>
+
+          {/* Chart — กล่องเทาอ่อนมุมมน 24 ตามแบบ */}
+          <div style={{ background: 'rgba(142,142,147,0.07)', borderRadius: 24, padding: '14px 8px 6px' }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: -14 }}
+                onClick={st => { if (st && st.activeTooltipIndex != null) setSelIdx(st.activeTooltipIndex === lastIdx ? null : st.activeTooltipIndex); }}
+                style={{ cursor: 'pointer' }}>
+                <CartesianGrid stroke="rgba(30,27,57,0.05)" vertical={period === 'สัปดาห์'} />
+                <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} tickLine={false} axisLine={{ stroke: 'rgba(30,27,57,0.08)' }} minTickGap={22} />
+                <YAxis domain={cfg.domain} ticks={cfg.ticks} tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} tickLine={false} axisLine={false} />
+                {(cfg.zones || []).map((z, zi) => (
+                  <ReferenceArea key={zi} y1={z.y1} y2={z.y2} fill={z.color} stroke="none" />
+                ))}
+                {(cfg.refs || []).map(r => (
+                  <ReferenceLine key={r.y} y={r.y} stroke={r.color} strokeOpacity={0.4} strokeDasharray="4 4" />
+                ))}
+                {/* เส้นโฟกัสแนวตั้ง + แหวนไฮไลต์ที่จุด — ล็อกค้างที่จุดที่กดเลือก */}
+                {data[effIdx] && (
+                  <ReferenceLine x={data[effIdx].day} stroke="#0088FF" strokeWidth={1.5} strokeDasharray="5 4" strokeOpacity={0.7} />
+                )}
+                {data[effIdx] && cfg.lines.map(l => {
+                  const v = data[effIdx][l.key];
+                  const out = l.range && (v < l.range[0] || v > l.range[1]);
+                  const c = out ? '#FF383C' : l.color;
+                  return [
+                    <ReferenceDot key={`glow-${l.key}`} x={data[effIdx].day} y={v} r={11} fill={c} fillOpacity={0.15} stroke="none" isFront />,
+                    <ReferenceDot key={`ring-${l.key}`} x={data[effIdx].day} y={v} r={7} fill="none" stroke={c} strokeWidth={2} isFront />,
+                    <ReferenceDot key={`core-${l.key}`} x={data[effIdx].day} y={v} r={4} fill={c} stroke="white" strokeWidth={2} isFront />,
+                  ];
+                })}
+                <Tooltip
+                  content={<Tip unit={cfg.unit} source="รวมจากแอพ Atlas HomeCare · My Atlas · อุปกรณ์ IoT" ranges={Object.fromEntries(cfg.lines.map(l => [l.key, l.range]))} />}
+                  cursor={{ stroke: 'rgba(30,27,57,0.15)', strokeDasharray: '3 3' }}
+                />
+                {cfg.lines.map(l => (
+                  <Line key={l.key} type="monotone" dataKey={l.key} name={l.name}
+                    stroke={l.color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                    dot={({ cx, cy, value, index }) => {
+                      /* จุดทุกช่วงเวลา — ขนาดตามความถี่ข้อมูล · หลุดเกณฑ์เป็นแดง (แหวนโฟกัสวาดด้วย ReferenceDot แยก) */
+                      const base = data.length > 20 ? 2.5 : data.length > 10 ? 3 : 3.5;
+                      const out = l.range && (value < l.range[0] || value > l.range[1]);
+                      return <circle key={index} cx={cx} cy={cy} r={base} fill={out ? '#FF383C' : l.color} stroke="white" strokeWidth={1.5} />;
+                    }}
+                    activeDot={{ r: 5, fill: l.color, stroke: 'white', strokeWidth: 2 }}
+                    animationDuration={700} animationEasing="ease-out"
+                  />
+                ))}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Criterion — legend ใต้กราฟตามแบบ */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 14px' }}>
+            {cfg.lines.length > 1 && cfg.lines.map(l => (
+              <span key={l.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#1E1B39', whiteSpace: 'nowrap' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: `linear-gradient(180deg, ${l.color}, ${l.color2})`, flexShrink: 0 }} />
+                {l.name}
+              </span>
+            ))}
+            {loneRefs.map(r => (
+              <span key={r.y} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#615E83', whiteSpace: 'nowrap' }}>
+                <svg width="14" height="2" style={{ flexShrink: 0, overflow: 'visible' }} aria-hidden="true">
+                  <line x1="0" y1="1" x2="14" y2="1" stroke={r.color} strokeOpacity={0.55} strokeWidth="1.5" strokeDasharray="4 3" />
+                </svg>
+                {r.label}
+              </span>
+            ))}
+            {(cfg.refs || []).filter(r => r.hideLegend).map(r => (
+              <span key={`h-${r.y}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#615E83', whiteSpace: 'nowrap' }}>
+                <svg width="14" height="2" style={{ flexShrink: 0, overflow: 'visible' }} aria-hidden="true">
+                  <line x1="0" y1="1" x2="14" y2="1" stroke={r.color} strokeOpacity={0.55} strokeWidth="1.5" strokeDasharray="4 3" />
+                </svg>
+                {r.label}
+              </span>
+            ))}
+            {zoneLegends.map((z, zi) => (
+              <span key={`z-${zi}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#615E83', whiteSpace: 'nowrap' }}>
+                <span style={{ width: 14, height: 8, borderRadius: 3, flexShrink: 0, background: `${z.edge}2E`, border: `1px solid ${z.edge}66` }} />
+                {z.legendLabel}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* ═ การ์ดสถิติ 4 ใบท้ายป๊อปอัพตามแบบ (ล่าสุด/เฉลี่ย/สูงสุด/ต่ำสุด) ═ */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {[['ล่าสุด', 'last'], ['เฉลี่ย', 'avg'], ['สูงสุด', 'max'], ['ต่ำสุด', 'min']].map(([lb, key]) => (
+            <div key={lb} style={{
+              background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(30,27,57,0.06)',
+              borderRadius: 24, padding: '12px 12px 14px',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: GRAY, marginBottom: 8 }}>{lb}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {stats.map(st => (
+                  <div key={st.name} style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                    {stats.length > 1 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: st.color, flexShrink: 0, alignSelf: 'center' }} />}
+                    <span className="num" style={{ fontSize: 18, fontWeight: 800, color: '#1E1B39', lineHeight: 1.15 }}>{st[key]}</span>
+                    <span style={{ fontSize: 9, color: '#9291A5' }}>{cfg.unit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/* ══ ตั้งค่าภาพเครื่องชั่ง BMI — ปรับตัวเลขตรงนี้ได้เลย ══ */
+const BMI_SCALE_IMG = {
+  width: 94,      // ความกว้างรูป (px)
+  offsetX: 0,     // ขยับซ้าย/ขวา: + ไปขวา, - ไปซ้าย (px)
+  offsetY: -28,   // ขยับขึ้น/ลง: + ยกขึ้น, - กดลง (px)
+  opacity: 0.4,   // ความโปร่งใส 0–1 (1 = ทึบสุด)
+  fadeStart: 20,  // % ของรูปที่เริ่มเฟดจางลงถึงขอบล่าง (100 = ไม่เฟด)
+};
+
 /* ── BMI Gauge SVG ── */
 function getBmiCategory(bmi) {
   if (bmi < 18.5) return { label: 'น้ำหนักต่ำกว่าเกณฑ์', color: '#3B82F6', range: '< 18.5', advice: 'ควรเพิ่มน้ำหนักด้วยอาหารที่มีคุณค่า' };
@@ -78,68 +445,122 @@ function getBmiCategory(bmi) {
 }
 
 function BMIGauge({ bmi = 19.5 }) {
-  const angle = Math.min(Math.max((bmi - 10) / 30, 0), 1) * 180;
+  /* Figma 504:2991 — เกจโชว์ช่วง 10–25 (19.5 → ~63% ของครึ่งวง) track เทาจาง เส้น gradient เขียว→เหลืองที่ปลาย */
+  const frac = Math.min(Math.max((bmi - 10) / 15, 0), 1);
   const cat = getBmiCategory(bmi);
+  const status = bmi >= 18.5 && bmi < 23 ? 'อยู่ในเกณฑ์ปกติ' : cat.label;
   return (
-    <svg width="160" height="95" viewBox="0 0 160 95">
-      <path d="M10 85 A 70 70 0 0 1 150 85" fill="none" stroke="#E5E7EB" strokeWidth="12" strokeLinecap="round" />
-      <path d="M10 85 A 70 70 0 0 1 150 85" fill="none" stroke="url(#bmiGrad)" strokeWidth="12" strokeLinecap="round" strokeDasharray="220" strokeDashoffset={220 - (angle / 180) * 220} />
+    <svg width="194" height="112" viewBox="0 0 194 112">
+      <path d="M7 104 A 90 90 0 0 1 187 104" fill="none" stroke="rgba(142,142,147,0.10)" strokeWidth="13" strokeLinecap="round" />
+      <path d="M7 104 A 90 90 0 0 1 187 104" fill="none" stroke="url(#bmiGrad)" strokeWidth="13" strokeLinecap="round" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - frac * 100} />
       <defs>
-        <linearGradient id="bmiGrad" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id="bmiGrad" x1="0" y1="1" x2="1" y2="0">
           <stop offset="0%" stopColor="#34C759" />
-          <stop offset="40%" stopColor="#FFCC00" />
-          <stop offset="70%" stopColor="#FF9500" />
-          <stop offset="100%" stopColor="#FF383C" />
+          <stop offset="45%" stopColor="#34C759" />
+          <stop offset="72%" stopColor="#FFE684" />
         </linearGradient>
       </defs>
-      <text x="80" y="75" textAnchor="middle" fontSize="28" fontWeight="700" fill={BLACK} fontFamily={font}>{bmi}</text>
-      <text x="80" y="92" textAnchor="middle" fontSize="10" fill={cat.color} fontFamily={font} fontWeight="600">{cat.label}</text>
+      <text x="97" y="86" textAnchor="middle" fontSize="32" fontWeight="700" fill="#000" fontFamily={font}>{bmi}</text>
+      <text x="97" y="108" textAnchor="middle" fontSize="12" fontWeight="500" fill={cat.color} fontFamily={font}>{status}</text>
     </svg>
   );
 }
 
-/* ── Chart mock data ── */
+/* ── Chart mock data ──
+   7 วันย้อนหลังจบที่วันอัพเดท (25 มี.ค) — จุดสุดท้ายต้องตรงกับค่าล่าสุดบนหัวการ์ดเสมอ
+   src: ที่มาของค่ารายจุด — เยี่ยมบ้านบันทึกผ่าน Atlas HomeCare / ผู้ป่วยวัดเองผ่าน My Atlas + IoT */
+const SRC_HOMECARE = 'แอพ Atlas HomeCare · บันทึกจากการเยี่ยมบ้าน';
+const SRC_MYATLAS = 'แอพ My Atlas · ผู้ป่วยวัดเองด้วยอุปกรณ์ IoT';
 const chartData = [
-  { day: '15 มี.ค.', systolic: 128, diastolic: 95 },
-  { day: '16 มี.ค.', systolic: 132, diastolic: 92 },
-  { day: '17 มี.ค.', systolic: 125, diastolic: 98 },
-  { day: '18 มี.ค.', systolic: 130, diastolic: 90 },
-  { day: '19 มี.ค.', systolic: 135, diastolic: 96 },
-  { day: '20 มี.ค.', systolic: 128, diastolic: 93 },
-  { day: '21 มี.ค.', systolic: 130, diastolic: 95 },
+  { day: '19 มี.ค.', systolic: 132, diastolic: 88, src: SRC_HOMECARE },
+  { day: '20 มี.ค.', systolic: 128, diastolic: 85, src: SRC_MYATLAS },
+  { day: '21 มี.ค.', systolic: 135, diastolic: 90, src: SRC_MYATLAS },
+  { day: '22 มี.ค.', systolic: 138, diastolic: 82, src: SRC_HOMECARE },
+  { day: '23 มี.ค.', systolic: 142, diastolic: 86, src: SRC_MYATLAS },
+  { day: '24 มี.ค.', systolic: 146, diastolic: 80, src: SRC_MYATLAS },
+  { day: '25 มี.ค.', systolic: 150, diastolic: 77, src: SRC_HOMECARE },
 ];
 
-const chartFilterTabs = ['ทั้งหมด', 'ชีพจร', 'อุณหภูมิ', 'ออกซิเจน', 'น้ำตาล', 'น้ำหนัก', 'CGM'];
+/* CGM: เครื่องวัดจริงบันทึกทุก 1-5 นาที — mock แบบ 5 นาที (288 จุด/วัน) ด้วยสูตร deterministic
+   จังหวะร่างกายพื้นฐาน + ลอนน้ำตาลหลังมื้อ (เช้า/เที่ยง/เย็น/ของว่างก่อนนอน) มื้อเที่ยงทะลุเกณฑ์ 180 */
+const cgmData = (() => {
+  const meal = (t, center, height, width) => height * Math.exp(-((t - center) ** 2) / (2 * width * width));
+  const pts = [];
+  for (let m = 0; m < 24 * 60; m += 5) {
+    const t = m / 60;
+    const v = 96
+      + 6 * Math.sin(((t - 3) / 24) * Math.PI * 2)
+      + meal(t, 8.4, 62, 1.15)   // มื้อเช้า ~164
+      + meal(t, 13.4, 92, 1.35)  // มื้อเที่ยง ~190 (เกินเกณฑ์)
+      + meal(t, 19.3, 80, 1.5)   // มื้อเย็น ~171
+      + meal(t, 23.6, 52, 0.8)   // ของว่างก่อนนอน — จูนให้เส้นไหลมาจบ ~142 เองพอดีค่าหัวการ์ด
+      - meal(t, 3.6, 34, 1.0);   // น้ำตาลต่ำกลางดึก ~03:30 แตะ ~63 (ต่ำกว่าเกณฑ์ 70)
+    pts.push({ day: `${String(Math.floor(t)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`, v: Math.round(v) });
+  }
+  pts[pts.length - 1].v = 142; // เก็บเศษปัดให้ตรงหัวการ์ดเป๊ะ (ค่าธรรมชาติ ~141)
+  return pts;
+})();
+
+/* dataset ต่อ metric — การ์ดแต่ละใบดึงกราฟของตัวเองด้วย key นี้ (Figma 494:2233) */
 const chartDataSets = {
-  0: { // ทั้งหมด = BP
+  0: { // ความดันโลหิต — กราฟระดับอ่านทางคลินิก: เส้นทึบ, สเกลละเอียด, เส้นเกณฑ์ 140/90, สรุปเฉลี่ย+ช่วง
     data: chartData, lines: [
-      { key: 'systolic', name: 'Systolic', color: '#FF383C', dash: '5 5' },
-      { key: 'diastolic', name: 'Diastolic', color: '#3B82F6', dash: '' },
-    ], domain: [90, 140],
+      { key: 'systolic', name: 'Systolic', color: '#FF383C', color2: '#992224', dash: '', range: [90, 140] },
+      { key: 'diastolic', name: 'Diastolic', color: '#4A3AFF', color2: '#2C2399', dash: '', range: [60, 90] },
+    ], domain: [60, 180], ticks: [60, 90, 120, 150, 180],
+    dots: true, // สไตล์ chart ทางการแพทย์สากล: เส้นทึบ + จุด marker ทุกครั้งที่วัด
+    refs: [
+      { y: 140, color: '#FF383C', label: 'เกณฑ์ 140' },
+      { y: 90, color: '#4A3AFF', label: 'เกณฑ์ 90' },
+    ],
+    h: 140,
   },
-  1: { // ชีพจร
-    data: [{ day:'15 มี.ค.', v:82 },{ day:'16 มี.ค.', v:78 },{ day:'17 มี.ค.', v:90 },{ day:'18 มี.ค.', v:85 },{ day:'19 มี.ค.', v:103 },{ day:'20 มี.ค.', v:88 },{ day:'21 มี.ค.', v:80 }],
-    lines: [{ key: 'v', name: 'ชีพจร', color: '#FC9BBA', dash: '' }], domain: [60, 120],
+  /* ใบเดี่ยวใช้โทนแอพ (ม่วง-ฟ้า-มินต์) ไล่เฉดให้แยก metric ออก — BP คงแดง/น้ำเงินตามขนบทางการแพทย์ */
+  1: { // ชีพจร — สไตล์ chart การแพทย์สากล (เหมือน BP): เส้นทึบสีเดียว + marker ทุกจุดวัด จุดหลุดเกณฑ์เป็นแดงทึบ
+    data: [{ day:'19 มี.ค.', v:82, src: SRC_HOMECARE },{ day:'20 มี.ค.', v:78, src: SRC_MYATLAS },{ day:'21 มี.ค.', v:85, src: SRC_MYATLAS },{ day:'22 มี.ค.', v:88, src: SRC_HOMECARE },{ day:'23 มี.ค.', v:92, src: SRC_MYATLAS },{ day:'24 มี.ค.', v:96, src: SRC_MYATLAS },{ day:'25 มี.ค.', v:103, src: SRC_HOMECARE }],
+    lines: [{ key: 'v', name: 'ชีพจร', color: '#FF383C', color2: '#992224', dash: '', range: [60, 100] }],
+    domain: [50, 120], ticks: [60, 80, 100, 120],
+    /* แถบช่วงปกติจางๆ ตามขนบ chart คลินิก (reference range) — คำอธิบายอยู่ที่ legend ใต้กราฟ */
+    zones: [{ y1: 60, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 60–100' }],
+    refs: [{ y: 100, color: '#FF383C', label: 'เกณฑ์ 100', hideLegend: true }],
+    dots: true, // จุด marker ทุกครั้งที่วัด — เกินเกณฑ์เป็นจุดแดงทึบ
+    h: 140, // อยู่แถวเดียวกับ BP — สูงเท่ากันให้แถวเสมอ
   },
-  2: { // อุณหภูมิ
-    data: [{ day:'15 มี.ค.', v:36.5 },{ day:'16 มี.ค.', v:36.8 },{ day:'17 มี.ค.', v:36.2 },{ day:'18 มี.ค.', v:37.1 },{ day:'19 มี.ค.', v:36.4 },{ day:'20 มี.ค.', v:36.6 },{ day:'21 มี.ค.', v:36.3 }],
-    lines: [{ key: 'v', name: 'อุณหภูมิ', color: '#3B82F6', dash: '' }], domain: [35, 38],
+  2: { // อุณหภูมิ — ล่าสุด 36
+    data: [{ day:'19 มี.ค.', v:36.5 },{ day:'20 มี.ค.', v:36.8 },{ day:'21 มี.ค.', v:36.2 },{ day:'22 มี.ค.', v:36.4 },{ day:'23 มี.ค.', v:36.6 },{ day:'24 มี.ค.', v:36.3 },{ day:'25 มี.ค.', v:36 }],
+    lines: [{ key: 'v', name: 'อุณหภูมิ', color: '#FF383C', color2: '#992224', dash: '', range: [36, 37.5] }], domain: [35, 38],
   },
-  3: { // ออกซิเจน
-    data: [{ day:'15 มี.ค.', v:97 },{ day:'16 มี.ค.', v:98 },{ day:'17 มี.ค.', v:96 },{ day:'18 มี.ค.', v:98 },{ day:'19 มี.ค.', v:95 },{ day:'20 มี.ค.', v:97 },{ day:'21 มี.ค.', v:98 }],
-    lines: [{ key: 'v', name: 'ออกซิเจน', color: '#8B5CF6', dash: '' }], domain: [90, 100],
+  3: { // ออกซิเจน — ล่าสุด 98
+    data: [{ day:'19 มี.ค.', v:97 },{ day:'20 มี.ค.', v:98 },{ day:'21 มี.ค.', v:96 },{ day:'22 มี.ค.', v:97 },{ day:'23 มี.ค.', v:95 },{ day:'24 มี.ค.', v:97 },{ day:'25 มี.ค.', v:98 }],
+    lines: [{ key: 'v', name: 'ออกซิเจน', color: '#FF383C', color2: '#992224', dash: '', range: [95, 100] }], domain: [90, 100],
   },
-  4: { // น้ำตาล
-    data: [{ day:'15 มี.ค.', v:118 },{ day:'16 มี.ค.', v:132 },{ day:'17 มี.ค.', v:142 },{ day:'18 มี.ค.', v:128 },{ day:'19 มี.ค.', v:135 },{ day:'20 มี.ค.', v:145 },{ day:'21 มี.ค.', v:138 }],
-    lines: [{ key: 'v', name: 'น้ำตาล', color: '#19A589', dash: '' }], domain: [80, 160],
+  4: { // น้ำตาล — ล่าสุด 142
+    data: [{ day:'19 มี.ค.', v:118 },{ day:'20 มี.ค.', v:132 },{ day:'21 มี.ค.', v:125 },{ day:'22 มี.ค.', v:128 },{ day:'23 มี.ค.', v:135 },{ day:'24 มี.ค.', v:145 },{ day:'25 มี.ค.', v:142 }],
+    lines: [{ key: 'v', name: 'น้ำตาล', color: '#FF383C', color2: '#992224', dash: '', range: [70, 180] }], domain: [80, 160],
   },
-  5: { // น้ำหนัก
-    data: [{ day:'15 มี.ค.', v:62 },{ day:'16 มี.ค.', v:61.8 },{ day:'17 มี.ค.', v:62.1 },{ day:'18 มี.ค.', v:61.5 },{ day:'19 มี.ค.', v:62 },{ day:'20 มี.ค.', v:61.7 },{ day:'21 มี.ค.', v:62.2 }],
-    lines: [{ key: 'v', name: 'น้ำหนัก', color: '#E8802A', dash: '' }], domain: [58, 66],
-  },
-  6: { // CGM
-    data: [{ day:'15 มี.ค.', v:130 },{ day:'16 มี.ค.', v:142 },{ day:'17 มี.ค.', v:128 },{ day:'18 มี.ค.', v:155 },{ day:'19 มี.ค.', v:138 },{ day:'20 มี.ค.', v:145 },{ day:'21 มี.ค.', v:142 }],
-    lines: [{ key: 'v', name: 'CGM', color: '#E8802A', dash: '' }], domain: [100, 170],
+  6: { // CGM — เซนเซอร์บันทึกทุก 5 นาที (288 จุด/วัน) ยอดมื้อเที่ยงทะลุเกณฑ์ 180 ล่าสุด 142
+    data: cgmData,
+    /* เส้นทึบต่อเนื่อง (ข้อมูลเซนเซอร์ไม่ใช่การวัดเป็นครั้ง) เขียว = ในเกณฑ์
+       splitColor ไล่สีเส้นช่วงที่ทะลุเกณฑ์เป็นแดง */
+    lines: [{ key: 'v', name: 'CGM (24 ชม.)', color: '#34C759', color2: '#0F7B37', dash: '', range: [70, 180] }],
+    splitColor: { high: 180, above: '#FF383C', low: 70, below: '#E8802A' },
+    curve: 'natural', // spline โค้งไหลเป็นคลื่น เหมาะกับข้อมูลเซนเซอร์ต่อเนื่อง
+    refs: [
+      { y: 180, color: '#FF383C', label: 'เกณฑ์ 180' },
+      { y: 70, color: '#E8802A', label: 'เกณฑ์ 70' },
+    ],
+    legend: [
+      { color: '#34C759', color2: '#0F7B37', label: 'ในเกณฑ์' },
+      { color: '#FF383C', color2: '#992224', label: 'สูง' },
+      { color: '#E8802A', color2: '#B45309', label: 'ต่ำ' },
+    ],
+    source: 'แอพ My Atlas · อุปกรณ์สวมใส่ (เซนเซอร์ CGM) บันทึกทุก 5 นาที',
+    showTir: true, // สรุป % เวลาที่อยู่ในเกณฑ์ (Time-in-Range) ใต้บรรทัดอัพเดท
+    /* แกน Y แสดง 5 ค่า ระยะเท่ากันทุกขั้น (ขั้นละ 30) ครอบทั้งเกณฑ์ต่ำ 70 และสูง 180 */
+    domain: [50, 210], ticks: [60, 90, 120, 150, 180],
+    /* label แกน X กำหนดเอง ครบช่วงถึงขอบขวา — จุดสุดท้าย 23:55 แสดงเป็น 24:00 */
+    xTicks: ['00:00', '06:00', '12:00', '18:00', '23:55'],
+    h: 145,
   },
 };
 
@@ -171,17 +592,10 @@ const vitalHistory = [
 ];
 
 /* ── Stat card configs ── */
-import imgVitalBp from '../assets/images/vital-bp.png';
-import imgVitalPulse from '../assets/images/vital-pulse.png';
-import imgVitalTemp from '../assets/images/vital-temp.png';
-import imgVitalOxygen from '../assets/images/vital-oxygen.png';
-import imgVitalSugar from '../assets/images/vital-sugar.png';
-import imgVitalCgm from '../assets/images/vital-cgm.png';
-import ppBp from '../assets/icons/pp-bp.svg';
-import ppEcg from '../assets/icons/pp-ecg.svg';
-import ppThermo from '../assets/icons/pp-thermo.svg';
-import ppOxygen from '../assets/icons/pp-oxygen.svg';
-import ppDrop from '../assets/icons/pp-drop.svg';
+import imgRobotBp from '../assets/images/vital-robot-bp.png';
+import imgRobotCgm from '../assets/images/vital-robot-cgm.png';
+import imgBmiScale from '../assets/images/vital-bmi-scale.png';
+import ppInfoCircle from '../assets/icons/pp-info-circle.svg';
 import ppRowBp from '../assets/icons/pp-row-bp.svg';
 import ppRowEcg from '../assets/icons/pp-row-ecg.svg';
 import ppRowThermo from '../assets/icons/pp-row-thermo.svg';
@@ -222,28 +636,47 @@ import imgAssessRisk35 from '../assets/images/assess-risk35.png';
 import imgAssessDyspnea from '../assets/images/assess-dyspnea.png';
 import imgAssessHero3d from '../assets/images/assess-hero-3d.png';
 
+/* การ์ดรวม KPI + กราฟตามดีไซน์ Figma (node 494:2233) — chart ชี้ dataset ใน chartDataSets
+   ผังกริด 3 คอลัมน์: แถว 1 = ความดัน(2)+ชีพจร(1), แถว 2 = อุณหภูมิ/ออกซิเจน/น้ำตาล(1:1:1),
+   แถว 3 = BMI(1)+CGM(2) — col/row คุมตำแหน่ง ใบที่ไม่ระบุปล่อยไหลตามลำดับ */
 const statCards = [
-  { label: 'ความดันโลหิต', value: '150/77', unit: 'mmHg', gradient: 'linear-gradient(149deg, #FF383C, #992224)', shadow: 'rgba(208,56,26,0.3)', icon: 'ecg', badge: 'สูงเล็กน้อย', img: imgVitalBp },
-  { label: 'ชีพจร', value: '103', unit: 'bpm', gradient: 'linear-gradient(149deg, #FC9BBA, #DB677E)', shadow: 'rgba(252,155,186,0.3)', icon: 'heart', badge: 'หัวใจเต้นเร็ว', img: imgVitalPulse },
-  { label: 'อุณหภูมิ', value: '36', unit: 'C', gradient: 'linear-gradient(149deg, #3B82F6, #1D4ED8)', shadow: 'rgba(59,130,246,0.3)', icon: 'thermo', badge: 'ปกติ', img: imgVitalTemp },
-  { label: 'ออกซิเจน', value: '98', unit: '%', gradient: 'linear-gradient(149deg, #8B5CF6, #7C3AED)', shadow: 'rgba(139,92,246,0.3)', icon: 'lungs', badge: 'ปกติ', img: imgVitalOxygen },
-  { label: 'น้ำตาล', value: '142', unit: 'mg/dl', gradient: 'linear-gradient(149deg, #19A589, #0D7C66)', shadow: 'rgba(139,92,246,0.3)', icon: 'drop', badge: 'ปกติ', img: imgVitalSugar },
-  { label: 'CGM', value: '142', unit: 'mg/dl', gradient: 'linear-gradient(149deg, #E8802A, #D06A1A)', shadow: 'rgba(232,128,42,0.3)', icon: 'scale', badge: 'ปกติ', img: imgVitalCgm },
+  /* artCrop: หน้าต่างครอปมุมขวาล่าง (w,h) + ขนาด/ตำแหน่งภาพข้างใน (imgW,x,y) — จูนให้เห็นแขนใส่ cuff กับจอเครื่องวัด */
+  { label: 'ความดันโลหิต', value: '150/77', unit: 'mmHg', status: 'warning', badge: 'สูงเล็กน้อย',  updated: '25 มี.ค 69 · 10:30', delta: '▲4 / ▼3', chart: 0, art: imgRobotBp, artCrop: { w: 163, h: 249, imgW: 303, x: -24, y: 25 }, col: 'span 2' },
+  { label: 'ชีพจร',        value: '103',    unit: 'bpm',   status: 'warning', badge: 'หัวใจเต้นเร็ว', updated: '25 มี.ค 69 · 10:30', delta: '▲7', chart: 1 },
+  { label: 'อุณหภูมิ',      value: '36',     unit: 'C',     status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 10:35', delta: '▼0.3', chart: null },
+  { label: 'ออกซิเจน',     value: '98',     unit: '%',     status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 10:35', delta: '▲1', chart: null },
+  { label: 'น้ำตาล',       value: '142',    unit: 'mg/dl', status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 07:00', delta: '▼3', chart: null },
+  { label: 'CGM',          value: '142',    unit: 'mg/dl', status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 23:55', chart: 6, art: imgRobotCgm, artCrop: { w: 108, h: 219, imgW: 275, x: -62, y: -4 }, col: '2 / 4', row: 3 },
 ];
 
-/* ── Figma icons for stat cards ── */
-const STAT_ICONS = {
-  ecg: ppBp,
-  heart: ppEcg,
-  thermo: ppThermo,
-  lungs: ppOxygen,
-  drop: ppDrop,
-  scale: ppDrop,
+/* กรอบและเงาเป็นกลางเหมือนกันทุกใบ (ตามที่ตกลงไว้ ไม่ใช้เงาสีของ Figma) */
+const CARD_BORDER = '1px solid rgba(30,27,57,0.07)';
+const CARD_SHADOW = '0 2px 10px rgba(30,27,57,0.05)';
+
+/* สถานะกำหนด: สีไม่ทาทั้งใบ — แต้มแค่ 2 จุดคือมุมบนซ้าย (surface) กับหลังภาพ 3D (imgGlow)
+   ที่เหลือเป็นพื้นขาว ค่าปกติขาวล้วน มีสีแค่ป้ายเขียว */
+/* การ์ดขาวล้วนทุกสถานะตามดีไซน์ 504:3142 — สถานะสื่อผ่านสีตัวเลข/หน่วย/ป้ายเท่านั้น */
+const VITAL_STATUS = {
+  normal: {
+    surface: '#FFFFFF',
+    value: '#34C759', unit: '#34C759',
+    badgeBg: '#34C759', badgeFg: '#FFFFFF',
+    mark: 'info',
+  },
+  warning: {
+    surface: '#FFFFFF',
+    value: '#E8802A', unit: '#FF8D28',
+    badgeBg: '#E8802A', badgeFg: '#FFFFFF',
+    mark: '!', markFg: '#E8802A',
+  },
+  critical: {
+    surface: '#FFFFFF',
+    value: '#E02A2E', unit: '#FF6B6E',
+    badgeBg: '#FF383C', badgeFg: '#FFFFFF',
+    mark: '!', markFg: '#FF383C',
+  },
 };
-function StatIcon({ type }) {
-  const src = STAT_ICONS[type];
-  return src ? <img src={src} alt="" style={{ width: 20, height: 20 }} /> : null;
-}
+
 
 /* ── Home Visit History Data ── */
 const homeVisitData = [
@@ -482,12 +915,12 @@ const tabLabels = ['Vital Signs', 'ประวัติการเยี่ย
 export default function PatientProfile({ patient, onClose }) {
   const { startCall } = useContext(CallContext);
   const [activeTab, setActiveTab] = useState(0);
-  const [chartFilter, setChartFilter] = useState(0);
   const [historyPage, setHistoryPage] = useState(1);
   const [expandedVisit, setExpandedVisit] = useState('0-0'); // default first visit open
   const [bmiHover, setBmiHover] = useState(false);
-  const [visitDetail, setVisitDetail] = useState(null);
-  const [assessDetail, setAssessDetail] = useState(null);
+  const [metricDetail, setMetricDetail] = useState(null);   // ป๊อปอัพดูเพิ่มเติมของ vital (สัปดาห์/เดือน/ปี)
+  const [selVisit, setSelVisit] = useState(homeVisitData[0].visits[0]);   // รายการเยี่ยมที่เลือกในหน้า 2 คอลัมน์
+  const [selAssess, setSelAssess] = useState(assessmentData[0].items[0]); // รายการประเมินที่เลือกในหน้า 2 คอลัมน์
   const [rxDetail, setRxDetail] = useState(null);
   const [rxCalendarMode, setRxCalendarMode] = useState(false);
   const [rxSelectedDay, setRxSelectedDay] = useState(6);
@@ -646,129 +1079,295 @@ export default function PatientProfile({ patient, onClose }) {
             ))}
           </div>
 
-          {/* ── Scrollable content below tabs ── */}
-          <div style={{ flex: 1, overflowY: 'auto', paddingTop: 12 }}>
+          {/* ── Scrollable content below tabs — ปิด overflow-x กันแถบนอนโผล่ล่าง ── */}
+          <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 12 }}>
 
           {activeTab === 0 && (
             <div className="anim-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-              {/* ── 6 Stat Cards (4-col grid, 2 rows) ── */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                {statCards.map((s, i) => (
-                  <div key={i} className={`hover-stat anim-slide-up delay-${i + 1}`} style={{
-                    backgroundImage: s.gradient, borderRadius: 24, padding: 16,
-                    color: '#fff', position: 'relative', overflow: 'hidden',
-                    display: 'flex', flexDirection: 'column', gap: 8,
-                    boxShadow: `0 4px 14px ${s.shadow}`,
+              {/* ── Vital cards: KPI header + embedded chart (Figma 494:2233), 3-col grid ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                {statCards.map((s, i) => {
+                  const st = VITAL_STATUS[s.status] || VITAL_STATUS.normal;
+                  const ds = s.chart != null ? chartDataSets[s.chart] : null;
+                  return (
+                  <div key={i} className={`hover-card anim-slide-up delay-${i + 1}`} style={{
+                    background: st.surface, border: CARD_BORDER, borderRadius: 24,
+                    position: 'relative', overflow: 'hidden', minWidth: 0,
+                    display: 'flex', flexDirection: 'column',
+                    boxShadow: CARD_SHADOW,
+                    gridColumn: s.col, gridRow: s.row,
                   }}>
-                    {/* 3D image bottom-right */}
-                    <img src={s.img} alt="" style={{ position: 'absolute', bottom: -20, right: -29, width: 90, height: 90, objectFit: 'cover', pointerEvents: 'none' }} />
-                    {/* Top: icon + badge */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: 40 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <StatIcon type={s.icon} />
+                    {/* ── Header (Figma 504:3142): ชื่อ + ดูเพิ่มเติม / ค่า / ป้าย / วันอัพเดท — legend ชิดขวาล่างเฉพาะกราฟหลายเส้น ── */}
+                    <div style={{ padding: ds ? '16px 16px 12px' : 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                          {VITAL_ROW_ICONS[s.label] && (
+                            <img src={VITAL_ROW_ICONS[s.label]} alt="" style={{
+                              width: 14, height: 14, flexShrink: 0,
+                              filter: 'grayscale(1) brightness(0.72)',
+                            }} />
+                          )}
+                          <p style={{ fontSize: 12, fontWeight: 600, color: '#1E1B39', margin: 0, lineHeight: '16px', whiteSpace: 'nowrap' }}>{s.label}</p>
+                        </div>
+                        {/* ปุ่มดูเพิ่มเติม — เปิดป๊อปอัพดูย้อนหลัง สัปดาห์/เดือน/ปี */}
+                        <button className="hover-btn" onClick={() => setMetricDetail(s)} style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                          height: 28, padding: '0 12px', borderRadius: 100,
+                          background: 'rgba(142,142,147,0.1)', border: '1px solid rgba(255,255,255,0.9)',
+                          cursor: 'pointer', fontFamily: font, fontSize: 11, fontWeight: 500,
+                          color: '#1E1B39', lineHeight: '16px',
+                        }}>
+                          ดูเพิ่มเติม
+                          {/* glyph ในไฟล์ชี้ซ้าย (chevron.backward) — หมุน 180° ให้ชี้ขวาตามดีไซน์ */}
+                          <img src={ppChevronFwdSm} alt="" style={{ width: 6, height: 9, transform: 'rotate(180deg)' }} />
+                        </button>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 100, background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.9)', lineHeight: '16.5px' }}>{s.badge}</span>
-                    </div>
-                    {/* Label */}
-                    <p style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: '16px' }}>{s.label}</p>
-                    {/* Value + unit */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 20, fontWeight: 700, lineHeight: '20px' }}>{s.value}</span>
-                      <span style={{ fontSize: 12, lineHeight: 'normal' }}>{s.unit}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* ── Chart + BMI row ── */}
-              <div style={{ display: 'flex', gap: 16 }}>
-
-                {/* Chart section */}
-                <div className="hover-card anim-slide-up delay-5" style={{ ...glassCard, flex: 1, minWidth: 0 }}>
-                  {/* Chart filter tabs */}
-                  <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
-                    {chartFilterTabs.map((t, i) => (
-                      <button
-                        key={i}
-                        className="hover-btn"
-                        onClick={() => setChartFilter(i)}
-                        style={{
-                          padding: '4px 12px', borderRadius: 14, border: 'none', cursor: 'pointer',
-                          fontSize: 10, fontWeight: 500, fontFamily: font,
-                          background: chartFilter === i ? '#34C759' : 'rgba(0,0,0,0.04)',
-                          color: chartFilter === i ? '#fff' : GRAY,
-                        }}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Legend - dynamic */}
-                  <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
-                    {(chartDataSets[chartFilter] || chartDataSets[0]).lines.map(l => (
-                      <div key={l.key} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, display: 'inline-block' }} />
-                        <span style={{ fontSize: 10, color: GRAY }}>{l.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start', minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 20, fontWeight: 700, lineHeight: '20px', color: st.value }}>{s.value}</span>
+                            <span style={{ fontSize: 12, color: st.unit, lineHeight: 'normal' }}>{s.unit}</span>
+                            {s.delta && <span style={{
+                              fontSize: 10, fontWeight: 600, color: '#615E83',
+                              background: 'rgba(30,27,57,0.05)', padding: '2px 8px', borderRadius: 100,
+                              whiteSpace: 'nowrap',
+                            }}>{s.delta} จากครั้งก่อน</span>}
+                          </div>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100,
+                            background: st.badgeBg, color: st.badgeFg, lineHeight: '14px',
+                          }}>
+                            {/* สัญลักษณ์กำกับ ไม่สื่อสถานะด้วยสีอย่างเดียว — ปกติ = info, ผิดปกติ = ! */}
+                            {st.mark === 'info'
+                              ? <img src={ppInfoCircle} alt="" style={{ width: 8, height: 8 }} />
+                              : st.mark && <span style={{
+                                  width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                                  background: '#fff', color: st.markFg,
+                                  fontSize: 8, fontWeight: 800, lineHeight: '10px', textAlign: 'center',
+                                }}>{st.mark}</span>}
+                            {s.badge}
+                          </span>
+                          <p style={{ fontSize: 11, color: '#8E8E93', margin: 0, lineHeight: '16px' }}>อัพเดท : {s.updated}</p>
+                          {ds?.showTir && (() => {
+                            const l0 = ds.lines[0];
+                            const pct = Math.round(ds.data.filter(d => d[l0.key] >= l0.range[0] && d[l0.key] <= l0.range[1]).length / ds.data.length * 100);
+                            return <p style={{ fontSize: 11, fontWeight: 600, color: '#0F7B37', margin: 0, lineHeight: '16px' }}>อยู่ในเกณฑ์ {pct}% ของ 24 ชม.</p>;
+                          })()}
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* ── Chart บนการ์ดโดยตรง (ดีไซน์ใหม่ไม่มีแผงซ้อน) — เว้นขวาให้ภาพหุ่น 3D ถ้ามี ── */}
+                    {ds && (
+                      <div style={{ padding: '4px 16px 16px', position: 'relative' }}>
+                        <div style={{ marginRight: s.artCrop ? s.artCrop.w + 8 : s.art ? 150 : 0 }}>
+                          <ResponsiveContainer className="anim-chart-fade" width="100%" height={ds.h || 100}>
+                            <ComposedChart data={ds.data} margin={{ top: 6, right: 18, left: 2, bottom: 4 }}>
+                              <CartesianGrid stroke="rgba(30,27,57,0.06)" vertical={ds.data.length <= 40} />
+                              <XAxis dataKey="day" interval={ds.xTicks ? 0 : (ds.xInterval ?? 0)} ticks={ds.xTicks} tickFormatter={d => (d === '23:55' ? '24:00' : d.split(' ')[0])} tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} axisLine={false} tickLine={false} tickMargin={12} />
+                              <YAxis width={26} tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} axisLine={false} tickLine={false} domain={ds.domain} ticks={ds.ticks} tickCount={3} />
+                              <Tooltip content={<Tip unit={s.unit} source={ds.source} ranges={Object.fromEntries(ds.lines.filter(l => l.range).map(l => [l.key, l.range]))} />} cursor={{ stroke: 'rgba(30,27,57,0.15)', strokeDasharray: '3 3' }} />
+                              {/* โซนช่วงค่าผิดปกติ — แถบสีจางพาดเต็มกว้าง มองแวบเดียวรู้ว่าเส้นเข้าโซนวันไหน */}
+                              {(ds.zones || []).map((z, zi) => (
+                                <ReferenceArea key={zi} y1={z.y1} y2={z.y2} fill={z.color} stroke="none"
+                                  label={z.label ? { value: z.label, position: 'insideTopLeft', fill: z.edge, fontSize: 9, fontFamily: font, opacity: 0.85, dx: 2, dy: 2 } : undefined} />
+                              ))}
+                              {/* กราฟจุดถี่ (CGM): วาดเส้นตั้งของกริดเองตาม xTicks — ปล่อยให้ CartesianGrid ทำจะได้ 288 เส้น */}
+                              {ds.data.length > 40 && (ds.xTicks || []).map(t => (
+                                <ReferenceLine key={`vgrid-${t}`} x={t} stroke="rgba(30,27,57,0.06)" strokeWidth={1} />
+                              ))}
+                              {/* เส้นเกณฑ์เดี่ยว (กรณีเกณฑ์ไม่ติดขอบ domain เช่น DIA 90) */}
+                              {(ds.refs || []).map(r => (
+                                <ReferenceLine key={r.y} y={r.y} stroke={r.color} strokeOpacity={0.4} strokeDasharray="4 4" />
+                              ))}
+                              {/* splitColor: ไล่สีเส้นตามค่า — เหนือเกณฑ์สูงเป็นแดง / ต่ำกว่าเกณฑ์ล่างเป็นส้ม
+                                  (gradient แนวตั้งอิง bbox ของเส้น offset คิดจาก min-max ของข้อมูลจริง) */}
+                              {(() => {
+                                if (!ds.splitColor) return null;
+                                const sc = ds.splitColor;
+                                const vals = ds.data.map(d => d[ds.lines[0].key]);
+                                const mx = Math.max(...vals), mn = Math.min(...vals);
+                                if (mx <= mn) return null;
+                                const clamp = v => Math.max(0, Math.min(1, v));
+                                const offHigh = sc.high != null ? clamp((mx - sc.high) / (mx - mn)) : 0;
+                                const offLow = sc.low != null ? clamp((mx - sc.low) / (mx - mn)) : 1;
+                                const hasHigh = sc.high != null && mx > sc.high;
+                                const hasLow = sc.low != null && mn < sc.low;
+                                if (!hasHigh && !hasLow) return null;
+                                const stops = [];
+                                if (hasHigh) {
+                                  stops.push([0, sc.above], [offHigh, sc.above], [Math.min(1, offHigh + 0.04), ds.lines[0].color]);
+                                } else stops.push([0, ds.lines[0].color]);
+                                if (hasLow) {
+                                  stops.push([Math.max(0, offLow - 0.04), ds.lines[0].color], [offLow, sc.below], [1, sc.below]);
+                                } else stops.push([1, ds.lines[0].color]);
+                                return (
+                                  <defs>
+                                    <linearGradient id={`split-${i}`} x1="0" y1="0" x2="0" y2="1">
+                                      {stops.map(([o, c], si) => <stop key={si} offset={o} stopColor={c} />)}
+                                    </linearGradient>
+                                  </defs>
+                                );
+                              })()}
+                              {/* เงาเรืองสีใต้เส้น (ต่อเส้น) + พื้นไล่เฉดสองจังหวะ — ให้เส้นลอยมีมิติ */}
+                              <defs>
+                                {ds.lines.map(l => (
+                                  <filter key={l.key} id={`glow-${i}-${l.key}`} x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor={l.color} floodOpacity="0.15" />
+                                  </filter>
+                                ))}
+                                {ds.lines.length === 1 && (
+                                  <linearGradient id={`fill-${i}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={ds.lines[0].color} stopOpacity={0.12} />
+                                    <stop offset="55%" stopColor={ds.lines[0].color} stopOpacity={0.04} />
+                                    <stop offset="100%" stopColor={ds.lines[0].color} stopOpacity={0} />
+                                  </linearGradient>
+                                )}
+                              </defs>
+                              {/* พื้นไล่เฉดเฉพาะกราฟเส้นเดี่ยว (สองเส้นซ้อนกันจะขุ่น) */}
+                              {ds.lines.length === 1 && (
+                                <Area type={ds.curve || 'monotone'} dataKey={ds.lines[0].key}
+                                  fill={`url(#fill-${i})`} stroke="none" tooltipType="none" legendType="none"
+                                  animationDuration={1000} />
+                              )}
+                              {/* ds.dots (BP): สไตล์ chart แพทย์สากล เส้นทึบ + marker ทุกจุดวัด — จุดในช่วงผิดปกติเป็นแดงทึบ */}
+                              {ds.lines.map(l => (
+                                <Line key={l.key} type={ds.curve || 'monotone'} dataKey={l.key} name={l.name}
+                                  stroke={ds.splitColor && (
+                                    (ds.splitColor.high != null && Math.max(...ds.data.map(d => d[l.key])) > ds.splitColor.high) ||
+                                    (ds.splitColor.low != null && Math.min(...ds.data.map(d => d[l.key])) < ds.splitColor.low)
+                                  ) ? `url(#split-${i})` : l.color}
+                                  strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                                  filter={`url(#glow-${i}-${l.key})`}
+                                  dot={ds.dots ? ({ cx, cy, value, index }) => {
+                                    const out = l.range && (value < l.range[0] || value > l.range[1]);
+                                    return out
+                                      ? <circle key={index} cx={cx} cy={cy} r={4.5} fill="#FF383C" stroke="white" strokeWidth={2} />
+                                      : <circle key={index} cx={cx} cy={cy} r={4} fill={l.color} stroke="white" strokeWidth={2} />;
+                                  } : ({ cx, cy, index }) => (
+                                    /* จุดปลายเส้น = ค่าล่าสุด มีรัศมีเรืองรอบ ให้ความรู้สึก live */
+                                    index === ds.data.length - 1
+                                      ? <g key={index}>
+                                          <circle cx={cx} cy={cy} r={9} fill={l.color} opacity={0.15} />
+                                          <circle cx={cx} cy={cy} r={4} fill={l.color} stroke="white" strokeWidth={2} />
+                                        </g>
+                                      : <circle key={index} r={0} fill="none" />
+                                  )}
+                                  activeDot={{ r: 5, fill: l.color, stroke: 'white', strokeWidth: 2, style: { filter: `drop-shadow(0 2px 4px ${l.color}60)` } }}
+                                  animationDuration={1200} animationEasing="ease-out"
+                                />
+                              ))}
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                          {/* คำอธิบายกราฟรวมไว้ที่เดียวใต้กราฟ — ชื่อเส้น + เกณฑ์ของเส้นนั้นจับคู่กันด้วยสี
+                              (เลิกมี legend ซ้ำบนหัวการ์ด) */}
+                          {(() => {
+                            const refByColor = Object.fromEntries((ds.refs || []).map(r => [r.color, r]));
+                            /* จับคู่ชื่อกับเกณฑ์สีเดียวกันทุกแบบ (CGM: สูง · เกณฑ์ 180 / ต่ำ · เกณฑ์ 70 — โครงเดียวกับกราฟความดัน) */
+                            const items = ds.legend
+                              ? ds.legend.map(g => ({ ...g, ref: refByColor[g.color] }))
+                              : ds.lines.length > 1
+                                ? ds.lines.map(l => ({ color: l.color, color2: l.color2, label: l.name, ref: refByColor[l.color] }))
+                                : [];
+                            const used = new Set(items.filter(it => it.ref).map(it => it.color));
+                            const loneRefs = (ds.refs || []).filter(r => !used.has(r.color) && !r.hideLegend);
+                            const zoneLegends = (ds.zones || []).filter(z => z.legendLabel);
+                            if (!items.length && !loneRefs.length && !zoneLegends.length) return null;
+                            return (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 14px', paddingTop: 8 }}>
+                                {items.map(it => (
+                                  <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#615E83', lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(180deg, ${it.color}, ${it.color2 || it.color})` }} />
+                                    {it.label}
+                                    {it.ref && <span style={{ color: '#9291A5' }}>· {it.ref.label}</span>}
+                                  </span>
+                                ))}
+                                {loneRefs.map(r => (
+                                  <span key={r.y} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#8E8E93', lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                                    <svg width="14" height="2" style={{ flexShrink: 0, overflow: 'visible' }} aria-hidden="true">
+                                      <line x1="0" y1="1" x2="14" y2="1" stroke={r.color} strokeOpacity={0.55} strokeWidth="1.5" strokeDasharray="4 3" />
+                                    </svg>
+                                    {r.label}
+                                  </span>
+                                ))}
+                                {/* legend ของโซนช่วงค่า — สี่เหลี่ยมมนสีเดียวกับแถบบนกราฟ */}
+                                {zoneLegends.map((z, zi) => (
+                                  <span key={`zone-${zi}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#615E83', lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                                    <span style={{ width: 14, height: 8, borderRadius: 3, flexShrink: 0, background: `${z.edge}2E`, border: `1px solid ${z.edge}66` }} />
+                                    {z.legendLabel}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        {/* ภาพหุ่น 3D ข้างกราฟ — แบบ artCrop: หน้าต่างครอปชิดมุมขวาล่าง ภาพขยายข้างในให้เห็นเฉพาะโซนสำคัญ
+                            เหมือนภาพโผล่จากมุมการ์ด (ขอบหน้าต่าง + ขอบการ์ดตัดส่วนเกินทิ้ง) */}
+                        {s.art && (s.artCrop ? (
+                          <div style={{
+                            position: 'absolute', right: 0, bottom: 0, width: s.artCrop.w, height: s.artCrop.h,
+                            overflow: 'hidden', pointerEvents: 'none',
+                            /* เฟดขอบล่างให้ภาพกลืนกับการ์ด ไม่ตัดขาดเป็นเส้นตรง */
+                            WebkitMaskImage: 'linear-gradient(180deg, black 62%, transparent 97%)',
+                            maskImage: 'linear-gradient(180deg, black 62%, transparent 97%)',
+                          }}>
+                            <img src={s.art} alt="" style={{ position: 'absolute', width: s.artCrop.imgW, left: s.artCrop.x, top: s.artCrop.y, maxWidth: 'none' }} />
+                          </div>
+                        ) : (
+                          <img src={s.art} alt="" style={{ position: 'absolute', right: 0, bottom: 4, height: (ds.h || 100) + 55, objectFit: 'contain', pointerEvents: 'none' }} />
+                        ))}
+                      </div>
+                    )}
                   </div>
+                  );
+                })}
 
-                  {(() => {
-                    const ds = chartDataSets[chartFilter] || chartDataSets[0];
-                    const isMultiLine = ds.lines.length > 1;
-                    return (
-                      <ResponsiveContainer className="anim-chart-fade" width="100%" height={200}>
-                        <ComposedChart data={ds.data} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
-                          <defs>
-                            {ds.lines.map(l => (
-                              <linearGradient key={l.key + 'g'} id={`grad-${l.key}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor={l.color} stopOpacity={0.25} />
-                                <stop offset="100%" stopColor={l.color} stopOpacity={0.02} />
-                              </linearGradient>
-                            ))}
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" vertical={false} />
-                          <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#8E8E93', fontFamily: font }} axisLine={false} tickLine={false} dy={8} />
-                          <YAxis tick={{ fontSize: 10, fill: '#8E8E93' }} axisLine={false} tickLine={false} domain={ds.domain} />
-                          <Tooltip content={<Tip />} />
-                          {ds.lines.map(l => (
-                            <Area key={l.key + 'a'} type="monotone" dataKey={l.key} fill={`url(#grad-${l.key})`} stroke="none" animationDuration={1000} />
-                          ))}
-                          {ds.lines.map(l => (
-                            <Line key={l.key} type="monotone" dataKey={l.key} name={l.name} stroke={l.color} strokeWidth={2.5}
-                              strokeDasharray={l.dash || '0'}
-                              dot={{ r: 4, fill: 'white', stroke: l.color, strokeWidth: 2 }}
-                              activeDot={{ r: 6, fill: l.color, stroke: 'white', strokeWidth: 2.5, style: { filter: `drop-shadow(0 2px 4px ${l.color}60)` } }}
-                              animationDuration={1200} animationEasing="ease-out"
-                            />
-                          ))}
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    );
-                  })()}
-                </div>
-
-                {/* BMI section */}
+                {/* BMI section — แถว 3 ช่องซ้าย คู่กับ CGM ที่กิน 2 ช่องขวา
+                    โครงหัวการ์ดเหมือนใบ vital อื่น (ไอคอน+ชื่อ / ดูเพิ่มเติม / ค่า / ป้ายสถานะ / อัพเดท)
+                    สีค่ากับป้ายมาจากเกณฑ์ BMI จริง ถ้าค่าเปลี่ยนหมวดสีเปลี่ยนตามเอง */}
+                {(() => {
+                const bmiVal = 19.5;
+                const bmiCat = getBmiCategory(bmiVal);
+                return (
                 <div
-                  className="hover-card anim-slide-up delay-6"
-                  style={{ ...glassCard, width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'visible', zIndex: bmiHover ? 200 : 1 }}
+                  className="hover-card anim-slide-up delay-7"
+                  style={{
+                    background: '#FFFFFF', border: CARD_BORDER, borderRadius: 24,
+                    boxShadow: CARD_SHADOW, minWidth: 0,
+                    gridColumn: 1, gridRow: 3, display: 'flex', flexDirection: 'column',
+                    position: 'relative', overflow: 'visible', zIndex: bmiHover ? 200 : 1,
+                  }}
                 >
-                  <div style={{ fontSize: 16, fontWeight: 700, color: BLACK, marginBottom: 2 }}>BMI</div>
-                  <div style={{ fontSize: 12, color: GRAY, marginBottom: 10 }}>Body Mass Index</div>
+                  {/* เลเยอร์ clip รูปเครื่องชั่ง — ตัดภาพตามขอบมนการ์ด (การ์ดเองต้อง overflow visible ให้ tooltip) */}
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: 24, overflow: 'hidden', pointerEvents: 'none' }}>
+                    <img src={imgBmiScale} alt="" style={{
+                      position: 'absolute', left: `calc(50% + ${BMI_SCALE_IMG.offsetX}px)`, bottom: BMI_SCALE_IMG.offsetY, transform: 'translateX(-50%)',
+                      width: BMI_SCALE_IMG.width, objectFit: 'contain',
+                      opacity: BMI_SCALE_IMG.opacity,
+                      WebkitMaskImage: `linear-gradient(180deg, black ${BMI_SCALE_IMG.fadeStart}%, transparent 96%)`,
+                      maskImage: `linear-gradient(180deg, black ${BMI_SCALE_IMG.fadeStart}%, transparent 96%)`,
+                    }} />
+                  </div>
+                  {/* หัวการ์ดกึ่งกลางตาม Figma 504:2991 */}
+                  <div style={{ padding: '16px 16px 0', textAlign: 'center' }}>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: '#1E1B39', margin: 0, lineHeight: '26px' }}>BMI</p>
+                    <p style={{ fontSize: 12, color: GRAY, margin: 0, lineHeight: '16px' }}>Body Mass Index</p>
+                  </div>
+                  {/* เกจกึ่งกลางการ์ดตาม Figma — ถ่วงน้ำหนักขึ้นบนเล็กน้อย */}
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px 16px 26px', position: 'relative' }}>
                   {/* Gauge — hover only here */}
                   <div
                     onMouseEnter={() => setBmiHover(true)}
                     onMouseLeave={() => setBmiHover(false)}
                     style={{ position: 'relative', cursor: 'pointer' }}
                   >
-                    <BMIGauge bmi={19.5} />
+                    <BMIGauge bmi={bmiVal} />
 
                     {/* BMI Hover Tooltip */}
                     {bmiHover && (() => {
-                    const bmiVal = 19.5;
-                    const cat = getBmiCategory(bmiVal);
+                    const cat = bmiCat; // ใช้ค่าเดียวกับหัวการ์ด ไม่ประกาศซ้ำให้หลุดกัน
                     const ranges = [
                       { label: 'น้ำหนักต่ำกว่าเกณฑ์', range: '< 18.5', color: '#3B82F6', icon: '🔽' },
                       { label: 'ปกติ (สมส่วน)', range: '18.5 – 22.9', color: '#34C759', icon: '✅' },
@@ -778,8 +1377,8 @@ export default function PatientProfile({ patient, onClose }) {
                     ];
                     return (
                       <div style={{
-                        position: 'absolute', top: '50%', right: '100%', transform: 'translateY(-50%)',
-                        marginRight: 10, width: 260, borderRadius: 20, overflow: 'hidden',
+                        position: 'absolute', top: '50%', left: '100%', transform: 'translateY(-50%)',
+                        marginLeft: 10, width: 260, borderRadius: 20, overflow: 'hidden',
                         boxShadow: '0 12px 40px rgba(30,27,57,0.22), 0 2px 8px rgba(30,27,57,0.08)',
                         zIndex: 200, fontFamily: font,
                         animation: 'anim-scale-in 0.2s ease-out',
@@ -871,19 +1470,28 @@ export default function PatientProfile({ patient, onClose }) {
                     );
                   })()}
                   </div>
-                  {/* Weight / Height */}
-                  <div style={{ display: 'flex', gap: 20, marginTop: 12 }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: BLACK }}>60</div>
-                      <div style={{ fontSize: 9, color: GRAY }}>น้ำหนัก (kg)</div>
+                  </div>
+                  {/* แถวล่างตาม Figma: น้ำหนัก | เครื่องชั่ง (กลาง เฟดขอบล่าง) | ส่วนสูง */}
+                  <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', padding: '4px 30px 14px', marginTop: 'auto' }}>
+                    {/* ยกเฉพาะข้อความขึ้น — รูปเครื่องชั่งคงชิดขอบล่างตามแบบ */}
+                    <div style={{ textAlign: 'center', position: 'relative', zIndex: 1, bottom: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, justifyContent: 'center' }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: '#000' }}>60</span>
+                        <span style={{ fontSize: 12, color: '#000' }}>kg</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: '#000', marginTop: 2 }}>น้ำหนัก</div>
                     </div>
-                    <div style={{ width: 1, background: 'rgba(0,0,0,0.08)', alignSelf: 'stretch' }} />
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: BLACK }}>175</div>
-                      <div style={{ fontSize: 9, color: GRAY }}>ส่วนสูง (cm)</div>
+                    <div style={{ textAlign: 'center', position: 'relative', zIndex: 1, bottom: 20 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, justifyContent: 'center' }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: '#000' }}>175</span>
+                        <span style={{ fontSize: 12, color: '#000' }}>cm</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: '#000', marginTop: 2 }}>ส่วนสูง</div>
                     </div>
                   </div>
                 </div>
+                );
+                })()}
               </div>
 
               {/* ── ประวัติการวัด Vital Signs ── */}
@@ -1007,7 +1615,7 @@ export default function PatientProfile({ patient, onClose }) {
 
           {/* ── Tab 2: ประวัติการเยี่ยมบ้าน ── */}
           {activeTab === 1 && (
-            <div className="anim-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="anim-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
               {/* Hero banner — green gradient */}
               <div style={{
                 background: 'linear-gradient(175deg, #19A589 0%, #0D7C66 100%)',
@@ -1033,267 +1641,223 @@ export default function PatientProfile({ patient, onClose }) {
                 </div>
               </div>
 
-              {/* Timeline */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {homeVisitData.map((group, gi) => (
-                  <div key={gi}>
-                    {/* Month header */}
-                    <div style={{ padding: '8px 0', fontSize: 12, fontWeight: 500, color: 'black', fontFamily: font }}>{group.month}</div>
+              {/* ═ 2 คอลัมน์ 1:2 ตาม Figma 546:3601 — สกรอลล์แยกซ้าย/ขวา (ทั้งหน้าไม่เลื่อน) ═ */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
 
-                    {/* Visit cards */}
-                    {group.visits.map((visit, vi) => (
-                      <div key={vi} style={{ display: 'flex', gap: 10 }}>
-                        {/* Date column + line */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingBottom: 12 }}>
-                          <div style={{
-                            width: 48, height: 48, borderRadius: 16, flexShrink: 0,
-                            background: 'linear-gradient(135deg, #19A589, #0D7C66)',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-                          }}>
-                            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.8)', fontFamily: font }}>{visit.monthShort}</span>
-                            <span style={{ fontSize: 16, fontWeight: 700, color: 'white', fontFamily: font }}>{visit.day}</span>
-                          </div>
-                          <div style={{ width: 1, flex: 1, minHeight: 12, background: 'rgba(25,165,137,0.3)' }} />
-                        </div>
-
-                        {/* Card */}
-                        <div className="hover-visit-card" onClick={() => setVisitDetail(visit.detail)} style={{
-                          flex: 1, borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
-                          border: '1px solid white', cursor: 'pointer', marginBottom: 12,
-                          background: 'white',
-                        }}>
-                          {/* 3D image */}
-                          <img src={imgHomevisit3dCard} alt="" style={{ position: 'absolute', bottom: -5, right: 0, width: 80, height: 80, objectFit: 'contain', opacity: 0.5, pointerEvents: 'none' }} />
-
-                          {/* Time + arrow */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                            <span style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>{visit.time}</span>
-                            <button style={{
-                              width: 24, height: 24, borderRadius: 100, border: 'none', cursor: 'pointer',
-                              background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                            }}>
-                              <svg width="7" height="10" viewBox="0 0 7 10" fill="none"><path d="M1 1L5 5L1 9" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            </button>
-                          </div>
-
-                          {/* Info row */}
-                          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8, flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                              <img src={ppStethoscope} alt="" style={{ width: 14, height: 12 }} />
-                              <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: font }}>ผู้เยี่ยม: {visit.visitor}</span>
+                {/* ── ซ้าย: timeline รายการเยี่ยม (สกรอลล์ของตัวเอง ไม่โชว์แถบ) — เผื่อขอบให้เงาการ์ดไม่โดน clip ── */}
+                <div className="no-scrollbar" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto', padding: '12px 12px 0 16px', margin: '-12px -8px 0 -16px' }}>
+                  {homeVisitData.map((group, gi) => (
+                    <div key={gi}>
+                      <div style={{ padding: '8px 0', fontSize: 12, fontWeight: 500, color: 'black', fontFamily: font }}>{group.month}</div>
+                      {group.visits.map((visit, vi) => {
+                        const isSel = selVisit === visit;
+                        return (
+                          <div key={vi} style={{ display: 'flex', gap: 10 }}>
+                            {/* จุดวันที่ — ใบที่เลือกเป็นเขียว gradient ตามแบบ */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingBottom: 12 }}>
+                              <div style={{
+                                width: 56, height: 56, borderRadius: 16, flexShrink: 0,
+                                background: isSel ? 'linear-gradient(135deg, #19A589, #0D7C66)' : 'rgba(255,255,255,0.5)',
+                                backdropFilter: isSel ? 'none' : 'blur(5px)',
+                                border: isSel ? 'none' : '1px solid rgba(255,255,255,0.6)',
+                                boxShadow: isSel ? '0 4px 12px rgba(25,165,137,0.35)' : '0 1px 4px rgba(13,10,44,0.05)',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+                                transition: 'all 0.25s ease',
+                              }}>
+                                <span style={{ fontSize: 8, color: isSel ? 'rgba(255,255,255,0.85)' : '#8E8E93', fontFamily: font }}>{visit.monthShort}</span>
+                                <span style={{ fontSize: 17, fontWeight: 700, color: isSel ? 'white' : '#1E1B39', fontFamily: font, lineHeight: 1.1 }}>{visit.day}</span>
+                                <span style={{ fontSize: 7.5, color: isSel ? 'rgba(255,255,255,0.85)' : '#8E8E93', fontFamily: font }}>{visit.time}</span>
+                              </div>
+                              <div style={{ width: 0, flex: 1, minHeight: 14, borderLeft: '1.5px dashed rgba(25,165,137,0.35)' }} />
                             </div>
-                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                              <img src={ppTextSearch} alt="" style={{ width: 12, height: 14 }} />
-                              <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: font }}>ประเภทการเยี่ยม: {visit.type}</span>
+
+                            {/* การ์ดรายการ (ย่อ) — คลิกเพื่อแสดงรายละเอียดฝั่งขวา */}
+                            <div
+                              className="hover-visit-card"
+                              onClick={() => setSelVisit(visit)}
+                              style={{
+                                flex: 1, minWidth: 0, borderRadius: 16, padding: '13px 14px', cursor: 'pointer', marginBottom: 12,
+                                background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(5px)',
+                                border: `1.5px solid ${isSel ? '#19A589' : 'rgba(255,255,255,0.6)'}`,
+                                boxShadow: isSel ? '0 6px 18px rgba(25,165,137,0.15)' : '0 1px 4px rgba(13,10,44,0.05)',
+                                transition: 'all 0.25s ease',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#1E1B39', fontFamily: font }}>{visit.type}</span>
+                                <span style={{
+                                  width: 24, height: 24, borderRadius: 100, flexShrink: 0,
+                                  background: isSel ? 'rgba(25,165,137,0.12)' : '#F2F2F7',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                  <svg width="7" height="10" viewBox="0 0 7 10" fill="none"><path d="M1 1L5 5L1 9" stroke={isSel ? '#0D7C66' : '#8E8E93'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
+                                <img src={ppStethoscope} alt="" style={{ width: 14, height: 12, flexShrink: 0 }} />
+                                <span className="truncate" style={{ fontSize: 10, color: '#8E8E93', fontFamily: font }}>ผู้เยี่ยม: {visit.visitor}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                {visit.tags.slice(0, 2).map((tag, ti) => (
+                                  <span key={ti} style={{
+                                    fontSize: 10, color: '#0D7C66', fontFamily: font,
+                                    background: 'rgba(25,165,137,0.15)', borderRadius: 100, padding: '3px 10px',
+                                  }}>{tag}</span>
+                                ))}
+                                {visit.tags.length > 2 && (
+                                  <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: font, padding: '3px 4px' }}>+{visit.tags.length - 2}</span>
+                                )}
+                              </div>
                             </div>
                           </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
 
-                          {/* Tags */}
-                          <div style={{ display: 'flex', gap: 10 }}>
-                            {visit.tags.map((tag, ti) => (
-                              <span key={ti} style={{
-                                fontSize: 10, color: '#0D7C66', fontFamily: font,
-                                background: 'rgba(25,165,137,0.2)', borderRadius: 100,
-                                padding: '4px 10px',
-                              }}>{tag}</span>
-                            ))}
-                          </div>
+                {/* ── ขวา: รายละเอียดการเยี่ยมที่เลือก ── */}
+                {selVisit && (
+                  <div className="anim-tab-enter no-scrollbar" key={`${selVisit.day}-${selVisit.time}`} style={{
+                    background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(5px)',
+                    border: '1px solid rgba(255,255,255,0.5)', borderRadius: 24, padding: 16,
+                    boxShadow: '0 2px 6px rgba(13,10,44,0.08)', minWidth: 0,
+                    display: 'flex', flexDirection: 'column', gap: 14,
+                    overflowY: 'auto',
+                  }}>
+                    {/* หัว: ไอคอนเขียว + ชื่อ + วันเวลา */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 14, background: 'linear-gradient(135deg, #19A589, #0D7C66)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <img src={ppHeaderIcon} alt="" style={{ width: 20, height: 20 }} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>รายละเอียดการเยี่ยมบ้าน</div>
+                        <div style={{ fontSize: 12, color: '#615E83', fontFamily: font, marginTop: 1 }}>{selVisit.detail.datetime.replace(' - ', ' เวลา ')}</div>
+                      </div>
+                    </div>
+                    <div style={{ height: 1, background: 'rgba(30,27,57,0.07)' }} />
+
+                    {/* ตาราง 2 คอลัมน์: ประเภท/HN · เจ้าหน้าที่/วัน-เวลา */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
+                      {[['ประเภทการเยี่ยม', selVisit.type], ['HN', selVisit.detail.hn], ['เจ้าหน้าที่', selVisit.visitor], ['วัน-เวลา', selVisit.detail.datetime]].map(([lb, v]) => (
+                        <div key={lb} style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 12, color: 'black', fontFamily: font, opacity: 0.75 }}>{lb}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'black', fontFamily: font, marginTop: 3 }}>{v}</div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* ภารกิจ/วัตถุประสงค์ — การ์ดน้ำเงิน gradient ตัวอักษรขาวตามแบบ */}
+                    <div style={{
+                      background: 'linear-gradient(139deg, #3B82F6, #1D4ED8)', borderRadius: 18,
+                      padding: '14px 16px', color: 'white',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ width: 3.5, height: 16, borderRadius: 2, background: 'white', flexShrink: 0 }} />
+                        <span style={{ fontSize: 14, fontWeight: 700, fontFamily: font }}>ภารกิจ/วัตถุประสงค์การเยี่ยม</span>
+                      </div>
+                      <div style={{ fontSize: 13, fontFamily: font, lineHeight: 1.85 }}>{selVisit.detail.mission}</div>
+                    </div>
+
+                    {/* ข้อมูลทางการแพทย์ — หัวข้อแถบส้มแดง + เนื้อหาดำ */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ width: 3.5, height: 16, borderRadius: 2, background: '#E8432A', flexShrink: 0 }} />
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>ข้อมูลทางการแพทย์</span>
+                      </div>
+                      <div style={{ fontSize: 13, color: '#1E1B39', fontFamily: font, lineHeight: 1.85, whiteSpace: 'pre-line' }}>{selVisit.detail.medical}</div>
+                    </div>
+
+                    {/* สาเหตุการส่งเยี่ยม / วัตถุประสงค์ / ปัญหาสุขภาพ */}
+                    {[['สาเหตุการส่งเยี่ยม', selVisit.detail.reason], ['ปัญหาสุขภาพ', selVisit.detail.healthIssue]].map(([t, c]) => (
+                      <div key={t} style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 16, padding: '13px 15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+                          <span style={{ width: 3.5, height: 15, borderRadius: 2, background: '#19A589', flexShrink: 0 }} />
+                          <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>{t}</span>
+                        </div>
+                        <div style={{ fontSize: 13, color: '#1E1B39', fontFamily: font, lineHeight: 1.8 }}>{c}</div>
                       </div>
                     ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Visit Detail Popup ── */}
-          {visitDetail && (
-            <div className="anim-backdrop" style={{
-              position: 'fixed', inset: 0, zIndex: 9999,
-              background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }} onClick={() => setVisitDetail(null)}>
-            <div className="anim-slide-up" onClick={e => e.stopPropagation()} style={{
-              backdropFilter: 'blur(50px)', background: 'rgba(255,255,255,0.95)',
-              border: '1px solid rgba(255,255,255,0.8)', borderRadius: 24,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)', padding: 20,
-              display: 'flex', flexDirection: 'column', gap: 16,
-              width: '90%', maxWidth: 700, maxHeight: '85vh', overflowY: 'auto',
-            }}>
-              {/* Detail Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 14, background: 'linear-gradient(135deg, #19A589, #0D7C66)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <img src={ppHeaderIcon} alt="" style={{ width: 20, height: 20 }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: BLACK }}>รายละเอียดการเยี่ยมบ้าน</div>
-                    <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{visitDetail.datetime}</div>
-                  </div>
-                </div>
-                <button
-                  className="hover-btn"
-                  onClick={() => setVisitDetail(null)}
-                  style={{
-                    width: 32, height: 32, borderRadius: 100, border: 'none', cursor: 'pointer',
-                    background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                </button>
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: 1, background: 'rgba(0,0,0,0.06)' }} />
-
-              {/* Info rows */}
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>ประเภทการเยี่ยม</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>เยี่ยมตามนัด</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>HN</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>{visitDetail.hn}</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>เจ้าหน้าที่</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>เจ้าหน้าที่ทดสอบ ทดลอง</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>วัน-เวลา</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>{visitDetail.datetime}</div>
-                </div>
-              </div>
-
-              {/* Mission card (blue gradient) */}
-              <div style={{
-                background: 'linear-gradient(160deg, #3B82F6, #1D4ED8)', borderRadius: 16, padding: 16,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 0, height: 14, borderLeft: '3px solid white' }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'white', fontFamily: font }}>ภารกิจ/วัตถุประสงค์การเยี่ยม</span>
-                </div>
-                <div style={{ fontSize: 14, color: 'white', lineHeight: 1.6, fontFamily: font }}>{visitDetail.mission}</div>
-              </div>
-
-              {/* Section cards */}
-              {[
-                { title: 'ข้อมูลทางการแพทย์', content: visitDetail.medical },
-                { title: 'สาเหตุการส่งเยี่ยม', content: visitDetail.reason },
-              ].map((sec, i) => (
-                <div key={i} style={{ background: 'white', border: '1px solid white', borderRadius: 16, padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                    <div style={{ width: 0, height: 14, borderLeft: '3px solid #19A589' }} />
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'black', fontFamily: font }}>{sec.title}</span>
-                  </div>
-                  <div style={{ fontSize: 14, color: 'black', lineHeight: 1.6, fontFamily: font, whiteSpace: 'pre-line' }}>{sec.content}</div>
-                </div>
-              ))}
-
-              {/* Objective with checkmark */}
-              <div style={{ background: 'white', border: '1px solid white', borderRadius: 16, padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 0, height: 14, borderLeft: '3px solid #19A589' }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'black', fontFamily: font }}>วัตถุประสงค์การเยี่ยม</span>
-                </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                  <img src={ppCheckmarkCircle} alt="" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 2 }} />
-                  <div style={{ fontSize: 14, color: 'black', lineHeight: 1.6, fontFamily: font }}>{visitDetail.objective}</div>
-                </div>
-              </div>
-
-              {/* Health issue */}
-              <div style={{ background: 'white', border: '1px solid white', borderRadius: 16, padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 0, height: 14, borderLeft: '3px solid #19A589' }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'black', fontFamily: font }}>ปัญหาสุขภาพ</span>
-                </div>
-                <div style={{ fontSize: 14, color: 'black', lineHeight: 1.6, fontFamily: font }}>{visitDetail.healthIssue}</div>
-              </div>
-
-              {/* Social/Environment */}
-              <div style={{ background: 'white', border: '1px solid white', borderRadius: 16, padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 0, height: 14, borderLeft: '3px solid #19A589' }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'black', fontFamily: font }}>ข้อมูลด้านสังคมและสิ่งแวดล้อม</span>
-                </div>
-                <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>จำนวนสมาชิกในบ้าน</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: font }}>{visitDetail.social.members}</div>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>รายได้ครัวเรือน</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: font }}>{visitDetail.social.income}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>สวัสดิการ</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: font }}>{visitDetail.social.welfare}</div>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>ปัญหาสุขภาพจิต/พฤติกรรมเสี่ยง</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: font }}>{visitDetail.social.mental}</div>
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>ลักษณะสิ่งแวดล้อมบ้าน</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, fontFamily: font }}>{visitDetail.social.env}</div>
-                </div>
-              </div>
-
-              {/* Screening grid */}
-              <div style={{ background: 'white', border: '1px solid white', borderRadius: 16, padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 0, height: 14, borderLeft: '3px solid #19A589' }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'black', fontFamily: font }}>ข้อมูลคัดกรอง</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                  {visitDetail.screening.map((s, i) => (
-                    <div key={i} style={{ background: 'rgba(116,116,128,0.08)', borderRadius: 16, padding: 16 }}>
-                      <div style={{ fontSize: 12, color: 'black', fontFamily: font, marginBottom: 8 }}>{s.label}</div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>{s.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Visit notes */}
-              <div style={{ background: 'white', border: '1px solid white', borderRadius: 16, padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 0, height: 14, borderLeft: '3px solid #19A589' }} />
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'black', fontFamily: font }}>บันทึกการเยี่ยมบ้าน</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {visitDetail.notes.map((note, i) => (
-                    <div key={i} style={{ border: '1px solid rgba(116,116,128,0.08)', borderRadius: 16, padding: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <img src={NOTE_ICONS[note.icon]} alt="" style={{ width: 12, height: 14 }} />
-                        <span style={{ fontSize: 12, color: 'black', fontFamily: font }}>{note.label}</span>
+                    <div style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 16, padding: '13px 15px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+                        <span style={{ width: 3.5, height: 15, borderRadius: 2, background: '#19A589', flexShrink: 0 }} />
+                        <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>วัตถุประสงค์การเยี่ยม</span>
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>{note.value}</div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <img src={ppCheckmarkCircle} alt="" style={{ width: 18, height: 18, flexShrink: 0, marginTop: 2 }} />
+                        <div style={{ fontSize: 13, color: '#1E1B39', fontFamily: font, lineHeight: 1.8 }}>{selVisit.detail.objective}</div>
+                      </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* ข้อมูลด้านสังคมและสิ่งแวดล้อม */}
+                    <div style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 16, padding: '13px 15px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                        <span style={{ width: 3.5, height: 15, borderRadius: 2, background: '#19A589', flexShrink: 0 }} />
+                        <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>ข้อมูลด้านสังคมและสิ่งแวดล้อม</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }}>
+                        {[['จำนวนสมาชิกในบ้าน', selVisit.detail.social.members], ['รายได้ครัวเรือน', selVisit.detail.social.income], ['สวัสดิการ', selVisit.detail.social.welfare], ['ปัญหาสุขภาพจิต/พฤติกรรมเสี่ยง', selVisit.detail.social.mental]].map(([lb, v]) => (
+                          <div key={lb} style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 11.5, color: '#615E83', fontFamily: font }}>{lb}</div>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: '#1E1B39', fontFamily: font, marginTop: 3, lineHeight: 1.6 }}>{v}</div>
+                          </div>
+                        ))}
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <div style={{ fontSize: 11.5, color: '#615E83', fontFamily: font }}>ลักษณะสิ่งแวดล้อมบ้าน</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#1E1B39', fontFamily: font, marginTop: 3, lineHeight: 1.6 }}>{selVisit.detail.social.env}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ข้อมูลคัดกรอง */}
+                    <div style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 16, padding: '13px 15px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                        <span style={{ width: 3.5, height: 15, borderRadius: 2, background: '#19A589', flexShrink: 0 }} />
+                        <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>ข้อมูลคัดกรอง</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+                        {selVisit.detail.screening.map((sc, i) => (
+                          <div key={i} style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 14, padding: '10px 12px' }}>
+                            <div style={{ fontSize: 11, color: '#615E83', fontFamily: font }}>{sc.label}</div>
+                            <div className="num" style={{ fontSize: 14, fontWeight: 700, color: '#1E1B39', fontFamily: font, marginTop: 3 }}>{sc.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* บันทึกการเยี่ยมบ้าน */}
+                    <div style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 16, padding: '13px 15px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                        <span style={{ width: 3.5, height: 15, borderRadius: 2, background: '#19A589', flexShrink: 0 }} />
+                        <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>บันทึกการเยี่ยมบ้าน</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {selVisit.detail.notes.map((note, i) => (
+                          <div key={i} style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 14, padding: '11px 13px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+                              <img src={NOTE_ICONS[note.icon]} alt="" style={{ width: 12, height: 14 }} />
+                              <span style={{ fontSize: 11.5, fontWeight: 600, color: '#615E83', fontFamily: font }}>{note.label}</span>
+                            </div>
+                            <div style={{ fontSize: 13, color: '#1E1B39', fontFamily: font, lineHeight: 1.75 }}>{note.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
             </div>
           )}
 
           {/* ── Tab 3: ประวัติการประเมิน ── */}
           {activeTab === 2 && (
-            <div className="anim-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="anim-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
               {/* Hero banner — purple gradient */}
               <div style={{
                 background: 'linear-gradient(175deg, #8B5CF6 0%, #7C3AED 100%)',
                 borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
                 backdropFilter: 'blur(10px)', boxShadow: '0 4px 4px rgba(0,0,0,0.1)',
-                display: 'flex', gap: 16, alignItems: 'center',
+                display: 'flex', gap: 16, alignItems: 'center', flexShrink: 0,
               }}>
                 <img src={imgAssessHero3d} alt="" style={{ position: 'absolute', left: 16, top: 16, width: 80, height: 80, objectFit: 'cover', pointerEvents: 'none' }} />
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 96 }}>
@@ -1313,66 +1877,148 @@ export default function PatientProfile({ patient, onClose }) {
                 </div>
               </div>
 
-              {/* Timeline */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {assessmentData.map((group, gi) => (
-                  <div key={gi}>
-                    {/* Month header */}
-                    <div style={{ padding: '8px 0', fontSize: 12, fontWeight: 500, color: 'black', fontFamily: font }}>{group.month}</div>
+              {/* ═ 2 คอลัมน์ 1:2 — โครงเดียวกับหน้าประวัติการเยี่ยมบ้าน · สกรอลล์แยก ═ */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
 
-                    {/* Assessment cards */}
-                    {group.items.map((item, ii) => (
-                      <div key={ii} style={{ display: 'flex', gap: 10 }}>
-                        {/* Date column + line */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingBottom: 12 }}>
-                          <div style={{
-                            width: 48, height: 48, borderRadius: 16, flexShrink: 0,
-                            background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-                          }}>
-                            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.8)', fontFamily: font }}>{item.monthShort}</span>
-                            <span style={{ fontSize: 16, fontWeight: 700, color: 'white', fontFamily: font }}>{item.day}</span>
+                {/* ── ซ้าย: timeline รายการประเมิน ── */}
+                <div className="no-scrollbar" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflowY: 'auto', padding: '12px 12px 0 16px', margin: '-12px -8px 0 -16px' }}>
+                  {assessmentData.map((group, gi) => (
+                    <div key={gi}>
+                      <div style={{ padding: '8px 0', fontSize: 12, fontWeight: 500, color: 'black', fontFamily: font }}>{group.month}</div>
+                      {group.items.map((item, ii) => {
+                        const isSel = selAssess === item;
+                        return (
+                          <div key={ii} style={{ display: 'flex', gap: 10 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingBottom: 12 }}>
+                              <div style={{
+                                width: 56, height: 56, borderRadius: 16, flexShrink: 0,
+                                background: isSel ? 'linear-gradient(135deg, #8B5CF6, #7C3AED)' : 'rgba(255,255,255,0.5)',
+                                backdropFilter: isSel ? 'none' : 'blur(5px)',
+                                border: isSel ? 'none' : '1px solid rgba(255,255,255,0.6)',
+                                boxShadow: isSel ? '0 4px 12px rgba(139,92,246,0.35)' : '0 1px 4px rgba(13,10,44,0.05)',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+                                transition: 'all 0.25s ease',
+                              }}>
+                                <span style={{ fontSize: 8, color: isSel ? 'rgba(255,255,255,0.85)' : '#8E8E93', fontFamily: font }}>{item.monthShort}</span>
+                                <span style={{ fontSize: 17, fontWeight: 700, color: isSel ? 'white' : '#1E1B39', fontFamily: font, lineHeight: 1.1 }}>{item.day}</span>
+                              </div>
+                              <div style={{ width: 0, flex: 1, minHeight: 14, borderLeft: '1.5px dashed rgba(139,92,246,0.35)' }} />
+                            </div>
+
+                            <div
+                              className="hover-assess-card"
+                              onClick={() => setSelAssess(item)}
+                              style={{
+                                flex: 1, minWidth: 0, borderRadius: 16, padding: '13px 14px', cursor: 'pointer', marginBottom: 12,
+                                background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(5px)',
+                                border: `1.5px solid ${isSel ? '#8B5CF6' : 'rgba(255,255,255,0.6)'}`,
+                                boxShadow: isSel ? '0 6px 18px rgba(139,92,246,0.15)' : '0 1px 4px rgba(13,10,44,0.05)',
+                                transition: 'all 0.25s ease',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 7 }}>
+                                {/* ชื่อยาวตัดเหลือบรรทัดเดียว */}
+                                <span className="truncate" style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: '#1E1B39', fontFamily: font }}>{item.title}</span>
+                                <span style={{
+                                  width: 24, height: 24, borderRadius: 100, flexShrink: 0,
+                                  background: isSel ? 'rgba(139,92,246,0.12)' : '#F2F2F7',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                  <svg width="7" height="10" viewBox="0 0 7 10" fill="none"><path d="M1 1L5 5L1 9" stroke={isSel ? '#7C3AED' : '#8E8E93'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
+                                <img src={ppStethoscope} alt="" style={{ width: 14, height: 12, flexShrink: 0 }} />
+                                <span className="truncate" style={{ fontSize: 10, color: '#8E8E93', fontFamily: font }}>ผู้ประเมิน: {item.assessor}</span>
+                              </div>
+                              <span style={{
+                                fontSize: 10, fontFamily: font, borderRadius: 100, padding: '4px 10px',
+                                color: item.status === 'ประเมินแล้ว' ? '#34C759' : item.status === 'รอประเมิน' ? '#FF9500' : '#8E8E93',
+                                background: item.status === 'ประเมินแล้ว' ? 'rgba(52,199,89,0.2)' : item.status === 'รอประเมิน' ? 'rgba(255,149,0,0.15)' : 'rgba(142,142,147,0.1)',
+                              }}>{item.status}</span>
+                            </div>
                           </div>
-                          <div style={{ width: 1, flex: 1, minHeight: 12, background: 'rgba(139,92,246,0.3)' }} />
-                        </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
 
-                        {/* Card */}
-                        <div className="hover-assess-card" onClick={() => item.score !== null && setAssessDetail(item)} style={{
-                          flex: 1, borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
-                          border: '1px solid white', cursor: 'pointer', marginBottom: 12,
-                          background: 'linear-gradient(90deg, rgba(206,195,255,0.04) 0%, rgba(255,255,255,0.052) 100%), white',
+                {/* ── ขวา: รายละเอียดการประเมินที่เลือก ── */}
+                {selAssess && (
+                  <div className="anim-tab-enter no-scrollbar" key={`${selAssess.title}-${selAssess.datetime}`} style={{
+                    background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(5px)',
+                    border: '1px solid rgba(255,255,255,0.5)', borderRadius: 24, padding: 16,
+                    boxShadow: '0 2px 6px rgba(13,10,44,0.08)', minWidth: 0,
+                    display: 'flex', flexDirection: 'column', gap: 14,
+                    overflowY: 'auto',
+                  }}>
+                    {/* หัว: ไอคอนม่วง + ชื่อแบบประเมิน + วันเวลา */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 14, background: '#6658E1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <img src={ppPencilClipboard} alt="" style={{ width: 20, height: 20 }} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>{selAssess.title}</div>
+                        <div style={{ fontSize: 12, color: '#615E83', fontFamily: font, marginTop: 1 }}>{selAssess.datetime}</div>
+                      </div>
+                    </div>
+                    <div style={{ height: 1, background: 'rgba(30,27,57,0.07)' }} />
+
+                    {/* ข้อมูลทั่วไป 2 คอลัมน์ */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 12, color: 'black', fontFamily: font, opacity: 0.75 }}>ผู้ประเมิน</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'black', fontFamily: font, marginTop: 3 }}>{selAssess.assessor}</div>
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 12, color: 'black', fontFamily: font, opacity: 0.75 }}>สถานะ</div>
+                        <span style={{
+                          display: 'inline-block', marginTop: 4,
+                          fontSize: 11, fontWeight: 600, fontFamily: font, borderRadius: 100, padding: '4px 12px',
+                          color: selAssess.status === 'ประเมินแล้ว' ? '#34C759' : '#FF9500',
+                          background: selAssess.status === 'ประเมินแล้ว' ? 'rgba(52,199,89,0.15)' : 'rgba(255,149,0,0.12)',
+                        }}>{selAssess.status}</span>
+                      </div>
+                    </div>
+
+                    {/* การ์ดคะแนน — gradient ตามระดับผล (แบบเดียวกับ popup เดิม) */}
+                    {selAssess.score !== null ? (
+                      <div style={{
+                        borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
+                        background: selAssess.gradient,
+                        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center',
+                      }}>
+                        <img src={selAssess.img} alt="" style={{
+                          position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+                          width: 125, height: 125, objectFit: 'contain', pointerEvents: 'none',
+                        }} />
+                        <div style={{ fontSize: 12, color: 'white', fontFamily: font, fontWeight: 500, letterSpacing: 0.22, marginBottom: 2 }}>คะแนน</div>
+                        <div style={{ fontSize: 48, fontWeight: 700, color: 'white', fontFamily: font, textShadow: '0 4px 4px rgba(0,0,0,0.25)', lineHeight: 1 }}>{selAssess.score}</div>
+                        <div style={{
+                          marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 10,
+                          background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100,
+                          padding: '4px 10px', boxShadow: '0 4px 4px rgba(0,0,0,0.05)',
                         }}>
-                          {/* 3D image */}
-                          <img src={item.img} alt="" style={{ position: 'absolute', bottom: -5, right: -5, width: 80, height: 80, objectFit: 'contain', opacity: 0.5, pointerEvents: 'none' }} />
-
-                          {/* Title + arrow */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                            <span style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: font }}>{item.title}</span>
-                            <button style={{
-                              width: 24, height: 24, borderRadius: 100, border: 'none', cursor: 'pointer',
-                              background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                            }}>
-                              <svg width="7" height="10" viewBox="0 0 7 10" fill="none"><path d="M1 1L5 5L1 9" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                            </button>
-                          </div>
-
-                          {/* Assessor */}
-                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
-                            <img src={ppStethoscope} alt="" style={{ width: 14, height: 12 }} />
-                            <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: font }}>ผู้ประเมิน: {item.assessor}</span>
-                          </div>
-
-                          {/* Status badge */}
-                          <span style={{
-                            fontSize: 10, fontFamily: font, borderRadius: 100, padding: '4px 10px',
-                            color: item.status === 'ประเมินแล้ว' ? '#34C759' : item.status === 'รอประเมิน' ? '#FF9500' : '#8E8E93',
-                            background: item.status === 'ประเมินแล้ว' ? 'rgba(52,199,89,0.2)' : item.status === 'รอประเมิน' ? 'rgba(255,149,0,0.15)' : 'rgba(142,142,147,0.1)',
-                          }}>{item.status}</span>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="white" strokeWidth="1.2"/><path d="M7 4V7.5M7 9.5V10" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                          <span style={{ fontSize: 12, color: 'white', fontFamily: font }}>{selAssess.result}</span>
                         </div>
                       </div>
-                    ))}
+                    ) : (
+                      /* ยังไม่ประเมิน — การ์ดสถานะรอ */
+                      <div style={{
+                        borderRadius: 16, padding: '22px 16px', position: 'relative', overflow: 'hidden',
+                        background: 'white', border: '1.5px dashed rgba(255,149,0,0.4)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center',
+                      }}>
+                        <img src={selAssess.img} alt="" style={{ width: 72, height: 72, objectFit: 'contain', opacity: 0.9 }} />
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#FF9500', fontFamily: font }}>รอประเมิน</div>
+                        <div style={{ fontSize: 12, color: '#615E83', fontFamily: font }}>{selAssess.datetime}</div>
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
@@ -1669,77 +2315,9 @@ export default function PatientProfile({ patient, onClose }) {
         </div>{/* end main content */}
       </div>{/* end 2-column flex */}
       {/* ── Assessment Detail Popup ── */}
-      {assessDetail && (
-        <div className="anim-backdrop" style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }} onClick={() => setAssessDetail(null)}>
-          <div className="anim-slide-up" onClick={e => e.stopPropagation()} style={{
-            background: 'white', borderRadius: 24, padding: 16, width: 450, maxWidth: '90%',
-            display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
-            overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-          }}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 14, background: '#6658E1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <img src={ppPencilClipboard} alt="" style={{ width: 20, height: 20 }} />
-                </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: BLACK, fontFamily: font, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{assessDetail.title}</div>
-                  <div style={{ fontSize: 12, color: GRAY, marginTop: 4, fontFamily: font }}>{assessDetail.datetime}</div>
-                </div>
-              </div>
-              <button
-                className="hover-btn"
-                onClick={() => setAssessDetail(null)}
-                style={{
-                  width: 32, height: 32, borderRadius: 100, border: 'none', cursor: 'pointer',
-                  background: '#F2F2F7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}
-              >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1L9 9M9 1L1 9" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              </button>
-            </div>
-
-            {/* Score card */}
-            <div style={{
-              width: '100%', borderRadius: 16, padding: 16, position: 'relative', overflow: 'hidden',
-              background: assessDetail.gradient,
-              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center',
-            }}>
-              {/* 3D image */}
-              <img src={assessDetail.img} alt="" style={{
-                position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
-                width: 125, height: 125, objectFit: 'contain', pointerEvents: 'none',
-              }} />
-
-              <div style={{ fontSize: 12, color: 'white', fontFamily: font, fontWeight: 500, letterSpacing: 0.22, marginBottom: 2 }}>คะแนน</div>
-              <div style={{ fontSize: 48, fontWeight: 700, color: 'white', fontFamily: font, textShadow: '0 4px 4px rgba(0,0,0,0.25)', lineHeight: 1 }}>{assessDetail.score}</div>
-
-              {/* Result badge */}
-              <div style={{
-                marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 10,
-                background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100,
-                padding: '4px 10px', boxShadow: '0 4px 4px rgba(0,0,0,0.05)',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="white" strokeWidth="1.2"/><path d="M7 4V7.5M7 9.5V10" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                <span style={{ fontSize: 12, color: 'white', fontFamily: font }}>{assessDetail.result}</span>
-              </div>
-            </div>
-
-            {/* Assessor */}
-            <div style={{
-              background: 'rgba(116,116,128,0.08)', borderRadius: 100,
-              padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 6,
-            }}>
-              <img src={ppStethoscope} alt="" style={{ width: 14, height: 12 }} />
-              <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: font }}>ผู้ประเมิน: {assessDetail.assessor}</span>
-            </div>
-          </div>
-        </div>
+      {/* ป๊อปอัพดูเพิ่มเติมของ vital — key ตาม metric ให้รีเซ็ตช่วงเวลาเมื่อเปิดใบใหม่ */}
+      {metricDetail && DETAIL_CFG[metricDetail.label] && (
+        <MetricDetailModal key={metricDetail.label} metric={metricDetail} onClose={() => setMetricDetail(null)} />
       )}
       {/* Prescription detail popup removed — now inline in Tab 4 */}
     </div>/* end root */
@@ -1765,19 +2343,19 @@ function MedCard({ med, defaultOpen = false }) {
           }}>
             <img src={imgMedPill3d} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
-          <span style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>{med.name}</span>
+          <span style={{ fontSize: 14, fontWeight: 500, color: 'black', fontFamily: "'Sarabun', sans-serif" }}>{med.name}</span>
         </div>
         <span style={{
-          fontSize: 10, color: '#0088FF', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif",
+          fontSize: 10, color: '#0088FF', fontFamily: "'Sarabun', sans-serif",
           background: 'rgba(0,136,255,0.2)', borderRadius: 100, padding: '4px 10px',
         }}>จำนวน {med.qty} เม็ด</span>
       </div>
 
       {/* Dose + expand */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 12, color: '#8E8E93', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>{med.dose}</span>
+        <span style={{ fontSize: 12, color: '#8E8E93', fontFamily: "'Sarabun', sans-serif" }}>{med.dose}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>ดูเพิ่มเติม</span>
+          <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: "'Sarabun', sans-serif" }}>ดูเพิ่มเติม</span>
           <svg width="10" height="7" viewBox="0 0 10 7" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
             <path d="M1 1L5 5L9 1" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -1790,7 +2368,7 @@ function MedCard({ med, defaultOpen = false }) {
           {/* Date label */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 0, height: 14, borderLeft: '3px solid #0088FF' }} />
-            <span style={{ fontSize: 12, fontWeight: 500, color: 'black', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>1 มกราคม 2569</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'black', fontFamily: "'Sarabun', sans-serif" }}>1 มกราคม 2569</span>
           </div>
           {/* Time cards grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
@@ -1804,8 +2382,8 @@ function MedCard({ med, defaultOpen = false }) {
                 }}>
                   <img src={t.img} alt="" style={{ position: 'absolute', bottom: -10, right: -0.5, width: 70, height: 70, objectFit: 'cover', pointerEvents: 'none' }} />
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'black', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>{t.label}</span>
-                    <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>{t.time}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'black', fontFamily: "'Sarabun', sans-serif" }}>{t.label}</span>
+                    <span style={{ fontSize: 10, color: '#8E8E93', fontFamily: "'Sarabun', sans-serif" }}>{t.time}</span>
                   </div>
                   {slot ? (
                     <img src={MED_STATUS_ICON[slot.s]} alt="" style={{ width: 16, height: 16 }} />
@@ -1818,6 +2396,7 @@ function MedCard({ med, defaultOpen = false }) {
           </div>
         </div>
       )}
+
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { IconMessageCircle, IconX, IconChevronLeft, IconCamera, IconSend2 } from '@tabler/icons-react';
 
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 const GRAY2 = '#9291A5';

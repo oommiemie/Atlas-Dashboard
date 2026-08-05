@@ -63,7 +63,7 @@ function GuardLogin({ onLogin }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24, textAlign: 'left' }}>
           <div>
             <div style={{ fontSize: 12.5, color: GRAY, fontFamily: font, marginBottom: 6 }}>ชื่อผู้ใช้</div>
-            <input value={u} onChange={e => { setU(e.target.value); setError(null); }} style={{ ...inputStyle(error), fontFamily: 'Inter' }} />
+            <input value={u} onChange={e => { setU(e.target.value); setError(null); }} style={{ ...inputStyle(error), fontFamily: 'Sarabun' }} />
           </div>
           <div>
             <div style={{ fontSize: 12.5, color: GRAY, fontFamily: font, marginBottom: 6 }}>รหัสผ่าน</div>
@@ -87,7 +87,7 @@ function GuardLogin({ onLogin }) {
             ลืมรหัสผ่าน? ติดต่อนิติบุคคล/ผู้ดูแลระบบ Atlas เท่านั้น<br />(ไม่มีการรีเซ็ตด้วยตนเอง)
           </div>
           <div style={{ fontSize: 10.5, color: GRAY2, fontFamily: font, textAlign: 'center', lineHeight: 1.7, borderTop: BORDER, paddingTop: 10 }}>
-            demo: <span style={{ fontFamily: 'Inter' }}>vlg001-somsak</span> (ใช้งาน) · <span style={{ fontFamily: 'Inter' }}>vlg003-prayut</span> (ถูกระงับ) · username อื่น = รหัสผิด
+            demo: <span style={{ fontFamily: 'Sarabun' }}>vlg001-somsak</span> (ใช้งาน) · <span style={{ fontFamily: 'Sarabun' }}>vlg003-prayut</span> (ถูกระงับ) · username อื่น = รหัสผิด
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@ function AlertPanel({ alert, house, device, phase, onAck, onClose, onNavigate })
           <span style={{ fontSize: 11, fontWeight: 700, color: accent, fontFamily: font }}>{isNew ? 'ตรวจพบการล้ม' : 'กำลังช่วยเหลือ'}</span>
           <ElapsedSince minAgo={alert.minAgo} style={{ marginLeft: 'auto', fontSize: 11.5, fontWeight: 800, color: accent, flexShrink: 0 }} />
         </div>
-        <div style={{ fontSize: 17, fontWeight: 900, color: BLACK, fontFamily: font, lineHeight: 1.25, marginTop: 4 }}>
+        <div style={{ fontSize: 17, fontWeight: 800, color: BLACK, fontFamily: font, lineHeight: 1.25, marginTop: 4 }}>
           บ้าน {house.no}
         </div>
         <div style={{ fontSize: 11.5, color: GRAY, fontFamily: font, marginTop: 1 }}>

@@ -15,7 +15,7 @@ import iconRefresh from '../assets/icons/refresh.svg';
 import vsMap from '../assets/icons/vs-map.svg';
 
 /* -- shared styles -- */
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 
@@ -348,7 +348,7 @@ function MapSection({ plannedVisits = [] }) {
 
       const popup = new maplibregl.Popup({ offset: 20, closeButton: false, maxWidth: '280px' })
         .setHTML(
-          '<div style="font-family:IBM Plex Sans Thai Looped,sans-serif;padding:10px;min-width:220px">' +
+          '<div style="font-family:Sarabun,sans-serif;padding:10px;min-width:220px">' +
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
               '<div style="display:flex;align-items:center;gap:6px">' +
                 '<span style="width:8px;height:8px;border-radius:50%;background:' + meta.color + ';display:inline-block;box-shadow:0 0 6px ' + meta.color + '60"></span>' +
@@ -407,7 +407,7 @@ function MapSection({ plannedVisits = [] }) {
         '</svg>';
         var svgEl = el.querySelector('svg');
         var avatarUrl = getAvatar(pt.age || 45, pt.gender || 'ชาย');
-        var popupHtml = '<div style="font-family:IBM Plex Sans Thai Looped,sans-serif;padding:10px;min-width:200px">' +
+        var popupHtml = '<div style="font-family:Sarabun,sans-serif;padding:10px;min-width:200px">' +
           '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">' +
             '<span style="width:8px;height:8px;border-radius:50%;background:' + meta.color + ';box-shadow:0 0 6px ' + meta.color + '60"></span>' +
             '<span style="font-size:10px;font-weight:500;color:' + meta.color + '">' + meta.label + '</span>' +

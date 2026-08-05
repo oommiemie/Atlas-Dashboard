@@ -29,7 +29,7 @@ import iconSidebarPills from './assets/icons/sidebar-pills-figma.svg'
 import iconSidebarVillage from './assets/icons/sidebar-village.svg'
 import iconSidebarFamily from './assets/icons/sidebar-family.svg'
 
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 
 function App() {
   const [user, setUser] = useState(null)
@@ -94,8 +94,8 @@ function App() {
                 <img src={imgLogo} alt="Atlas Dashboard" style={{ width: 42, height: 42, objectFit: 'contain' }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, color: 'white', width: 91 }}>
-                <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>ATLAS</span>
-                <span style={{ fontSize: 14, fontFamily: "'Inter', sans-serif", letterSpacing: 2.24 }}>Dashboard</span>
+                <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Sarabun', sans-serif" }}>ATLAS</span>
+                <span style={{ fontSize: 14, fontFamily: "'Sarabun', sans-serif", letterSpacing: 2.24 }}>Dashboard</span>
               </div>
             </div>
 

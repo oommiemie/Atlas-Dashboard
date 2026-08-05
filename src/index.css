@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai+Looped:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -6,8 +6,8 @@
 img, svg, video, canvas { display: inline-block; vertical-align: middle; }
 
 :root {
-  --font: 'IBM Plex Sans Thai Looped','Inter',system-ui,sans-serif;
-  --mono: 'Inter',system-ui,sans-serif;
+  --font: 'Sarabun',system-ui,sans-serif;
+  --mono: 'Sarabun',system-ui,sans-serif;
   --black: #1E1B39;
   --gray: #615E83;
   --gray2: #9291A5;
@@ -59,10 +59,10 @@ body {
   background: linear-gradient(135deg, #8B7CF8, #6C5CE7);
   box-shadow: 0 8px 24px rgba(108,92,231,0.5);
   display: flex; align-items: center; justify-content: center;
-  color: white; font-weight: 900; font-size: 20px; font-family: var(--mono);
+  color: white; font-weight: 800; font-size: 20px; font-family: var(--mono);
 }
 
-.s-logo-text { font-size: 22px; font-weight: 900; color: white; font-family: var(--mono); letter-spacing: -0.5px; }
+.s-logo-text { font-size: 22px; font-weight: 800; color: white; font-family: var(--mono); letter-spacing: -0.5px; }
 .s-logo-text span { display: block; font-size: 9px; font-weight: 600; color: rgba(162,155,254,0.5); text-transform: uppercase; letter-spacing: 3px; margin-top: 2px; }
 
 .s-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: rgba(162,155,254,0.35); padding: 24px 14px 10px; font-family: var(--mono); position: relative; z-index: 1; }
@@ -146,7 +146,7 @@ body {
   border: 1.5px solid rgba(108,92,231,0.06);
 }
 
-.hero h2 { font-size: 28px; font-weight: 900; color: #2D3436; line-height: 1.3; }
+.hero h2 { font-size: 28px; font-weight: 800; color: #2D3436; line-height: 1.3; }
 .hero h2 span { background: linear-gradient(135deg, #6C5CE7, #0984E3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .hero .sub { font-size: 14px; color: #636E72; line-height: 1.6; }
 
@@ -217,7 +217,7 @@ body {
 }
 
 .sc .lbl { font-size: 12px; font-weight: 500; opacity: 0.85; margin-bottom: 4px; }
-.sc .val { font-size: 36px; font-weight: 900; line-height: 1; letter-spacing: -0.04em; font-family: var(--mono); }
+.sc .val { font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; font-family: var(--mono); }
 
 /* ═══ SEGMENTED TOGGLE ═══ */
 /* tab pills แบบเดียวกับ hero หน้ารายงานเยี่ยมบ้าน */
@@ -650,6 +650,14 @@ div:hover > .row-tooltip { opacity: 1 !important; }
 
 /* ═══ RECHARTS ═══ */
 .recharts-tooltip-wrapper { z-index: 9999 !important; pointer-events: none !important; }
+/* ปิดกรอบ focus น้ำเงินตอนคลิกกราฟ (Recharts v3 ใส่ tabIndex ให้กราฟเป็น focusable) */
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible,
+.recharts-surface:focus {
+  outline: none !important;
+}
 
 /* ═══ MAPLIBRE ═══ */
 .maplibregl-popup { z-index: 10000 !important; }
@@ -666,6 +674,10 @@ div:hover > .row-tooltip { opacity: 1 !important; }
 .maplibregl-ctrl-group { border-radius: 100px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important; }
 .maplibregl-ctrl-group button { width: 32px !important; height: 32px !important; }
 .maplibregl-ctrl-group button + button { border-top: 1px solid rgba(0,0,0,0.06) !important; }
+
+/* ── เลื่อนได้แต่ซ่อน scrollbar ── */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* ═══ SMART VILLAGE ═══ */
 @keyframes svPulseRed {

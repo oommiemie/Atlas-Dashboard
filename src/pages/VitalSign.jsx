@@ -34,7 +34,7 @@ import logoMyAtlas from '../assets/images/logo-my-atlas.png';
 import vsBolt from '../assets/icons/vs-bolt.svg';
 import vsArrowUp from '../assets/icons/vs-arrow-up.svg';
 
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 
@@ -687,7 +687,7 @@ function MapSection() {
           hoverPopup = new maplibregl.Popup({ offset: 16, closeButton: false, maxWidth: '280px' })
             .setLngLat(f.geometry.coordinates)
             .setHTML(
-              '<div style="font-family:IBM Plex Sans Thai Looped,sans-serif;padding:10px;min-width:220px">' +
+              '<div style="font-family:Sarabun,sans-serif;padding:10px;min-width:220px">' +
                 // Status badge top
                 '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
                   '<div style="display:flex;align-items:center;gap:6px">' +

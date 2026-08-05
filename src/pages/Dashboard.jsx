@@ -36,7 +36,7 @@ import imgHero3d from '../assets/images/hero-3d.png';
 import imgAvatarBlur from '../assets/images/avatar-blur.png';
 
 /* ── shared styles ── */
-const font = "'IBM Plex Sans Thai Looped', sans-serif";
+const font = "'Sarabun', sans-serif";
 const BLACK = '#1E1B39';
 const GRAY = '#615E83';
 const CARD_BG = 'rgba(255,255,255,0.5)';
@@ -1478,11 +1478,11 @@ function HospitalBanner() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏥</div>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'white', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>{user.name}</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif" }}>ข้อมูลเฉพาะโรงพยาบาล — จ.ขอนแก่น</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'white', fontFamily: "'Sarabun', sans-serif" }}>{user.name}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontFamily: "'Sarabun', sans-serif" }}>ข้อมูลเฉพาะโรงพยาบาล — จ.ขอนแก่น</div>
         </div>
       </div>
-      <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 100, padding: '6px 14px', fontSize: 11, color: 'white', fontFamily: "'IBM Plex Sans Thai Looped', sans-serif", backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+      <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 100, padding: '6px 14px', fontSize: 11, color: 'white', fontFamily: "'Sarabun', sans-serif", backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
         Hospital Mode
       </div>
     </div>

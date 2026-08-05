@@ -9,7 +9,7 @@ import imgAvatarBlur from '../../assets/images/avatar-blur.png';
 import imgGrid from '../../assets/images/grid-bg.png';
 import imgHero3d from '../../assets/images/homevisit-hero-3d.png';
 
-export const font = "'IBM Plex Sans Thai Looped', sans-serif";
+export const font = "'Sarabun', sans-serif";
 export const BLACK = '#1E1B39';
 export const GRAY = '#615E83';
 export const GRAY2 = '#9291A5';
