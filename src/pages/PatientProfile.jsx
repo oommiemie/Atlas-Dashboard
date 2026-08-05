@@ -98,7 +98,7 @@ const Tip = ({ active, payload, label, ranges, unit, source }) => {
 /* ── Vital row icon mapping ── */
 const VITAL_ROW_ICONS = {
   'ความดันโลหิต': ppRowBp,
-  'ชีพจร': ppRowEcg,
+  'อัตราเต้นของหัวใจ': ppRowEcg,
   'อุณหภูมิ': ppRowThermo,
   'ออกซิเจน': ppRowOxygen,
   'น้ำตาล': ppRowDrop,
@@ -141,11 +141,11 @@ const DETAIL_CFG = {
       { key: 'diastolic', name: 'Diastolic', color: '#4A3AFF', color2: '#2C2399', range: [60, 90], last: 77, base: 84, spread: 6, seed: 5 },
     ],
   },
-  'ชีพจร': {
+  'อัตราเต้นของหัวใจ': {
     unit: 'bpm', domain: [50, 120], ticks: [60, 80, 100, 120],
     zones: [{ y1: 60, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 60–100' }],
     refs: [{ y: 100, color: '#FF383C', label: 'เกณฑ์ 100', hideLegend: true }],
-    lines: [{ key: 'v', name: 'ชีพจร', color: '#FF383C', color2: '#992224', range: [60, 100], last: 103, base: 85, spread: 8, seed: 2 }],
+    lines: [{ key: 'v', name: 'อัตราเต้นของหัวใจ', color: '#FF383C', color2: '#992224', range: [60, 100], last: 103, base: 85, spread: 8, seed: 2 }],
   },
   'อุณหภูมิ': {
     unit: '°C', domain: [35, 39], ticks: [35, 36, 37, 38, 39], decimals: 1,
@@ -516,9 +516,9 @@ const chartDataSets = {
     h: 140,
   },
   /* ใบเดี่ยวใช้โทนแอพ (ม่วง-ฟ้า-มินต์) ไล่เฉดให้แยก metric ออก — BP คงแดง/น้ำเงินตามขนบทางการแพทย์ */
-  1: { // ชีพจร — สไตล์ chart การแพทย์สากล (เหมือน BP): เส้นทึบสีเดียว + marker ทุกจุดวัด จุดหลุดเกณฑ์เป็นแดงทึบ
+  1: { // อัตราเต้นของหัวใจ — สไตล์ chart การแพทย์สากล (เหมือน BP): เส้นทึบสีเดียว + marker ทุกจุดวัด จุดหลุดเกณฑ์เป็นแดงทึบ
     data: [{ day:'19 มี.ค.', v:82, src: SRC_HOMECARE },{ day:'20 มี.ค.', v:78, src: SRC_MYATLAS },{ day:'21 มี.ค.', v:85, src: SRC_MYATLAS },{ day:'22 มี.ค.', v:88, src: SRC_HOMECARE },{ day:'23 มี.ค.', v:92, src: SRC_MYATLAS },{ day:'24 มี.ค.', v:96, src: SRC_MYATLAS },{ day:'25 มี.ค.', v:103, src: SRC_HOMECARE }],
-    lines: [{ key: 'v', name: 'ชีพจร', color: '#FF383C', color2: '#992224', dash: '', range: [60, 100] }],
+    lines: [{ key: 'v', name: 'อัตราเต้นของหัวใจ', color: '#FF383C', color2: '#992224', dash: '', range: [60, 100] }],
     domain: [50, 120], ticks: [60, 80, 100, 120],
     /* แถบช่วงปกติจางๆ ตามขนบ chart คลินิก (reference range) — คำอธิบายอยู่ที่ legend ใต้กราฟ */
     zones: [{ y1: 60, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 60–100' }],
@@ -565,9 +565,30 @@ const chartDataSets = {
 };
 
 /* ── Mock vital history ── */
+/* ตัดสินค่าคัดกรองรายรายการ — อิงเป้าหมายเฉพาะผู้ป่วย DM+HT หลัง PCI (BP<130/80, FBS<130) และเกณฑ์ทั่วไป
+   คืน null = ปกติ · แดง = ผิดปกติชัด · ส้ม = เกินเป้าหมาย/เฝ้าระวัง */
+const judgeScreening = (label, value) => {
+  const num = parseFloat(String(value).replace(/[^\d.]/g, ''));
+  if (label === 'ความดันโลหิต') {
+    const m = String(value).match(/(\d+)\/(\d+)/);
+    if (m) {
+      const sys = +m[1], dia = +m[2];
+      if (sys >= 140 || dia >= 90) return { text: 'สูงกว่าเกณฑ์', color: '#FF383C' };
+      if (sys >= 130 || dia >= 80) return { text: 'เกินเป้าหมาย', color: '#E8802A' };
+    }
+    return null;
+  }
+  if (label === 'ออกซิเจนในเลือด') return num < 90 ? { text: 'ต่ำมาก', color: '#FF383C' } : num < 95 ? { text: 'ต่ำกว่าเกณฑ์', color: '#E8802A' } : null;
+  if (label === 'อุณหภูมิ') return num > 37.5 ? { text: 'มีไข้', color: '#FF383C' } : num < 36 ? { text: 'ต่ำกว่าเกณฑ์', color: '#E8802A' } : null;
+  if (label === 'น้ำตาลในเลือด') return num > 180 ? { text: 'สูงกว่าเกณฑ์', color: '#FF383C' } : num > 130 ? { text: 'สูงกว่าเป้าหมาย', color: '#E8802A' } : num < 70 ? { text: 'ต่ำกว่าเกณฑ์', color: '#FF383C' } : null;
+  if (label === 'อัตราเต้นของหัวใจ') return num > 100 ? { text: 'เร็วกว่าเกณฑ์', color: '#FF383C' } : num < 60 ? { text: 'ช้ากว่าเกณฑ์', color: '#E8802A' } : null;
+  if (label === 'รอบเอว') return num >= 90 ? { text: 'เกินเกณฑ์', color: '#E8802A' } : null;
+  return null;
+};
+
 const makeVitals = (bp, hr, temp, spo2, sugar, height, weight, waist) => [
   { label: 'ความดันโลหิต', value: bp, unit: 'mmHg' },
-  { label: 'ชีพจร', value: `${hr}`, unit: 'bpm' },
+  { label: 'อัตราเต้นของหัวใจ', value: `${hr}`, unit: 'bpm' },
   { label: 'อุณหภูมิ', value: `${temp}`, unit: '°C' },
   { label: 'ออกซิเจน', value: `${spo2}%`, unit: '' },
   { label: 'น้ำตาล', value: `${sugar}`, unit: 'mg/dL' },
@@ -576,18 +597,20 @@ const makeVitals = (bp, hr, temp, spo2, sugar, height, weight, waist) => [
   { label: 'รอบเอว', value: `${waist}`, unit: 'inch' },
 ];
 
+/* ประวัติ 7 วันล่าสุด (19–25 มี.ค.) — ทุกค่าตรงกับจุดบนกราฟการ์ด vital (BP/อัตราเต้นของหัวใจ/อุณหภูมิ/ออกซิเจน/น้ำตาล)
+   แบ่งกลุ่มตามแหล่งบันทึกเดียวกับ src ของกราฟ: เยี่ยมบ้าน (19, 22, 25) = Atlas HomeCare · วัดเอง = My Atlas
+   ส่วนสูง/น้ำหนักตรงกับการ์ด BMI (175 cm / 60 kg) */
 const vitalHistory = [
   { source: 'Atlas HomeCare', logo: 'homecare', visits: [
-    { id: '0001', date: '25 มี.ค. 69', time: '10:00 น.', vitals: makeVitals('98/77', 90, 36, 98, 93, 170, 62, 28) },
-    { id: '0002', date: '20 มี.ค. 69', time: '09:30 น.', vitals: makeVitals('120/80', 85, 36.5, 97, 110, 170, 63, 29) },
-    { id: '0003', date: '15 มี.ค. 69', time: '11:00 น.', vitals: makeVitals('135/88', 92, 36.2, 96, 125, 170, 62, 28) },
-    { id: '0004', date: '10 มี.ค. 69', time: '10:15 น.', vitals: makeVitals('128/82', 88, 36.4, 98, 105, 170, 61, 28) },
+    { id: '0007', date: '25 มี.ค. 69', time: '10:30 น.', vitals: makeVitals('150/77', 103, 36, 98, 142, 175, 60, 28) },
+    { id: '0004', date: '22 มี.ค. 69', time: '10:00 น.', vitals: makeVitals('138/82', 88, 36.4, 97, 128, 175, 60, 28) },
+    { id: '0001', date: '19 มี.ค. 69', time: '09:30 น.', vitals: makeVitals('132/88', 82, 36.5, 97, 118, 175, 60, 28) },
   ]},
   { source: 'My Atlas', logo: 'myatlas', visits: [
-    { id: '0005', date: '23 มี.ค. 69', time: '08:00 น.', vitals: makeVitals('115/75', 78, 36.3, 99, 98, 170, 62, 28) },
-    { id: '0006', date: '18 มี.ค. 69', time: '07:45 น.', vitals: makeVitals('118/78', 80, 36.1, 98, 102, 170, 63, 29) },
-    { id: '0007', date: '13 มี.ค. 69', time: '08:30 น.', vitals: makeVitals('122/80', 82, 36.5, 97, 108, 170, 62, 28) },
-    { id: '0008', date: '8 มี.ค. 69', time: '09:00 น.', vitals: makeVitals('110/72', 76, 36.2, 99, 95, 170, 61, 28) },
+    { id: '0006', date: '24 มี.ค. 69', time: '08:00 น.', vitals: makeVitals('146/80', 96, 36.3, 97, 145, 175, 60, 28) },
+    { id: '0005', date: '23 มี.ค. 69', time: '07:45 น.', vitals: makeVitals('142/86', 92, 36.6, 95, 135, 175, 60, 28) },
+    { id: '0003', date: '21 มี.ค. 69', time: '08:15 น.', vitals: makeVitals('135/90', 85, 36.2, 96, 125, 175, 60, 28) },
+    { id: '0002', date: '20 มี.ค. 69', time: '07:30 น.', vitals: makeVitals('128/85', 78, 36.8, 98, 132, 175, 60, 28) },
   ]},
 ];
 
@@ -637,12 +660,12 @@ import imgAssessDyspnea from '../assets/images/assess-dyspnea.png';
 import imgAssessHero3d from '../assets/images/assess-hero-3d.png';
 
 /* การ์ดรวม KPI + กราฟตามดีไซน์ Figma (node 494:2233) — chart ชี้ dataset ใน chartDataSets
-   ผังกริด 3 คอลัมน์: แถว 1 = ความดัน(2)+ชีพจร(1), แถว 2 = อุณหภูมิ/ออกซิเจน/น้ำตาล(1:1:1),
+   ผังกริด 3 คอลัมน์: แถว 1 = ความดัน(2)+อัตราเต้นของหัวใจ(1), แถว 2 = อุณหภูมิ/ออกซิเจน/น้ำตาล(1:1:1),
    แถว 3 = BMI(1)+CGM(2) — col/row คุมตำแหน่ง ใบที่ไม่ระบุปล่อยไหลตามลำดับ */
 const statCards = [
   /* artCrop: หน้าต่างครอปมุมขวาล่าง (w,h) + ขนาด/ตำแหน่งภาพข้างใน (imgW,x,y) — จูนให้เห็นแขนใส่ cuff กับจอเครื่องวัด */
   { label: 'ความดันโลหิต', value: '150/77', unit: 'mmHg', status: 'warning', badge: 'สูงเล็กน้อย',  updated: '25 มี.ค 69 · 10:30', delta: '▲4 / ▼3', chart: 0, art: imgRobotBp, artCrop: { w: 163, h: 249, imgW: 303, x: -24, y: 25 }, col: 'span 2' },
-  { label: 'ชีพจร',        value: '103',    unit: 'bpm',   status: 'warning', badge: 'หัวใจเต้นเร็ว', updated: '25 มี.ค 69 · 10:30', delta: '▲7', chart: 1 },
+  { label: 'อัตราเต้นของหัวใจ',        value: '103',    unit: 'bpm',   status: 'warning', badge: 'หัวใจเต้นเร็ว', updated: '25 มี.ค 69 · 10:30', delta: '▲7', chart: 1 },
   { label: 'อุณหภูมิ',      value: '36',     unit: 'C',     status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 10:35', delta: '▼0.3', chart: null },
   { label: 'ออกซิเจน',     value: '98',     unit: '%',     status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 10:35', delta: '▲1', chart: null },
   { label: 'น้ำตาล',       value: '142',    unit: 'mg/dl', status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 07:00', delta: '▼3', chart: null },
@@ -1816,12 +1839,20 @@ export default function PatientProfile({ patient, onClose }) {
                         <span style={{ fontSize: 13.5, fontWeight: 700, color: '#1E1B39', fontFamily: font }}>ข้อมูลคัดกรอง</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
-                        {selVisit.detail.screening.map((sc, i) => (
-                          <div key={i} style={{ background: 'white', border: '1px solid rgba(30,27,57,0.06)', borderRadius: 14, padding: '10px 12px' }}>
-                            <div style={{ fontSize: 11, color: '#615E83', fontFamily: font }}>{sc.label}</div>
-                            <div className="num" style={{ fontSize: 14, fontWeight: 700, color: '#1E1B39', fontFamily: font, marginTop: 3 }}>{sc.value}</div>
-                          </div>
-                        ))}
+                        {selVisit.detail.screening.map((sc, i) => {
+                          const j = judgeScreening(sc.label, sc.value);
+                          return (
+                            <div key={i} style={{
+                              background: j ? `${j.color}0D` : 'white',
+                              border: `1px solid ${j ? `${j.color}40` : 'rgba(30,27,57,0.06)'}`,
+                              borderRadius: 14, padding: '10px 12px',
+                            }}>
+                              <div style={{ fontSize: 11, color: '#615E83', fontFamily: font }}>{sc.label}</div>
+                              <div className="num" style={{ fontSize: 14, fontWeight: 700, color: j ? j.color : '#1E1B39', fontFamily: font, marginTop: 3 }}>{sc.value}</div>
+                              {j && <div style={{ fontSize: 9, fontWeight: 700, color: j.color, fontFamily: font, marginTop: 2 }}>⚠ {j.text}</div>}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
