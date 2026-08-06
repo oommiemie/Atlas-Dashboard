@@ -171,25 +171,64 @@ const DETAIL_CFG = {
 
 const DETAIL_PERIODS = ['วัน', 'สัปดาห์', 'เดือน', 'ปี'];
 
-/* ป้ายแกนเวลา: สัปดาห์ = 7 วันจบ 25 มี.ค. · เดือน = 30 วันย้อนหลัง · ปี = 12 เดือนจบ มี.ค. 69 */
-function detailLabels(period) {
-  if (period === 'วัน') return Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
-  if (period === 'สัปดาห์') return ['19 มี.ค.', '20 มี.ค.', '21 มี.ค.', '22 มี.ค.', '23 มี.ค.', '24 มี.ค.', '25 มี.ค.'];
-  if (period === 'เดือน') return Array.from({ length: 30 }, (_, i) => i < 5 ? `${24 + i} ก.พ.` : `${i - 4} มี.ค.`);
-  return ['เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.'];
+/* "วันนี้" ของข้อมูลจำลอง = 25 มี.ค. 69 — ทุก picker นับย้อนจากวันนี้ */
+const TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const DETAIL_TODAY = new Date(2026, 2, 25);
+const beYY = y => String((y + 543) % 100);
+const fmtDM = d => `${d.getDate()} ${TH_M[d.getMonth()]}`;
+const fmtDMY = d => `${fmtDM(d)} ${beYY(d.getFullYear())}`;
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+const dayNum = d => Math.round(d.getTime() / 86400000);
+
+/* สเปกของช่วงที่เลือก: ป้ายแกนเวลา + เฟสสุ่ม (shift) + anchor = ช่วงจบที่วันนี้ (จุดท้ายต้องตรงค่าบนการ์ด) */
+function detailSpec(period, sel) {
+  if (period === 'วัน') {
+    const isCur = sameDay(sel.date, DETAIL_TODAY);
+    return {
+      labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
+      shift: dayNum(sel.date) * 1.7, anchor: isCur,
+      title: isCur ? `วันนี้ · ${fmtDMY(sel.date)}` : fmtDMY(sel.date),
+    };
+  }
+  if (period === 'สัปดาห์') {
+    const days = Array.from({ length: 7 }, (_, i) => addDays(sel.date, i - 6));
+    return {
+      labels: days.map(fmtDM), shift: dayNum(sel.date) * 0.9, anchor: sameDay(sel.date, DETAIL_TODAY),
+      title: `${fmtDM(days[0])} – ${fmtDMY(sel.date)}`,
+    };
+  }
+  if (period === 'เดือน') {
+    const { y, m } = sel.month;
+    const isCur = y === DETAIL_TODAY.getFullYear() && m === DETAIL_TODAY.getMonth();
+    const nDays = isCur ? DETAIL_TODAY.getDate() : new Date(y, m + 1, 0).getDate();
+    return {
+      labels: Array.from({ length: nDays }, (_, i) => `${i + 1} ${TH_M[m]}`),
+      shift: (y * 12 + m) * 0.6, anchor: isCur, title: `${TH_M[m]} ${beYY(y)}`,
+    };
+  }
+  const y = sel.year;
+  const isCur = y === DETAIL_TODAY.getFullYear();
+  return {
+    labels: Array.from({ length: isCur ? DETAIL_TODAY.getMonth() + 1 : 12 }, (_, i) => TH_M[i]),
+    shift: y * 1.3, anchor: isCur, title: `ปี ${beYY(y)}`,
+  };
 }
 
-/* ซีรีส์ deterministic: แกว่งรอบ base แล้วค่อยๆ ไต่ให้จุดสุดท้าย = ค่าล่าสุดบนการ์ดพอดี */
-function genDetailData(cfg, period) {
-  const labels = detailLabels(period);
+/* ซีรีส์ deterministic: แกว่งรอบ base (เฟสต่างกันตามช่วงที่เลือก) — ช่วงปัจจุบันไต่ให้จุดสุดท้าย = ค่าบนการ์ดพอดี */
+function genDetailData(cfg, spec) {
+  const { labels, shift, anchor } = spec;
   const n = labels.length;
   const wave = (i, s) => Math.sin(i * 0.9 + s) + 0.6 * Math.sin(i * 0.37 + s * 1.7);
   return labels.map((lb, i) => {
     const row = { day: lb };
     cfg.lines.forEach(l => {
-      const raw = l.base + wave(i + l.seed * 3, l.seed) * l.spread;
-      const endRaw = l.base + wave(n - 1 + l.seed * 3, l.seed) * l.spread;
-      const v = raw + (l.last - endRaw) * (i / (n - 1));
+      const raw = l.base + wave(i + shift + l.seed * 3, l.seed) * l.spread;
+      let v = raw;
+      if (anchor) {
+        const endRaw = l.base + wave(n - 1 + shift + l.seed * 3, l.seed) * l.spread;
+        v = n > 1 ? raw + (l.last - endRaw) * (i / (n - 1)) : l.last;
+      }
       row[l.key] = cfg.decimals ? +v.toFixed(1) : Math.round(v);
     });
     return row;
@@ -198,9 +237,30 @@ function genDetailData(cfg, period) {
 
 function MetricDetailModal({ metric, onClose }) {
   const [period, setPeriod] = useState('วัน');
-  const [selIdx, setSelIdx] = useState(null);   // จุดที่กดบนกราฟ — null = ค่าล่าสุดจริง
+  const [selIdx, setSelIdx] = useState(null);   // จุดที่กดบนกราฟ — null = จุดท้ายของช่วง
+  /* ตัวกรองช่วง: วัน/สัปดาห์เลือกวัน · เดือนเลือกเดือน · ปีเลือกปี (3 ปีย้อนหลัง) */
+  const [selDate, setSelDate] = useState(DETAIL_TODAY);
+  const [selMonth, setSelMonth] = useState({ y: DETAIL_TODAY.getFullYear(), m: DETAIL_TODAY.getMonth() });
+  const [selYear, setSelYear] = useState(DETAIL_TODAY.getFullYear());
+  const [pickerOpen, setPickerOpen] = useState(false);
   const cfg = DETAIL_CFG[metric.label];
-  const data = genDetailData(cfg, period);
+  const spec = detailSpec(period, { date: selDate, month: selMonth, year: selYear });
+  const data = genDetailData(cfg, spec);
+  const pickerOptions = period === 'เดือน'
+    ? Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(DETAIL_TODAY.getFullYear(), DETAIL_TODAY.getMonth() - i, 1);
+      const o = { y: d.getFullYear(), m: d.getMonth() };
+      return { label: `${TH_M[o.m]} ${beYY(o.y)}`, active: o.y === selMonth.y && o.m === selMonth.m, pick: () => setSelMonth(o) };
+    })
+    : period === 'ปี'
+      ? Array.from({ length: 3 }, (_, i) => {
+        const y = DETAIL_TODAY.getFullYear() - i;
+        return { label: `ปี ${beYY(y)} (${y + 543})`, active: y === selYear, pick: () => setSelYear(y) };
+      })
+      : Array.from({ length: 14 }, (_, i) => {
+        const d = addDays(DETAIL_TODAY, -i);
+        return { label: i === 0 ? `วันนี้ · ${fmtDMY(d)}` : fmtDMY(d), active: sameDay(d, selDate), pick: () => setSelDate(d) };
+      });
   const fmt = v => cfg.decimals ? (+v).toFixed(1) : Math.round(v);
   const stats = cfg.lines.map(l => {
     const vals = data.map(d => d[l.key]);
@@ -213,11 +273,12 @@ function MetricDetailModal({ metric, onClose }) {
   const zoneLegends = (cfg.zones || []).filter(z => z.legendLabel);
   const loneRefs = (cfg.refs || []).filter(r => !r.hideLegend);
   const statusBg = metric.status === 'normal' ? '#34C759' : metric.status === 'critical' ? '#E02A2E' : '#E8802A';
-  /* ค่า/สถานะที่แสดงบนหัว — โฟกัสจุดล่าสุดเป็นค่าเริ่มต้น แล้วย้ายตามจุดที่กด */
+  /* ค่า/สถานะที่แสดงบนหัว — โฟกัสจุดท้ายของช่วงเป็นค่าเริ่มต้น แล้วย้ายตามจุดที่กด
+     isLive = จุดท้ายของช่วงปัจจุบันจริงๆ → ใช้ค่า/สถานะจากการ์ดหลักโดยตรง */
   const lastIdx = data.length - 1;
-  const effIdx = selIdx != null ? selIdx : lastIdx;
+  const effIdx = Math.min(selIdx != null ? selIdx : lastIdx, lastIdx);
   const isLatest = effIdx === lastIdx;
-  const selRow = !isLatest ? data[effIdx] : null;
+  const selRow = !(isLatest && spec.anchor) ? data[effIdx] : null;
   const dispValue = selRow
     ? (cfg.lines.length > 1 ? cfg.lines.map(l => fmt(selRow[l.key])).join('/') : String(fmt(selRow[cfg.lines[0].key])))
     : metric.value;
@@ -226,10 +287,6 @@ function MetricDetailModal({ metric, onClose }) {
   const dispStatus = selRow
     ? (outHigh ? { text: 'สูงกว่าเกณฑ์', color: '#FF383C' } : outLow ? { text: 'ต่ำกว่าเกณฑ์', color: '#E8802A' } : { text: 'ปกติ', color: '#34C759' })
     : { text: metric.badge, color: (metric.status === 'normal' ? '#34C759' : metric.status === 'critical' ? '#E02A2E' : '#E8802A') };
-  const periodDesc = period === 'วัน' ? 'วันนี้ 25 มี.ค. 69 · รายชั่วโมง'
-    : period === 'สัปดาห์' ? '7 วันย้อนหลัง · 19 – 25 มี.ค. 69'
-    : period === 'เดือน' ? '30 วันย้อนหลัง · 24 ก.พ. – 25 มี.ค. 69'
-    : '12 เดือนย้อนหลัง · เม.ย. 68 – มี.ค. 69';
   /* render ผ่าน portal ที่ body — ไม่งั้น backdrop-filter ของ .main-inner จะขัง fixed overlay ให้ครอบแค่โซน main */
   return createPortal(
     <div className="anim-backdrop" onClick={onClose} style={{
@@ -237,7 +294,7 @@ function MetricDetailModal({ metric, onClose }) {
       backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
     }}>
       {/* โครงตาม Figma 542:3284 — การ์ดขาว 600px ร่องเนื้อหาเป็นการ์ดซ้อน */}
-      <div className="anim-scale-in" onClick={e => e.stopPropagation()} style={{
+      <div className="anim-scale-in" onClick={e => { e.stopPropagation(); setPickerOpen(false); }} style={{
         width: 600, maxWidth: '94vw', maxHeight: '90vh', overflowY: 'auto',
         background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(30px)',
         borderRadius: 24, padding: 16, fontFamily: font,
@@ -269,7 +326,7 @@ function MetricDetailModal({ metric, onClose }) {
             background: 'rgba(116,116,128,0.06)', border: '1px solid rgba(120,120,128,0.1)',
           }}>
             {DETAIL_PERIODS.map(p => (
-              <button key={p} className="hover-btn" onClick={() => { setPeriod(p); setSelIdx(null); }} style={{
+              <button key={p} className="hover-btn" onClick={() => { setPeriod(p); setSelIdx(null); setPickerOpen(false); }} style={{
                 width: 80, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer',
                 fontSize: 12, fontFamily: font, transition: 'all 0.2s ease',
                 background: period === p ? '#0088FF' : 'transparent',
@@ -278,7 +335,46 @@ function MetricDetailModal({ metric, onClose }) {
               }}>{p}</button>
             ))}
           </div>
-          <span style={{ fontSize: 11, color: '#9291A5' }}>{periodDesc}</span>
+          {/* ตัวกรองช่วง — dropdown ตามแท็บ: วัน/สัปดาห์ = เลือกวัน · เดือน = เลือกเดือน · ปี = เลือกปี */}
+          <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <button className="hover-btn" onClick={() => setPickerOpen(o => !o)} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
+              height: 32, padding: '0 12px', borderRadius: 100, fontFamily: font,
+              background: pickerOpen ? 'rgba(0,136,255,0.1)' : 'rgba(116,116,128,0.06)',
+              border: `1px solid ${pickerOpen ? 'rgba(0,136,255,0.35)' : 'rgba(120,120,128,0.1)'}`,
+              fontSize: 12, fontWeight: 600, color: pickerOpen ? '#0088FF' : '#1E1B39', transition: 'all 0.15s ease',
+            }}>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                <rect x="1" y="2.2" width="12" height="10.8" rx="2.4" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M1 5.6h12" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M4.4 0.8v2.6M9.6 0.8v2.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              {spec.title}
+              <svg width="9" height="6" viewBox="0 0 10 6" fill="none" style={{ flexShrink: 0, transform: pickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
+                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {pickerOpen && (
+              <div className="no-scrollbar anim-scale-in" style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 60, minWidth: 176,
+                maxHeight: 232, overflowY: 'auto', background: 'white', borderRadius: 16, padding: 6,
+                border: '1px solid rgba(30,27,57,0.08)', boxShadow: '0 14px 44px rgba(30,27,57,0.2)',
+              }}>
+                {pickerOptions.map(o => (
+                  <button key={o.label} className="hover-btn" onClick={() => { o.pick(); setSelIdx(null); setPickerOpen(false); }} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                    width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 10,
+                    border: 'none', cursor: 'pointer', fontFamily: font, fontSize: 12, whiteSpace: 'nowrap',
+                    background: o.active ? 'rgba(0,136,255,0.1)' : 'transparent',
+                    color: o.active ? '#0088FF' : '#1E1B39', fontWeight: o.active ? 600 : 400,
+                  }}>
+                    {o.label}
+                    {o.active && <span style={{ fontSize: 11 }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ═ การ์ดเนื้อหา: Value+Unit → Status → Date Record → Chart → Criterion ═ */}
@@ -290,7 +386,7 @@ function MetricDetailModal({ metric, onClose }) {
             {/* ค่าใหญ่สีตามสถานะของจุดที่เลือก (default = ค่าล่าสุด) */}
             <span className="num" style={{ fontSize: 20, fontWeight: 700, color: dispStatus.color, transition: 'color 0.2s ease' }}>{dispValue}</span>
             <span style={{ fontSize: 12, color: '#000' }}>{metric.unit}</span>
-            {selRow && (
+            {!isLatest && (
               <button className="hover-btn" onClick={() => setSelIdx(null)} style={{
                 marginLeft: 6, border: 'none', cursor: 'pointer', borderRadius: 100, padding: '3px 10px',
                 background: 'rgba(0,136,255,0.1)', color: '#0088FF', fontSize: 10.5, fontWeight: 600, fontFamily: font,
@@ -312,9 +408,10 @@ function MetricDetailModal({ metric, onClose }) {
             </span>
           )}
           <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(0,0,0,0.7)' }}>
-            {/* โชว์เวลาเฉพาะมุมมองรายวัน — สัปดาห์/เดือน/ปี ตัด · HH:MM ทิ้ง */}
-            {selRow ? `ข้อมูล ณ ${selRow.day}` : `อัพเดทล่าสุด ${period === 'วัน' ? metric.updated : metric.updated.split(' · ')[0]}`}
-            <span style={{ color: '#9291A5', fontWeight: 400 }}> · แตะจุดบนกราฟเพื่อดูค่าแต่ละจุด</span>
+            {/* แสดงวันที่ตรงๆ — วิวรายวันพ่วงเวลาของจุดด้วย · ช่วงย้อนหลังใช้ป้ายจุด/ชื่อช่วงที่เลือก */}
+            {selRow
+              ? (period === 'วัน' ? `${fmtDMY(selDate)} · ${selRow.day}` : isLatest ? spec.title : selRow.day)
+              : (period === 'วัน' ? metric.updated : metric.updated.split(' · ')[0])}
           </div>
 
           {/* Chart — กล่องเทาอ่อนมุมมน 24 ตามแบบ */}
