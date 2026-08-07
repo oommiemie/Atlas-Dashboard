@@ -131,70 +131,87 @@ function VitalRow({ label, value, unit, color = '#34C759', time = '10:00 น.' }
 }
 
 /* ══════ ป๊อปอัพ "ดูเพิ่มเติม" ของ vital ทุกใบ — ดูย้อนหลังแบบ สัปดาห์/เดือน/ปี พร้อมกราฟ ══════ */
-/* config ต่อ metric: เส้น เกณฑ์ โซนปกติ และพารามิเตอร์สร้างข้อมูลย้อนหลัง (last = ค่าล่าสุดต้องตรงหัวการ์ด) */
-const DETAIL_CFG = {
-  'ความดันโลหิต': {
-    unit: 'mmHg', domain: [60, 180], ticks: [60, 90, 120, 150, 180],
-    refs: [{ y: 140, color: '#FF383C', label: 'เกณฑ์ 140' }, { y: 90, color: '#4A3AFF', label: 'เกณฑ์ 90' }],
-    lines: [
-      { key: 'systolic', name: 'Systolic', color: '#FF383C', color2: '#992224', range: [90, 140], last: 150, base: 134, spread: 9, seed: 1 },
-      { key: 'diastolic', name: 'Diastolic', color: '#4A3AFF', color2: '#2C2399', range: [60, 90], last: 77, base: 84, spread: 6, seed: 5 },
-    ],
-  },
-  'อัตราเต้นของหัวใจ': {
-    unit: 'bpm', domain: [50, 120], ticks: [60, 80, 100, 120],
-    zones: [{ y1: 60, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 60–100' }],
-    refs: [{ y: 100, color: '#FF383C', label: 'เกณฑ์ 100', hideLegend: true }],
-    lines: [{ key: 'v', name: 'อัตราเต้นของหัวใจ', color: '#FF383C', color2: '#992224', range: [60, 100], last: 103, base: 85, spread: 8, seed: 2 }],
-  },
-  'อุณหภูมิ': {
-    unit: '°C', domain: [35, 39], ticks: [35, 36, 37, 38, 39], decimals: 1,
-    zones: [{ y1: 36, y2: 37.5, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 36–37.5' }],
-    lines: [{ key: 'v', name: 'อุณหภูมิ', color: '#E8802A', color2: '#B45309', range: [36, 37.5], last: 36, base: 36.6, spread: 0.45, seed: 3 }],
-  },
-  'ออกซิเจน': {
-    unit: '%', domain: [88, 100], ticks: [88, 92, 96, 100],
-    zones: [{ y1: 95, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ ≥ 95' }],
-    lines: [{ key: 'v', name: 'ออกซิเจน', color: '#1398D8', color2: '#0B6E9E', range: [95, 100], last: 98, base: 97, spread: 1.6, seed: 4 }],
-  },
-  'น้ำตาล': {
-    unit: 'mg/dl', domain: [60, 220], ticks: [60, 100, 140, 180, 220],
-    zones: [{ y1: 70, y2: 180, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 70–180' }],
-    lines: [{ key: 'v', name: 'น้ำตาล', color: '#8B5CF6', color2: '#6D28D9', range: [70, 180], last: 142, base: 130, spread: 16, seed: 6 }],
-  },
-  'CGM': {
-    unit: 'mg/dl', domain: [60, 220], ticks: [60, 100, 140, 180, 220],
-    zones: [{ y1: 70, y2: 180, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 70–180' }],
-    lines: [{ key: 'v', name: 'ค่าเฉลี่ยรายวัน (CGM)', color: '#34C759', color2: '#0F7B37', range: [70, 180], last: 142, base: 128, spread: 18, seed: 7 }],
-  },
-};
-
-const DETAIL_PERIODS = ['วัน', 'สัปดาห์', 'เดือน', 'ปี'];
-
-/* "วันนี้" ของข้อมูลจำลอง = 25 มี.ค. 69 — ทุก picker นับย้อนจากวันนี้ */
+/* "วันนี้" ของข้อมูลจำลอง = วันปัจจุบันจริง (ไดนามิก) — ทุก picker/ข้อมูลนับจากวันนี้ */
 const TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-const DETAIL_TODAY = new Date(2026, 2, 25);
+const _now = new Date();
+const DETAIL_TODAY = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
 const beYY = y => String((y + 543) % 100);
 const fmtDM = d => `${d.getDate()} ${TH_M[d.getMonth()]}`;
 const fmtDMY = d => `${fmtDM(d)} ${beYY(d.getFullYear())}`;
 const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 const dayNum = d => Math.round(d.getTime() / 86400000);
+/* แปลงวันที่ปฏิทิน "YYYY-MM-DD" → จำนวนวันเทียบกับวันนี้ (ลบ = อดีต) — ใช้ปักหมุดเส้นเรื่อง */
+const D = s => { const [y, m, dd] = s.split('-').map(Number); return dayNum(new Date(y, m - 1, dd)) - dayNum(DETAIL_TODAY); };
 
-/* สเปกของช่วงที่เลือก: ป้ายแกนเวลา + เฟสสุ่ม (shift) + anchor = ช่วงจบที่วันนี้ (จุดท้ายต้องตรงค่าบนการ์ด) */
+/* config ต่อ metric: เส้น เกณฑ์ โซนปกติ และพารามิเตอร์จำลองข้อมูลสมจริงตั้งแต่ต้นปีถึงวันนี้
+   story = จุดยึดเส้นเรื่องทางคลินิก [วันปฏิทินจริง, ค่า] — interpolate เชิงเส้นระหว่างจุด
+   เรื่องของผู้ป่วย: ม.ค. คุมได้ปานกลาง → 21 ก.พ. 69 เกิด STEMI + PCI ค่าพุ่ง → พักฟื้น เม.ย.–มิ.ย. ดีขึ้น →
+   ก.ค.–ส.ค. ความดัน/ชีพจรไต่กลับขึ้น (สอดคล้องการ์ด "สูงเล็กน้อย/หัวใจเต้นเร็ว")
+   dn = ความแกว่งรายวัน · circ+ca = จังหวะร่างกายรายชั่วโมง · last = ค่าล่าสุดต้องตรงหัวการ์ด */
+const DETAIL_CFG = {
+  'ความดันโลหิต': {
+    unit: 'mmHg', domain: [60, 180], ticks: [60, 90, 120, 150, 180],
+    refs: [{ y: 140, color: '#FF383C', label: 'เกณฑ์ 140' }, { y: 90, color: '#4A3AFF', label: 'เกณฑ์ 90' }],
+    lines: [
+      { key: 'systolic', name: 'Systolic', color: '#FF383C', color2: '#992224', range: [90, 140], last: 150, seed: 1,
+        story: [[D('2026-01-01'), 126], [D('2026-02-10'), 130], [D('2026-02-18'), 133], [D('2026-02-21'), 166], [D('2026-02-24'), 152], [D('2026-03-01'), 138], [D('2026-03-25'), 133], [D('2026-04-15'), 128], [D('2026-05-20'), 126], [D('2026-06-20'), 128], [D('2026-07-15'), 132], [D('2026-07-31'), 131], [D('2026-08-04'), 140], [0, 150]], dn: 4, circ: 'bp', ca: 6 },
+      { key: 'diastolic', name: 'Diastolic', color: '#4A3AFF', color2: '#2C2399', range: [60, 90], last: 77, seed: 5,
+        story: [[D('2026-01-01'), 80], [D('2026-02-18'), 84], [D('2026-02-21'), 96], [D('2026-02-24'), 88], [D('2026-03-01'), 82], [D('2026-03-25'), 84], [D('2026-05-20'), 78], [D('2026-07-15'), 80], [D('2026-07-31'), 88], [D('2026-08-04'), 82], [0, 77]], dn: 3, circ: 'bp', ca: 4 },
+    ],
+  },
+  'อัตราเต้นของหัวใจ': {
+    unit: 'bpm', domain: [50, 120], ticks: [60, 80, 100, 120],
+    zones: [{ y1: 60, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 60–100' }],
+    refs: [{ y: 100, color: '#FF383C', label: 'เกณฑ์ 100', hideLegend: true }],
+    lines: [{ key: 'v', name: 'อัตราเต้นของหัวใจ', color: '#FF383C', color2: '#992224', range: [60, 100], last: 103, seed: 2,
+      story: [[D('2026-01-01'), 74], [D('2026-02-18'), 80], [D('2026-02-21'), 112], [D('2026-02-24'), 96], [D('2026-03-01'), 88], [D('2026-03-25'), 84], [D('2026-05-20'), 76], [D('2026-07-15'), 80], [D('2026-07-31'), 82], [D('2026-08-04'), 92], [0, 103]], dn: 4, circ: 'hr', ca: 7 }],
+  },
+  'อุณหภูมิ': {
+    unit: '°C', domain: [35, 39], ticks: [35, 36, 37, 38, 39], decimals: 1,
+    zones: [{ y1: 36, y2: 37.5, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 36–37.5' }],
+    lines: [{ key: 'v', name: 'อุณหภูมิ', color: '#E8802A', color2: '#B45309', range: [36, 37.5], last: 36, seed: 3,
+      story: [[D('2026-01-01'), 36.5], [D('2026-02-18'), 36.5], [D('2026-02-21'), 38.1], [D('2026-02-23'), 37.6], [D('2026-02-25'), 37.1], [D('2026-03-01'), 36.7], [D('2026-05-01'), 36.5], [D('2026-07-31'), 36.5], [0, 36.0]], dn: 0.18, circ: 'temp', ca: 0.35 }],
+  },
+  'ออกซิเจน': {
+    unit: '%', domain: [88, 100], ticks: [88, 92, 96, 100],
+    zones: [{ y1: 95, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ ≥ 95' }],
+    lines: [{ key: 'v', name: 'ออกซิเจน', color: '#1398D8', color2: '#0B6E9E', range: [95, 100], last: 98, seed: 4,
+      story: [[D('2026-01-01'), 97], [D('2026-02-18'), 97], [D('2026-02-21'), 92], [D('2026-02-24'), 94], [D('2026-03-01'), 96], [D('2026-05-01'), 97], [D('2026-07-31'), 97], [0, 98]], dn: 0.8, circ: 'none', ca: 0.6 }],
+  },
+  'น้ำตาล': {
+    unit: 'mg/dl', domain: [60, 220], ticks: [60, 100, 140, 180, 220],
+    zones: [{ y1: 70, y2: 180, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 70–180' }],
+    lines: [{ key: 'v', name: 'น้ำตาล', color: '#8B5CF6', color2: '#6D28D9', range: [70, 180], last: 142, seed: 6,
+      story: [[D('2026-01-01'), 124], [D('2026-02-10'), 130], [D('2026-02-18'), 135], [D('2026-02-21'), 178], [D('2026-02-24'), 160], [D('2026-03-01'), 145], [D('2026-03-25'), 132], [D('2026-05-15'), 126], [D('2026-07-01'), 130], [D('2026-07-31'), 118], [D('2026-08-04'), 136], [0, 142]], dn: 9, circ: 'meal', ca: 26 }],
+  },
+  'CGM': {
+    unit: 'mg/dl', domain: [60, 220], ticks: [60, 100, 140, 180, 220],
+    zones: [{ y1: 70, y2: 180, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 70–180' }],
+    lines: [{ key: 'v', name: 'ค่าเฉลี่ยรายวัน (CGM)', color: '#34C759', color2: '#0F7B37', range: [70, 180], last: 142, seed: 7,
+      story: [[D('2026-01-01'), 120], [D('2026-02-18'), 132], [D('2026-02-21'), 172], [D('2026-02-24'), 158], [D('2026-03-01'), 142], [D('2026-03-25'), 130], [D('2026-05-15'), 126], [D('2026-07-01'), 130], [D('2026-07-31'), 128], [0, 142]], dn: 8, circ: 'meal', ca: 30 }],
+  },
+};
+
+const DETAIL_PERIODS = ['วัน', 'สัปดาห์', 'เดือน', 'ปี'];
+
+/* สเปกของช่วงที่เลือก: ป้ายแกนเวลา + offs (วันเทียบกับวันนี้ต่อจุด) + anchor = ช่วงจบที่วันนี้ */
 function detailSpec(period, sel) {
+  const off = d => dayNum(d) - dayNum(DETAIL_TODAY);
   if (period === 'วัน') {
     const isCur = sameDay(sel.date, DETAIL_TODAY);
     return {
+      mode: 'hour', dayOff: off(sel.date),
       labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`),
-      shift: dayNum(sel.date) * 1.7, anchor: isCur,
+      anchor: isCur,
       title: isCur ? `วันนี้ · ${fmtDMY(sel.date)}` : fmtDMY(sel.date),
     };
   }
   if (period === 'สัปดาห์') {
     const days = Array.from({ length: 7 }, (_, i) => addDays(sel.date, i - 6));
     return {
-      labels: days.map(fmtDM), shift: dayNum(sel.date) * 0.9, anchor: sameDay(sel.date, DETAIL_TODAY),
+      mode: 'day', offs: days.map(off),
+      labels: days.map(fmtDM), anchor: sameDay(sel.date, DETAIL_TODAY),
       title: `${fmtDM(days[0])} – ${fmtDMY(sel.date)}`,
     };
   }
@@ -203,36 +220,71 @@ function detailSpec(period, sel) {
     const isCur = y === DETAIL_TODAY.getFullYear() && m === DETAIL_TODAY.getMonth();
     const nDays = isCur ? DETAIL_TODAY.getDate() : new Date(y, m + 1, 0).getDate();
     return {
+      mode: 'day', offs: Array.from({ length: nDays }, (_, i) => off(new Date(y, m, i + 1))),
       labels: Array.from({ length: nDays }, (_, i) => `${i + 1} ${TH_M[m]}`),
-      shift: (y * 12 + m) * 0.6, anchor: isCur, title: `${TH_M[m]} ${beYY(y)}`,
+      anchor: isCur, title: `${TH_M[m]} ${beYY(y)}`,
     };
   }
   const y = sel.year;
   const isCur = y === DETAIL_TODAY.getFullYear();
+  const nM = isCur ? DETAIL_TODAY.getMonth() + 1 : 12;
   return {
-    labels: Array.from({ length: isCur ? DETAIL_TODAY.getMonth() + 1 : 12 }, (_, i) => TH_M[i]),
-    shift: y * 1.3, anchor: isCur, title: `ปี ${beYY(y)}`,
+    mode: 'month', offs: Array.from({ length: nM }, (_, i) => off(new Date(y, i, 15))),
+    labels: Array.from({ length: nM }, (_, i) => TH_M[i]),
+    anchor: isCur, title: `ปี ${beYY(y)}`,
   };
 }
 
-/* ซีรีส์ deterministic: แกว่งรอบ base (เฟสต่างกันตามช่วงที่เลือก) — ช่วงปัจจุบันไต่ให้จุดสุดท้าย = ค่าบนการ์ดพอดี */
+/* ── เครื่องจำลองข้อมูลสมจริง (deterministic ทุกครั้งที่ render) ──
+   ค่า = เส้นเรื่องทางคลินิก (story interpolate) + ความแกว่งรายวัน (noise ตาม seed ของวัน)
+       + จังหวะร่างกายรายชั่วโมง (circadian/มื้ออาหาร) — วันนี้บังคับจุดล่าสุดตรงค่าบนการ์ด */
+const dNoise = s => { const x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
+const CIRC = {
+  none: () => 0,
+  bp: (h, a) => a * Math.sin(((h - 3) / 24) * 2 * Math.PI),                       // ต่ำกลางดึก พีคช่วงสาย
+  hr: (h, a) => a * Math.sin(((h - 4) / 24) * 2 * Math.PI),                       // ช้าตอนหลับ เร็วช่วงบ่าย
+  temp: (h, a) => a * Math.sin(((h - 12) / 24) * 2 * Math.PI),                    // ต่ำเช้ามืด สูงหัวค่ำ
+  meal: (h, a) => a * (Math.exp(-((h - 8.2) ** 2) / 2.2) + Math.exp(-((h - 13.3) ** 2) / 2.6)
+    + Math.exp(-((h - 19.2) ** 2) / 3)) - a * 0.25 * Math.exp(-((h - 4) ** 2) / 5), // ลอนสามมื้อ + ต่ำกลางดึก
+};
 function genDetailData(cfg, spec) {
-  const { labels, shift, anchor } = spec;
-  const n = labels.length;
-  const wave = (i, s) => Math.sin(i * 0.9 + s) + 0.6 * Math.sin(i * 0.37 + s * 1.7);
-  return labels.map((lb, i) => {
-    const row = { day: lb };
-    cfg.lines.forEach(l => {
-      const raw = l.base + wave(i + shift + l.seed * 3, l.seed) * l.spread;
-      let v = raw;
-      if (anchor) {
-        const endRaw = l.base + wave(n - 1 + shift + l.seed * 3, l.seed) * l.spread;
-        v = n > 1 ? raw + (l.last - endRaw) * (i / (n - 1)) : l.last;
+  const interp = (story, o) => {
+    if (o <= story[0][0]) return story[0][1];
+    for (let k = 1; k < story.length; k++) {
+      if (o <= story[k][0]) {
+        const [o0, v0] = story[k - 1], [o1, v1] = story[k];
+        return v0 + (v1 - v0) * ((o - o0) / (o1 - o0));
       }
-      row[l.key] = cfg.decimals ? +v.toFixed(1) : Math.round(v);
-    });
-    return row;
+    }
+    return story[story.length - 1][1];
+  };
+  const fmt = v => cfg.decimals ? +v.toFixed(1) : Math.round(v);
+  const rows = spec.labels.map(lb => ({ day: lb }));
+  cfg.lines.forEach(l => {
+    const sd = (l.seed || 1) * 7.13;
+    /* ค่าประจำวัน: เส้นเรื่อง + ความแกว่งรายวัน (วันนี้ไม่ใส่ noise ให้ตรงการ์ด) */
+    const dayVal = o => interp(l.story, o) + (o === 0 ? 0 : dNoise((o * 31.7 + 11) * sd) * l.dn);
+    if (spec.mode === 'hour') {
+      const vals = spec.labels.map((_, h) =>
+        dayVal(spec.dayOff) + CIRC[l.circ || 'none'](h, l.ca || 0)
+        + dNoise((spec.dayOff * 24 + h + 3) * sd) * l.dn * 0.45);
+      /* วันนี้: ไล่ปรับให้ชั่วโมงท้ายสุดตรงค่าบนการ์ดพอดี (คงรูปทรงช่วงเช้าไว้) */
+      if (spec.anchor) {
+        const corr = l.last - vals[vals.length - 1];
+        vals.forEach((v, h) => { vals[h] = v + corr * (h / (vals.length - 1)); });
+      }
+      vals.forEach((v, i) => { rows[i][l.key] = fmt(v); });
+    } else if (spec.mode === 'day') {
+      spec.offs.forEach((o, i) => { rows[i][l.key] = fmt(o === 0 ? l.last : dayVal(o)); });
+    } else {
+      /* รายเดือน: ค่ากลางเดือน + แกว่งเบาๆ — เดือนปัจจุบันจบที่ค่าล่าสุด */
+      spec.offs.forEach((o, i) => {
+        const isLastCur = spec.anchor && i === spec.offs.length - 1;
+        rows[i][l.key] = fmt(isLastCur ? l.last : interp(l.story, o) + dNoise((o * 3.3 + 5) * sd) * l.dn * 0.5);
+      });
+    }
   });
+  return rows;
 }
 
 function MetricDetailModal({ metric, onClose }) {
@@ -568,15 +620,11 @@ function BMIGauge({ bmi = 19.5 }) {
    src: ที่มาของค่ารายจุด — เยี่ยมบ้านบันทึกผ่าน Atlas HomeCare / ผู้ป่วยวัดเองผ่าน My Atlas + IoT */
 const SRC_HOMECARE = 'แอพ Atlas HomeCare · บันทึกจากการเยี่ยมบ้าน';
 const SRC_MYATLAS = 'แอพ My Atlas · ผู้ป่วยวัดเองด้วยอุปกรณ์ IoT';
-const chartData = [
-  { day: '19 มี.ค.', systolic: 132, diastolic: 88, src: SRC_HOMECARE },
-  { day: '20 มี.ค.', systolic: 128, diastolic: 85, src: SRC_MYATLAS },
-  { day: '21 มี.ค.', systolic: 135, diastolic: 90, src: SRC_MYATLAS },
-  { day: '22 มี.ค.', systolic: 138, diastolic: 82, src: SRC_HOMECARE },
-  { day: '23 มี.ค.', systolic: 142, diastolic: 86, src: SRC_MYATLAS },
-  { day: '24 มี.ค.', systolic: 146, diastolic: 80, src: SRC_MYATLAS },
-  { day: '25 มี.ค.', systolic: 150, diastolic: 77, src: SRC_HOMECARE },
-];
+/* ป้ายวัน 7 วันล่าสุดจบวันนี้ (ไดนามิก) + แหล่งบันทึก: เยี่ยมบ้าน = วันแรก/กลาง/วันนี้ ที่เหลือวัดเอง */
+const WEEK_LABELS = Array.from({ length: 7 }, (_, i) => fmtDM(addDays(DETAIL_TODAY, i - 6)));
+const WEEK_SRC = i => [0, 3, 6].includes(i) ? SRC_HOMECARE : SRC_MYATLAS;
+const chartData = [[132, 88], [128, 85], [135, 90], [138, 82], [142, 86], [146, 80], [150, 77]]
+  .map(([systolic, diastolic], i) => ({ day: WEEK_LABELS[i], systolic, diastolic, src: WEEK_SRC(i) }));
 
 /* CGM: เครื่องวัดจริงบันทึกทุก 1-5 นาที — mock แบบ 5 นาที (288 จุด/วัน) ด้วยสูตร deterministic
    จังหวะร่างกายพื้นฐาน + ลอนน้ำตาลหลังมื้อ (เช้า/เที่ยง/เย็น/ของว่างก่อนนอน) มื้อเที่ยงทะลุเกณฑ์ 180 */
@@ -614,7 +662,7 @@ const chartDataSets = {
   },
   /* ใบเดี่ยวใช้โทนแอพ (ม่วง-ฟ้า-มินต์) ไล่เฉดให้แยก metric ออก — BP คงแดง/น้ำเงินตามขนบทางการแพทย์ */
   1: { // อัตราเต้นของหัวใจ — สไตล์ chart การแพทย์สากล (เหมือน BP): เส้นทึบสีเดียว + marker ทุกจุดวัด จุดหลุดเกณฑ์เป็นแดงทึบ
-    data: [{ day:'19 มี.ค.', v:82, src: SRC_HOMECARE },{ day:'20 มี.ค.', v:78, src: SRC_MYATLAS },{ day:'21 มี.ค.', v:85, src: SRC_MYATLAS },{ day:'22 มี.ค.', v:88, src: SRC_HOMECARE },{ day:'23 มี.ค.', v:92, src: SRC_MYATLAS },{ day:'24 มี.ค.', v:96, src: SRC_MYATLAS },{ day:'25 มี.ค.', v:103, src: SRC_HOMECARE }],
+    data: [82, 78, 85, 88, 92, 96, 103].map((v, i) => ({ day: WEEK_LABELS[i], v, src: WEEK_SRC(i) })),
     lines: [{ key: 'v', name: 'อัตราเต้นของหัวใจ', color: '#FF383C', color2: '#992224', dash: '', range: [60, 100] }],
     domain: [50, 120], ticks: [60, 80, 100, 120],
     /* แถบช่วงปกติจางๆ ตามขนบ chart คลินิก (reference range) — คำอธิบายอยู่ที่ legend ใต้กราฟ */
@@ -623,17 +671,23 @@ const chartDataSets = {
     dots: true, // จุด marker ทุกครั้งที่วัด — เกินเกณฑ์เป็นจุดแดงทึบ
     h: 140, // อยู่แถวเดียวกับ BP — สูงเท่ากันให้แถวเสมอ
   },
-  2: { // อุณหภูมิ — ล่าสุด 36
-    data: [{ day:'19 มี.ค.', v:36.5 },{ day:'20 มี.ค.', v:36.8 },{ day:'21 มี.ค.', v:36.2 },{ day:'22 มี.ค.', v:36.4 },{ day:'23 มี.ค.', v:36.6 },{ day:'24 มี.ค.', v:36.3 },{ day:'25 มี.ค.', v:36 }],
-    lines: [{ key: 'v', name: 'อุณหภูมิ', color: '#FF383C', color2: '#992224', dash: '', range: [36, 37.5] }], domain: [35, 38],
+  2: { // อุณหภูมิ — ล่าสุด 36 · โทนส้มเดียวกับป๊อปอัพดูเพิ่มเติม + โซนช่วงปกติ
+    data: [36.5, 36.8, 36.2, 36.4, 36.6, 36.3, 36].map((v, i) => ({ day: WEEK_LABELS[i], v, src: WEEK_SRC(i) })),
+    lines: [{ key: 'v', name: 'อุณหภูมิ', color: '#E8802A', color2: '#B45309', dash: '', range: [36, 37.5] }], domain: [35, 38],
+    zones: [{ y1: 36, y2: 37.5, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 36–37.5' }],
+    dots: true,
   },
-  3: { // ออกซิเจน — ล่าสุด 98
-    data: [{ day:'19 มี.ค.', v:97 },{ day:'20 มี.ค.', v:98 },{ day:'21 มี.ค.', v:96 },{ day:'22 มี.ค.', v:97 },{ day:'23 มี.ค.', v:95 },{ day:'24 มี.ค.', v:97 },{ day:'25 มี.ค.', v:98 }],
-    lines: [{ key: 'v', name: 'ออกซิเจน', color: '#FF383C', color2: '#992224', dash: '', range: [95, 100] }], domain: [90, 100],
+  3: { // ออกซิเจน — ล่าสุด 98 · โทนฟ้าเดียวกับป๊อปอัพ + โซน ≥95
+    data: [97, 98, 96, 97, 95, 97, 98].map((v, i) => ({ day: WEEK_LABELS[i], v, src: WEEK_SRC(i) })),
+    lines: [{ key: 'v', name: 'ออกซิเจน', color: '#1398D8', color2: '#0B6E9E', dash: '', range: [95, 100] }], domain: [90, 100],
+    zones: [{ y1: 95, y2: 100, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ ≥ 95' }],
+    dots: true,
   },
-  4: { // น้ำตาล — ล่าสุด 142
-    data: [{ day:'19 มี.ค.', v:118 },{ day:'20 มี.ค.', v:132 },{ day:'21 มี.ค.', v:125 },{ day:'22 มี.ค.', v:128 },{ day:'23 มี.ค.', v:135 },{ day:'24 มี.ค.', v:145 },{ day:'25 มี.ค.', v:142 }],
-    lines: [{ key: 'v', name: 'น้ำตาล', color: '#FF383C', color2: '#992224', dash: '', range: [70, 180] }], domain: [80, 160],
+  4: { // น้ำตาล — ล่าสุด 142 · โทนม่วงเดียวกับป๊อปอัพ + โซน 70–180 (ขยาย domain ให้เห็นเกณฑ์)
+    data: [118, 132, 125, 128, 135, 145, 142].map((v, i) => ({ day: WEEK_LABELS[i], v, src: WEEK_SRC(i) })),
+    lines: [{ key: 'v', name: 'น้ำตาล', color: '#8B5CF6', color2: '#6D28D9', dash: '', range: [70, 180] }], domain: [60, 200], ticks: [60, 100, 140, 180],
+    zones: [{ y1: 70, y2: 180, color: 'rgba(52,199,89,0.06)', edge: '#1E9E4B', legendLabel: 'ช่วงปกติ 70–180' }],
+    dots: true,
   },
   6: { // CGM — เซนเซอร์บันทึกทุก 5 นาที (288 จุด/วัน) ยอดมื้อเที่ยงทะลุเกณฑ์ 180 ล่าสุด 142
     data: cgmData,
@@ -683,38 +737,72 @@ const judgeScreening = (label, value) => {
   return null;
 };
 
-const makeVitals = (bp, hr, temp, spo2, sugar, height, weight, waist) => [
-  { label: 'ความดันโลหิต', value: bp, unit: 'mmHg' },
-  { label: 'อัตราเต้นของหัวใจ', value: `${hr}`, unit: 'bpm' },
-  { label: 'อุณหภูมิ', value: `${temp}`, unit: '°C' },
-  { label: 'ออกซิเจน', value: `${spo2}%`, unit: '' },
-  { label: 'น้ำตาล', value: `${sugar}`, unit: 'mg/dL' },
-  { label: 'ส่วนสูง', value: `${height}`, unit: 'cm' },
-  { label: 'น้ำหนัก', value: `${weight}`, unit: 'kg' },
-  { label: 'รอบเอว', value: `${waist}`, unit: 'inch' },
-];
-
-/* ประวัติ 7 วันล่าสุด (19–25 มี.ค.) — ทุกค่าตรงกับจุดบนกราฟการ์ด vital (BP/อัตราเต้นของหัวใจ/อุณหภูมิ/ออกซิเจน/น้ำตาล)
-   แบ่งกลุ่มตามแหล่งบันทึกเดียวกับ src ของกราฟ: เยี่ยมบ้าน (19, 22, 25) = Atlas HomeCare · วัดเอง = My Atlas
-   ส่วนสูง/น้ำหนักตรงกับการ์ด BMI (175 cm / 60 kg) */
-const vitalHistory = [
-  { source: 'Atlas HomeCare', logo: 'homecare', visits: [
-    { id: '0007', date: '25 มี.ค. 69', time: '10:30 น.', vitals: makeVitals('150/77', 103, 36, 98, 142, 175, 60, 28) },
-    { id: '0004', date: '22 มี.ค. 69', time: '10:00 น.', vitals: makeVitals('138/82', 88, 36.4, 97, 128, 175, 60, 28) },
-    { id: '0001', date: '19 มี.ค. 69', time: '09:30 น.', vitals: makeVitals('132/88', 82, 36.5, 97, 118, 175, 60, 28) },
-  ]},
-  { source: 'My Atlas', logo: 'myatlas', visits: [
-    { id: '0006', date: '24 มี.ค. 69', time: '08:00 น.', vitals: makeVitals('146/80', 96, 36.3, 97, 145, 175, 60, 28) },
-    { id: '0005', date: '23 มี.ค. 69', time: '07:45 น.', vitals: makeVitals('142/86', 92, 36.6, 95, 135, 175, 60, 28) },
-    { id: '0003', date: '21 มี.ค. 69', time: '08:15 น.', vitals: makeVitals('135/90', 85, 36.2, 96, 125, 175, 60, 28) },
-    { id: '0002', date: '20 มี.ค. 69', time: '07:30 น.', vitals: makeVitals('128/85', 78, 36.8, 98, 132, 175, 60, 28) },
-  ]},
-];
+/* ประวัติการวัดรายเดือน — ไทม์ไลน์เรียงตามวัน/เวลา สร้างจากเครื่องจำลองชุดเดียวกับกราฟ (ค่าตรงกันเสมอ)
+   · เยี่ยมบ้าน (Atlas HomeCare): เจ้าหน้าที่วัดครบทุกค่าแล้วกดบันทึกครั้งเดียว — 1 รายการ/ครั้ง ระบุอุปกรณ์รายค่า
+   · วัดเอง (My Atlas): ข้อมูลไหลเข้าแยกทีละค่า ไม่พร้อมกัน — นาฬิกา/เซนเซอร์อัตโนมัติ + กรอกเองบางรายการ
+     บางวันบางค่าวัดมากกว่า 1 ครั้ง (เช่น ความดันเช้า-เย็น) */
+const histD = k => fmtDMY(addDays(DETAIL_TODAY, -k));
+const HV_STAFF = 'พว.สุภาพร ทดสอบ57';
+const buildMonthEntries = (y, m) => {
+  const isCur = y === DETAIL_TODAY.getFullYear() && m === DETAIL_TODAY.getMonth();
+  const nDays = isCur ? DETAIL_TODAY.getDate() : new Date(y, m + 1, 0).getDate();
+  const spec = detailSpec('เดือน', { month: { y, m } });
+  const [bp, hr, tp, ox, sg, cg] = ['ความดันโลหิต', 'อัตราเต้นของหัวใจ', 'อุณหภูมิ', 'ออกซิเจน', 'น้ำตาล', 'CGM']
+    .map(k => genDetailData(DETAIL_CFG[k], spec));
+  const rnd = (d, s) => dNoise((y * 372 + m * 31 + d) * 7.7 + s);
+  const mm = v => String(Math.abs(Math.round(v)) % 60).padStart(2, '0');
+  const out = [];
+  for (let d = nDays; d >= 1; d--) {
+    const i = d - 1;
+    const dateLabel = fmtDMY(new Date(y, m, d));
+    const isToday = isCur && d === nDays;
+    const isHome = isToday || (d - 1) % 7 === 0;
+    const day = [];
+    const push = (time, e) => day.push({ id: `${y}-${m}-${d}-${e.metric || 'home'}-${time}`, dateLabel, isToday, time, ...e });
+    /* ── My Atlas: แยกรายค่า ── */
+    push('23:55', { kind: 'self', metric: 'CGM', value: `${cg[i].v}`, unit: 'mg/dl', dev: 'เซนเซอร์ CGM Anytime', auto: true });
+    push(`20:${mm(rnd(d, 1) * 30 + 15)}`, { kind: 'self', metric: 'อัตราเต้นของหัวใจ', value: `${hr[i].v}`, unit: 'bpm', dev: 'นาฬิกา Anytime Watch', auto: true });
+    if (rnd(d, 2) > 0.25) push(`19:${mm(rnd(d, 3) * 30 + 10)}`, { kind: 'self', metric: 'ความดันโลหิต', value: `${bp[i].systolic + Math.round(rnd(d, 4) * 4)}/${bp[i].diastolic + Math.round(rnd(d, 5) * 3)}`, unit: 'mmHg', dev: 'เครื่องวัดความดันที่บ้าน', auto: false, again: true });
+    if (rnd(d, 6) > 0.55) push(`18:${mm(rnd(d, 9) * 30 + 20)}`, { kind: 'self', metric: 'อุณหภูมิ', value: `${tp[i].v}`, unit: '°C', dev: 'เครื่องวัดไข้', auto: false });
+    if (rnd(d, 7) > 0) push(`12:${mm(rnd(d, 8) * 30 + 5)}`, { kind: 'self', metric: 'ออกซิเจน', value: `${ox[i].v}`, unit: '%', dev: 'นาฬิกา Anytime Watch', auto: true });
+    push(`07:${mm(rnd(d, 12) * 30 + 10)}`, { kind: 'self', metric: 'ความดันโลหิต', value: `${bp[i].systolic}/${bp[i].diastolic}`, unit: 'mmHg', dev: 'เครื่องวัดความดันที่บ้าน', auto: false });
+    if (rnd(d, 10) > -0.2) push(`06:${mm(rnd(d, 11) * 30 + 40)}`, { kind: 'self', metric: 'น้ำตาล', value: `${sg[i].v}`, unit: 'mg/dl', dev: 'เครื่องเจาะ GLUCO', auto: false });
+    /* ── เยี่ยมบ้าน: บันทึกครบชุดครั้งเดียว ── */
+    if (isHome) push(isToday ? '10:30' : '10:00', {
+      kind: 'home', staff: HV_STAFF,
+      vitals: [
+        { label: 'ความดันโลหิต', value: `${bp[i].systolic}/${bp[i].diastolic}`, unit: 'mmHg', dev: 'เครื่องวัดความดัน Yuwell (IoT)' },
+        { label: 'อัตราเต้นของหัวใจ', value: `${hr[i].v}`, unit: 'bpm', dev: 'เครื่องวัดปลายนิ้ว (IoT)' },
+        { label: 'อุณหภูมิ', value: `${tp[i].v}`, unit: '°C', dev: 'เครื่องวัดไข้อินฟราเรด (IoT)' },
+        { label: 'ออกซิเจน', value: `${ox[i].v}`, unit: '%', dev: 'เครื่องวัดปลายนิ้ว (IoT)' },
+        { label: 'น้ำตาล', value: `${sg[i].v}`, unit: 'mg/dl', dev: 'เครื่องเจาะ GLUCO (IoT)' },
+        { label: 'ส่วนสูง', value: '175', unit: 'cm', dev: 'กรอกเอง' },
+        { label: 'น้ำหนัก', value: '60', unit: 'kg', dev: 'กรอกเอง' },
+        { label: 'รอบเอว', value: '28', unit: 'inch', dev: 'กรอกเอง' },
+      ],
+    });
+    day.sort((a, b) => b.time.localeCompare(a.time));
+    out.push(...day);
+  }
+  return out;
+};
 
 /* ── Stat card configs ── */
 import imgRobotBp from '../assets/images/vital-robot-bp.png';
 import imgRobotCgm from '../assets/images/vital-robot-cgm.png';
 import imgBmiScale from '../assets/images/vital-bmi-scale.png';
+import imgVitalMannequin from '../assets/images/vital-mannequin.png';
+import imgVitalMannBp from '../assets/images/vital-mann-bp.png';
+import imgVitalMannHeart from '../assets/images/vital-mann-heart.png';
+import imgVitalMannWatch from '../assets/images/vital-mann-watch.png';
+import imgVitalMannTemp from '../assets/images/vital-mann-temp.png';
+import imgVitalMannSugar from '../assets/images/vital-mann-sugar.png';
+import imgMiniBp from '../assets/images/vital-mini-bp.png';
+import imgMiniHr from '../assets/images/vital-mini-hr.png';
+import imgMiniTemp from '../assets/images/vital-mini-temp.png';
+import imgMiniSpo2 from '../assets/images/vital-mini-spo2.png';
+import imgMiniSugar from '../assets/images/vital-mini-sugar.png';
+import imgMiniCgm from '../assets/images/vital-mini-cgm.png';
 import ppInfoCircle from '../assets/icons/pp-info-circle.svg';
 import ppRowBp from '../assets/icons/pp-row-bp.svg';
 import ppRowEcg from '../assets/icons/pp-row-ecg.svg';
@@ -727,7 +815,6 @@ import ppRowWaist from '../assets/icons/pp-row-waist.svg';
 import ppHeaderIcon from '../assets/icons/pp-header-icon.svg';
 import ppStethoscope from '../assets/icons/pp-stethoscope.svg';
 import ppTextSearch from '../assets/icons/pp-text-search.svg';
-import ppChevronFwdSm from '../assets/icons/pp-chevron-forward-sm.svg';
 import ppCheckmarkCircle from '../assets/icons/pp-checkmark-circle.svg';
 import ppEcgText from '../assets/icons/pp-ecg-text.svg';
 import ppBoltHeart from '../assets/icons/pp-bolt-heart.svg';
@@ -761,17 +848,49 @@ import imgAssessHero3d from '../assets/images/assess-hero-3d.png';
    แถว 3 = BMI(1)+CGM(2) — col/row คุมตำแหน่ง ใบที่ไม่ระบุปล่อยไหลตามลำดับ */
 const statCards = [
   /* artCrop: หน้าต่างครอปมุมขวาล่าง (w,h) + ขนาด/ตำแหน่งภาพข้างใน (imgW,x,y) — จูนให้เห็นแขนใส่ cuff กับจอเครื่องวัด */
-  { label: 'ความดันโลหิต', value: '150/77', unit: 'mmHg', status: 'warning', badge: 'สูงเล็กน้อย',  updated: '25 มี.ค 69 · 10:30', delta: '▲4 / ▼3', chart: 0, art: imgRobotBp, artCrop: { w: 163, h: 249, imgW: 303, x: -24, y: 25 }, col: 'span 2' },
-  { label: 'อัตราเต้นของหัวใจ',        value: '103',    unit: 'bpm',   status: 'warning', badge: 'หัวใจเต้นเร็ว', updated: '25 มี.ค 69 · 10:30', delta: '▲7', chart: 1 },
-  { label: 'อุณหภูมิ',      value: '36',     unit: 'C',     status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 10:35', delta: '▼0.3', chart: null },
-  { label: 'ออกซิเจน',     value: '98',     unit: '%',     status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 10:35', delta: '▲1', chart: null },
-  { label: 'น้ำตาล',       value: '142',    unit: 'mg/dl', status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 07:00', delta: '▼3', chart: null },
-  { label: 'CGM',          value: '142',    unit: 'mg/dl', status: 'normal',  badge: 'ปกติ',        updated: '25 มี.ค 69 · 23:55', chart: 6, art: imgRobotCgm, artCrop: { w: 108, h: 219, imgW: 275, x: -62, y: -4 }, col: '2 / 4', row: 3 },
+  { label: 'ความดันโลหิต', value: '150/77', unit: 'mmHg', status: 'warning', badge: 'สูงเล็กน้อย',  updated: `${histD(0)} · 10:30`, delta: '▲4 / ▼3', chart: 0, art: imgRobotBp, artCrop: { w: 163, h: 249, imgW: 303, x: -24, y: 25 }, col: 'span 2' },
+  { label: 'อัตราเต้นของหัวใจ',        value: '103',    unit: 'bpm',   status: 'warning', badge: 'หัวใจเต้นเร็ว', updated: `${histD(0)} · 10:30`, delta: '▲7', chart: 1 },
+  { label: 'อุณหภูมิ',      value: '36',     unit: 'C',     status: 'normal',  badge: 'ปกติ',        updated: `${histD(0)} · 10:35`, delta: '▼0.3', chart: 2 },
+  { label: 'ออกซิเจน',     value: '98',     unit: '%',     status: 'normal',  badge: 'ปกติ',        updated: `${histD(0)} · 10:35`, delta: '▲1', chart: 3 },
+  { label: 'น้ำตาล',       value: '142',    unit: 'mg/dl', status: 'normal',  badge: 'ปกติ',        updated: `${histD(0)} · 07:00`, delta: '▼3', chart: 4 },
+  { label: 'CGM',          value: '142',    unit: 'mg/dl', status: 'normal',  badge: 'ปกติ',        updated: `${histD(0)} · 23:55`, chart: 6, art: imgRobotCgm, artCrop: { w: 108, h: 219, imgW: 275, x: -62, y: -4 }, col: '2 / 4', row: 3 },
 ];
 
 /* กรอบและเงาเป็นกลางเหมือนกันทุกใบ (ตามที่ตกลงไว้ ไม่ใช้เงาสีของ Figma) */
 const CARD_BORDER = '1px solid rgba(30,27,57,0.07)';
 const CARD_SHADOW = '0 2px 10px rgba(30,27,57,0.05)';
+
+/* ภาพอุปกรณ์ประจำ vital มุมขวาล่างมินิการ์ด (นาฬิกาหน้าจอค่านั้นๆ / กล่องเซนเซอร์ CGM) — แสดงแบบจางๆ
+   นาฬิกาทุกใบใช้ค่าจูนโดยผู้ใช้ชุดเดียวกัน · CGM ใช้ค่าเฉพาะ */
+const MINI_ART = [
+  { img: imgMiniBp, w: 84, r: -28, b: -18, op: 0.38, fd: 62 },    // ความดัน — นาฬิกาหน้าจอ 120/80
+  { img: imgMiniHr, w: 84, r: -28, b: -18, op: 0.38, fd: 62 },    // การเต้นหัวใจ — นาฬิกาหน้าจอ BPM
+  { img: imgMiniTemp, w: 84, r: -28, b: -18, op: 0.38, fd: 62 },  // อุณหภูมิ — นาฬิกาหน้าจอ °C
+  { img: imgMiniSpo2, w: 84, r: -28, b: -18, op: 0.38, fd: 62 },  // ออกซิเจน — นาฬิกาหน้าจอ SpO2
+  { img: imgMiniSugar, w: 84, r: -28, b: -18, op: 0.38, fd: 62 }, // น้ำตาล — นาฬิกาหน้าจอ มก./ดล.
+  { img: imgMiniCgm, w: 92, b: -5 },                              // CGM — กล่องเซนเซอร์ Anytime
+];
+
+/* หุ่นจำลองข้างกราฟใหญ่ เปลี่ยนตาม vital ที่เลือก — เซ็ตทางการจาก Figma (โหนดชื่อ BP/HR/SO2/temperature/Blood glucose/CGM)
+   ค่าตำแหน่ง/ขนาดต่อแท็บจูนผ่านแผง ⚙ แล้วฝังที่นี่ */
+const VITAL_ART = [
+  { img: imgVitalMannBp, cw: 259, ch: 290, w: 364, ix: 0, iy: -56, x: 0, y: -20, opacity: 1, fade: 45 }, // ความดัน — ครอปซูมช่วงตัว+เครื่องวัด (ค่าจูนโดยผู้ใช้)
+  { img: imgVitalMannHeart, cw: 259, ch: 290, w: 390, ix: -66, iy: -142, x: 0, y: -20, opacity: 1, fade: 50 }, // การเต้นหัวใจ — ครอปซูมช่วงบน โฟกัสนาฬิกาที่ยกดู
+  { img: imgVitalMannTemp, w: 259, x: -7, y: -24, opacity: 1, fade: 58 },     // อุณหภูมิ — ยกเครื่องวัดไข้จ่อหน้าผากตัวเอง
+  { img: imgVitalMannWatch, w: 259, x: -7, y: -24, opacity: 1, fade: 58 },    // ออกซิเจน — นาฬิกาสวมใส่ที่ข้อมือ
+  { img: imgVitalMannSugar, w: 259, x: -7, y: -24, opacity: 1, fade: 58 },    // น้ำตาล — ถือเครื่องเจาะน้ำตาล
+  { img: imgVitalMannequin, w: 259, x: -7, y: -24, opacity: 1, fade: 58 },    // CGM — เซนเซอร์แปะต้นแขน
+];
+
+/* เติมค่า default ให้ครบทุก field — ค่าจริงจูนผ่านแผงตั้งค่า (ถอดออกแล้ว) และฝังไว้ข้างบน */
+const VITAL_ART_CFG = VITAL_ART.map(a => ({
+  cw: a.cw ?? a.w, ch: a.ch ?? Math.round(a.w * 1.12),
+  w: a.w, ix: a.ix ?? 0, iy: a.iy ?? 0,
+  x: a.x ?? 14, y: a.y ?? -20, opacity: a.opacity ?? 1, fade: a.fade ?? 68,
+}));
+const MINI_ART_CFG = MINI_ART.map(m => ({
+  w: m.w, r: m.r ?? -8, b: m.b ?? -12, op: m.op ?? 0.38, fd: m.fd ?? 62,
+}));
 
 /* สถานะกำหนด: สีไม่ทาทั้งใบ — แต้มแค่ 2 จุดคือมุมบนซ้าย (surface) กับหลังภาพ 3D (imgGlow)
    ที่เหลือเป็นพื้นขาว ค่าปกติขาวล้วน มีสีแค่ป้ายเขียว */
@@ -1037,8 +1156,24 @@ export default function PatientProfile({ patient, onClose }) {
   const [activeTab, setActiveTab] = useState(0);
   const [historyPage, setHistoryPage] = useState(1);
   const [expandedVisit, setExpandedVisit] = useState('0-0'); // default first visit open
+  /* ตัวกรองเดือนของตารางประวัติการวัด — ประวัติสร้างจาก generator เดียวกับกราฟ */
+  const [histMonth, setHistMonth] = useState({ y: DETAIL_TODAY.getFullYear(), m: DETAIL_TODAY.getMonth() });
+  const [histPickerOpen, setHistPickerOpen] = useState(false);
+  const [histCalYear, setHistCalYear] = useState(DETAIL_TODAY.getFullYear());
+  const histEntries = buildMonthEntries(histMonth.y, histMonth.m);
   const [bmiHover, setBmiHover] = useState(false);
   const [metricDetail, setMetricDetail] = useState(null);   // ป๊อปอัพดูเพิ่มเติมของ vital (สัปดาห์/เดือน/ปี)
+  const [selVital, setSelVital] = useState(0);              // vital ที่เลือกดูกราฟใหญ่ (แท็บตามแบบ 573:6974)
+  const [selPeriod, setSelPeriod] = useState('สัปดาห์');    // ช่วงเวลาของกราฟใหญ่ (วัน/สัปดาห์/เดือน/ปี)
+  const [selPt, setSelPt] = useState(null);                 // จุดที่กดบนกราฟใหญ่ — null = จุดล่าสุด
+  const [haloMouse, setHaloMouse] = useState(null);         // ตำแหน่งเมาส์บนพื้นหลังจุด (interactive)
+  /* ตัวเลือกช่วงเอง: วัน/สัปดาห์เลือกวัน · เดือนเลือกเดือน · ปีเลือกปี (3 ปีย้อนหลัง) */
+  const [selDate, setSelDate] = useState(DETAIL_TODAY);
+  const [selMonth, setSelMonth] = useState({ y: DETAIL_TODAY.getFullYear(), m: DETAIL_TODAY.getMonth() });
+  const [selYear, setSelYear] = useState(DETAIL_TODAY.getFullYear());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [calView, setCalView] = useState({ y: DETAIL_TODAY.getFullYear(), m: DETAIL_TODAY.getMonth() }); // เดือนที่ปฏิทินแสดงอยู่
+  const [calYear, setCalYear] = useState(DETAIL_TODAY.getFullYear());                                    // ปีที่กริดเดือนแสดงอยู่
   const [selVisit, setSelVisit] = useState(homeVisitData[0].visits[0]);   // รายการเยี่ยมที่เลือกในหน้า 2 คอลัมน์
   const [selAssess, setSelAssess] = useState(assessmentData[0].items[0]); // รายการประเมินที่เลือกในหน้า 2 คอลัมน์
   const [rxDetail, setRxDetail] = useState(null);
@@ -1058,7 +1193,7 @@ export default function PatientProfile({ patient, onClose }) {
   ];
 
   /* ── Pagination ── */
-  const totalItems = 25;
+  const totalItems = histEntries.length;
   const perPage = 10;
   const totalPages = Math.ceil(totalItems / perPage);
   const startItem = (historyPage - 1) * perPage + 1;
@@ -1178,20 +1313,30 @@ export default function PatientProfile({ patient, onClose }) {
         {/* ════ MAIN CONTENT ════ */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          {/* ── Tabs row (fixed) ── */}
-          <div style={{ background: 'rgba(255,255,255,0.5)', borderRadius: 100, padding: 4, display: 'inline-flex', gap: 4, alignSelf: 'flex-start' }}>
+          {/* ── Tabs row (fixed) — สไตล์เดียวกับแท็บ vital: ปุ่มกว้างเท่ากัน + ไฮไลต์ gradient เลื่อนตาม ── */}
+          <div style={{
+            position: 'relative', display: 'inline-flex', padding: 4, borderRadius: 100, alignSelf: 'flex-start',
+            background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.7)',
+            boxShadow: 'inset 0 1px 3px rgba(30,27,57,0.05)',
+          }}>
+            <span aria-hidden style={{
+              position: 'absolute', top: 4, left: 4 + activeTab * 158, width: 158, height: 32,
+              borderRadius: 100, background: 'linear-gradient(160deg, #3FA9FF 0%, #0088FF 55%, #0070E0 100%)',
+              boxShadow: '0 4px 12px rgba(0,136,255,0.35), inset 0 1px 0 rgba(255,255,255,0.3)',
+              transition: 'left 0.3s cubic-bezier(0.34, 1.25, 0.64, 1)',
+            }} />
             {tabLabels.map((t, i) => (
               <button
                 key={i}
-                className="hover-btn"
                 onClick={() => setActiveTab(i)}
                 style={{
-                  padding: '8px 18px', borderRadius: 100, border: 'none', cursor: 'pointer',
-                  fontSize: 12, fontWeight: activeTab === i ? 600 : 400, fontFamily: font,
-                  background: activeTab === i ? '#0088FF' : 'transparent',
-                  color: activeTab === i ? '#fff' : BLACK,
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap',
+                  position: 'relative', zIndex: 1, width: 158, height: 32,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: 100, border: 'none', cursor: 'pointer', background: 'transparent',
+                  fontSize: 12, fontFamily: font, whiteSpace: 'nowrap',
+                  color: activeTab === i ? '#fff' : '#615E83',
+                  fontWeight: activeTab === i ? 600 : 500,
+                  transition: 'color 0.25s ease',
                 }}
               >
                 {t}
@@ -1205,247 +1350,82 @@ export default function PatientProfile({ patient, onClose }) {
           {activeTab === 0 && (
             <div className="anim-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-              {/* ── Vital cards: KPI header + embedded chart (Figma 494:2233), 3-col grid ── */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              {/* ── จัดวางตาม Figma 573:6974 — ซ้าย: มินิการ์ด 6 ใบ (3×2) กดเลือกดูกราฟใหญ่ · ขวา: BMI ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, alignItems: 'stretch' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: 16 }}>
                 {statCards.map((s, i) => {
                   const st = VITAL_STATUS[s.status] || VITAL_STATUS.normal;
-                  const ds = s.chart != null ? chartDataSets[s.chart] : null;
+                  /* สีประจำ vital (จากเส้นกราฟ) — ใช้ทาเส้นตารางหลังภาพ */
+                  const tint = chartDataSets[s.chart]?.lines[0]?.color || '#6658E1';
                   return (
-                  <div key={i} className={`hover-card anim-slide-up delay-${i + 1}`} style={{
-                    background: st.surface, border: CARD_BORDER, borderRadius: 24,
-                    position: 'relative', overflow: 'hidden', minWidth: 0,
-                    display: 'flex', flexDirection: 'column',
-                    boxShadow: CARD_SHADOW,
-                    gridColumn: s.col, gridRow: s.row,
+                  <div key={i} className={`hover-card pp-vital-mini anim-slide-up delay-${i + 1}`} onClick={() => { setSelVital(i); setSelPt(null); }} style={{
+                    background: st.surface, borderRadius: 24,
+                    border: selVital === i ? '1px solid rgba(0,136,255,0.45)' : CARD_BORDER,
+                    boxShadow: selVital === i ? '0 2px 12px rgba(0,136,255,0.12)' : CARD_SHADOW,
+                    position: 'relative', minWidth: 0, cursor: 'pointer',
+                    overflow: 'hidden', isolation: 'isolate',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 7,
+                    padding: '14px 16px', transition: 'border 0.15s ease, box-shadow 0.15s ease',
                   }}>
-                    {/* ── Header (Figma 504:3142): ชื่อ + ดูเพิ่มเติม / ค่า / ป้าย / วันอัพเดท — legend ชิดขวาล่างเฉพาะกราฟหลายเส้น ── */}
-                    <div style={{ padding: ds ? '16px 16px 12px' : 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                          {VITAL_ROW_ICONS[s.label] && (
-                            <img src={VITAL_ROW_ICONS[s.label]} alt="" style={{
-                              width: 14, height: 14, flexShrink: 0,
-                              filter: 'grayscale(1) brightness(0.72)',
-                            }} />
-                          )}
-                          <p style={{ fontSize: 12, fontWeight: 600, color: '#1E1B39', margin: 0, lineHeight: '16px', whiteSpace: 'nowrap' }}>{s.label}</p>
-                        </div>
-                        {/* ปุ่มดูเพิ่มเติม — เปิดป๊อปอัพดูย้อนหลัง สัปดาห์/เดือน/ปี */}
-                        <button className="hover-btn" onClick={() => setMetricDetail(s)} style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0,
-                          height: 28, padding: '0 12px', borderRadius: 100,
-                          background: 'rgba(142,142,147,0.1)', border: '1px solid rgba(255,255,255,0.9)',
-                          cursor: 'pointer', fontFamily: font, fontSize: 11, fontWeight: 500,
-                          color: '#1E1B39', lineHeight: '16px',
-                        }}>
-                          ดูเพิ่มเติม
-                          {/* glyph ในไฟล์ชี้ซ้าย (chevron.backward) — หมุน 180° ให้ชี้ขวาตามดีไซน์ */}
-                          <img src={ppChevronFwdSm} alt="" style={{ width: 6, height: 9, transform: 'rotate(180deg)' }} />
-                        </button>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start', minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ fontSize: 20, fontWeight: 700, lineHeight: '20px', color: st.value }}>{s.value}</span>
-                            <span style={{ fontSize: 12, color: st.unit, lineHeight: 'normal' }}>{s.unit}</span>
-                            {s.delta && <span style={{
-                              fontSize: 10, fontWeight: 600, color: '#615E83',
-                              background: 'rgba(30,27,57,0.05)', padding: '2px 8px', borderRadius: 100,
-                              whiteSpace: 'nowrap',
-                            }}>{s.delta} จากครั้งก่อน</span>}
-                          </div>
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100,
-                            background: st.badgeBg, color: st.badgeFg, lineHeight: '14px',
-                          }}>
-                            {/* สัญลักษณ์กำกับ ไม่สื่อสถานะด้วยสีอย่างเดียว — ปกติ = info, ผิดปกติ = ! */}
-                            {st.mark === 'info'
-                              ? <img src={ppInfoCircle} alt="" style={{ width: 8, height: 8 }} />
-                              : st.mark && <span style={{
-                                  width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
-                                  background: '#fff', color: st.markFg,
-                                  fontSize: 8, fontWeight: 800, lineHeight: '10px', textAlign: 'center',
-                                }}>{st.mark}</span>}
-                            {s.badge}
-                          </span>
-                          <p style={{ fontSize: 11, color: '#8E8E93', margin: 0, lineHeight: '16px' }}>อัพเดท : {s.updated}</p>
-                          {ds?.showTir && (() => {
-                            const l0 = ds.lines[0];
-                            const pct = Math.round(ds.data.filter(d => d[l0.key] >= l0.range[0] && d[l0.key] <= l0.range[1]).length / ds.data.length * 100);
-                            return <p style={{ fontSize: 11, fontWeight: 600, color: '#0F7B37', margin: 0, lineHeight: '16px' }}>อยู่ในเกณฑ์ {pct}% ของ 24 ชม.</p>;
-                          })()}
-                        </div>
-                      </div>
+                    {/* เส้นตารางสีประจำ vital จางมากๆ หลังภาพอุปกรณ์ (zIndex -2 = ชั้นหลังสุด) — เฟดออกจากมุมขวาล่าง */}
+                    <span aria-hidden style={{
+                      position: 'absolute', right: -4, bottom: -4, width: 150, height: 105, zIndex: -2,
+                      backgroundImage: `linear-gradient(${tint}0A 1px, transparent 1px), linear-gradient(90deg, ${tint}0A 1px, transparent 1px)`,
+                      backgroundSize: '14px 14px',
+                      WebkitMaskImage: 'radial-gradient(ellipse at 88% 88%, black 8%, transparent 64%)',
+                      maskImage: 'radial-gradient(ellipse at 88% 88%, black 8%, transparent 64%)',
+                    }} />
+                    {/* ภาพอุปกรณ์วัดมุมขวาล่าง — จางๆ เฟดเข้าหากลางการ์ด อยู่ใต้ตัวหนังสือ (zIndex -1) */}
+                    {MINI_ART[i] && (() => {
+                      const mc = MINI_ART_CFG[i];
+                      return (
+                        <img aria-hidden src={MINI_ART[i].img} alt="" className="pp-mini-art" style={{
+                          position: 'absolute', right: mc.r, bottom: mc.b,
+                          width: mc.w, zIndex: -1, pointerEvents: 'none',
+                          /* ใบที่เลือกอยู่ภาพชัดกว่าใบอื่น · hover ชัดสุด+เด้ง (transition คุมใน index.css) */
+                          opacity: selVital === i ? Math.min(mc.op + 0.4, 0.92) : mc.op,
+                          WebkitMaskImage: `linear-gradient(135deg, transparent 8%, black ${mc.fd}%)`,
+                          maskImage: `linear-gradient(135deg, transparent 8%, black ${mc.fd}%)`,
+                        }} />
+                      );
+                    })()}
+                    {/* มินิการ์ดตามแบบ: ชื่อ / ค่า+หน่วย / ป้ายสถานะ / วันที่บันทึก */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                      {VITAL_ROW_ICONS[s.label] && (
+                        <img src={VITAL_ROW_ICONS[s.label]} alt="" style={{
+                          width: 14, height: 14, flexShrink: 0,
+                          filter: 'grayscale(1) brightness(0.72)',
+                        }} />
+                      )}
+                      <p style={{ fontSize: 12, fontWeight: 600, color: '#1E1B39', margin: 0, lineHeight: '16px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</p>
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 20, fontWeight: 700, lineHeight: '22px', color: st.value }}>{s.value}</span>
+                      <span style={{ fontSize: 12, color: st.unit, lineHeight: 'normal' }}>{s.unit}</span>
+                    </div>
+                    <span style={{
+                      alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 4,
+                      fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100,
+                      background: st.badgeBg, color: st.badgeFg, lineHeight: '14px',
+                    }}>
+                      {/* สัญลักษณ์กำกับ ไม่สื่อสถานะด้วยสีอย่างเดียว — ปกติ = info, ผิดปกติ = ! */}
+                      {st.mark === 'info'
+                        ? <img src={ppInfoCircle} alt="" style={{ width: 8, height: 8 }} />
+                        : st.mark && <span style={{
+                            width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                            background: '#fff', color: st.markFg,
+                            fontSize: 8, fontWeight: 800, lineHeight: '10px', textAlign: 'center',
+                          }}>{st.mark}</span>}
+                      {s.badge}
+                    </span>
+                    <p style={{ fontSize: 10, color: 'rgba(0,0,0,0.5)', margin: 0, lineHeight: '14px' }}>อัพเดท : {s.updated}</p>
 
-                    {/* ── Chart บนการ์ดโดยตรง (ดีไซน์ใหม่ไม่มีแผงซ้อน) — เว้นขวาให้ภาพหุ่น 3D ถ้ามี ── */}
-                    {ds && (
-                      <div style={{ padding: '4px 16px 16px', position: 'relative' }}>
-                        <div style={{ marginRight: s.artCrop ? s.artCrop.w + 8 : s.art ? 150 : 0 }}>
-                          <ResponsiveContainer className="anim-chart-fade" width="100%" height={ds.h || 100}>
-                            <ComposedChart data={ds.data} margin={{ top: 6, right: 18, left: 2, bottom: 4 }}>
-                              <CartesianGrid stroke="rgba(30,27,57,0.06)" vertical={ds.data.length <= 40} />
-                              <XAxis dataKey="day" interval={ds.xTicks ? 0 : (ds.xInterval ?? 0)} ticks={ds.xTicks} tickFormatter={d => (d === '23:55' ? '24:00' : d.split(' ')[0])} tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} axisLine={false} tickLine={false} tickMargin={12} />
-                              <YAxis width={26} tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} axisLine={false} tickLine={false} domain={ds.domain} ticks={ds.ticks} tickCount={3} />
-                              <Tooltip content={<Tip unit={s.unit} source={ds.source} ranges={Object.fromEntries(ds.lines.filter(l => l.range).map(l => [l.key, l.range]))} />} cursor={{ stroke: 'rgba(30,27,57,0.15)', strokeDasharray: '3 3' }} />
-                              {/* โซนช่วงค่าผิดปกติ — แถบสีจางพาดเต็มกว้าง มองแวบเดียวรู้ว่าเส้นเข้าโซนวันไหน */}
-                              {(ds.zones || []).map((z, zi) => (
-                                <ReferenceArea key={zi} y1={z.y1} y2={z.y2} fill={z.color} stroke="none"
-                                  label={z.label ? { value: z.label, position: 'insideTopLeft', fill: z.edge, fontSize: 9, fontFamily: font, opacity: 0.85, dx: 2, dy: 2 } : undefined} />
-                              ))}
-                              {/* กราฟจุดถี่ (CGM): วาดเส้นตั้งของกริดเองตาม xTicks — ปล่อยให้ CartesianGrid ทำจะได้ 288 เส้น */}
-                              {ds.data.length > 40 && (ds.xTicks || []).map(t => (
-                                <ReferenceLine key={`vgrid-${t}`} x={t} stroke="rgba(30,27,57,0.06)" strokeWidth={1} />
-                              ))}
-                              {/* เส้นเกณฑ์เดี่ยว (กรณีเกณฑ์ไม่ติดขอบ domain เช่น DIA 90) */}
-                              {(ds.refs || []).map(r => (
-                                <ReferenceLine key={r.y} y={r.y} stroke={r.color} strokeOpacity={0.4} strokeDasharray="4 4" />
-                              ))}
-                              {/* splitColor: ไล่สีเส้นตามค่า — เหนือเกณฑ์สูงเป็นแดง / ต่ำกว่าเกณฑ์ล่างเป็นส้ม
-                                  (gradient แนวตั้งอิง bbox ของเส้น offset คิดจาก min-max ของข้อมูลจริง) */}
-                              {(() => {
-                                if (!ds.splitColor) return null;
-                                const sc = ds.splitColor;
-                                const vals = ds.data.map(d => d[ds.lines[0].key]);
-                                const mx = Math.max(...vals), mn = Math.min(...vals);
-                                if (mx <= mn) return null;
-                                const clamp = v => Math.max(0, Math.min(1, v));
-                                const offHigh = sc.high != null ? clamp((mx - sc.high) / (mx - mn)) : 0;
-                                const offLow = sc.low != null ? clamp((mx - sc.low) / (mx - mn)) : 1;
-                                const hasHigh = sc.high != null && mx > sc.high;
-                                const hasLow = sc.low != null && mn < sc.low;
-                                if (!hasHigh && !hasLow) return null;
-                                const stops = [];
-                                if (hasHigh) {
-                                  stops.push([0, sc.above], [offHigh, sc.above], [Math.min(1, offHigh + 0.04), ds.lines[0].color]);
-                                } else stops.push([0, ds.lines[0].color]);
-                                if (hasLow) {
-                                  stops.push([Math.max(0, offLow - 0.04), ds.lines[0].color], [offLow, sc.below], [1, sc.below]);
-                                } else stops.push([1, ds.lines[0].color]);
-                                return (
-                                  <defs>
-                                    <linearGradient id={`split-${i}`} x1="0" y1="0" x2="0" y2="1">
-                                      {stops.map(([o, c], si) => <stop key={si} offset={o} stopColor={c} />)}
-                                    </linearGradient>
-                                  </defs>
-                                );
-                              })()}
-                              {/* เงาเรืองสีใต้เส้น (ต่อเส้น) + พื้นไล่เฉดสองจังหวะ — ให้เส้นลอยมีมิติ */}
-                              <defs>
-                                {ds.lines.map(l => (
-                                  <filter key={l.key} id={`glow-${i}-${l.key}`} x="-50%" y="-50%" width="200%" height="200%">
-                                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor={l.color} floodOpacity="0.15" />
-                                  </filter>
-                                ))}
-                                {ds.lines.length === 1 && (
-                                  <linearGradient id={`fill-${i}`} x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor={ds.lines[0].color} stopOpacity={0.12} />
-                                    <stop offset="55%" stopColor={ds.lines[0].color} stopOpacity={0.04} />
-                                    <stop offset="100%" stopColor={ds.lines[0].color} stopOpacity={0} />
-                                  </linearGradient>
-                                )}
-                              </defs>
-                              {/* พื้นไล่เฉดเฉพาะกราฟเส้นเดี่ยว (สองเส้นซ้อนกันจะขุ่น) */}
-                              {ds.lines.length === 1 && (
-                                <Area type={ds.curve || 'monotone'} dataKey={ds.lines[0].key}
-                                  fill={`url(#fill-${i})`} stroke="none" tooltipType="none" legendType="none"
-                                  animationDuration={1000} />
-                              )}
-                              {/* ds.dots (BP): สไตล์ chart แพทย์สากล เส้นทึบ + marker ทุกจุดวัด — จุดในช่วงผิดปกติเป็นแดงทึบ */}
-                              {ds.lines.map(l => (
-                                <Line key={l.key} type={ds.curve || 'monotone'} dataKey={l.key} name={l.name}
-                                  stroke={ds.splitColor && (
-                                    (ds.splitColor.high != null && Math.max(...ds.data.map(d => d[l.key])) > ds.splitColor.high) ||
-                                    (ds.splitColor.low != null && Math.min(...ds.data.map(d => d[l.key])) < ds.splitColor.low)
-                                  ) ? `url(#split-${i})` : l.color}
-                                  strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
-                                  filter={`url(#glow-${i}-${l.key})`}
-                                  dot={ds.dots ? ({ cx, cy, value, index }) => {
-                                    const out = l.range && (value < l.range[0] || value > l.range[1]);
-                                    return out
-                                      ? <circle key={index} cx={cx} cy={cy} r={4.5} fill="#FF383C" stroke="white" strokeWidth={2} />
-                                      : <circle key={index} cx={cx} cy={cy} r={4} fill={l.color} stroke="white" strokeWidth={2} />;
-                                  } : ({ cx, cy, index }) => (
-                                    /* จุดปลายเส้น = ค่าล่าสุด มีรัศมีเรืองรอบ ให้ความรู้สึก live */
-                                    index === ds.data.length - 1
-                                      ? <g key={index}>
-                                          <circle cx={cx} cy={cy} r={9} fill={l.color} opacity={0.15} />
-                                          <circle cx={cx} cy={cy} r={4} fill={l.color} stroke="white" strokeWidth={2} />
-                                        </g>
-                                      : <circle key={index} r={0} fill="none" />
-                                  )}
-                                  activeDot={{ r: 5, fill: l.color, stroke: 'white', strokeWidth: 2, style: { filter: `drop-shadow(0 2px 4px ${l.color}60)` } }}
-                                  animationDuration={1200} animationEasing="ease-out"
-                                />
-                              ))}
-                            </ComposedChart>
-                          </ResponsiveContainer>
-                          {/* คำอธิบายกราฟรวมไว้ที่เดียวใต้กราฟ — ชื่อเส้น + เกณฑ์ของเส้นนั้นจับคู่กันด้วยสี
-                              (เลิกมี legend ซ้ำบนหัวการ์ด) */}
-                          {(() => {
-                            const refByColor = Object.fromEntries((ds.refs || []).map(r => [r.color, r]));
-                            /* จับคู่ชื่อกับเกณฑ์สีเดียวกันทุกแบบ (CGM: สูง · เกณฑ์ 180 / ต่ำ · เกณฑ์ 70 — โครงเดียวกับกราฟความดัน) */
-                            const items = ds.legend
-                              ? ds.legend.map(g => ({ ...g, ref: refByColor[g.color] }))
-                              : ds.lines.length > 1
-                                ? ds.lines.map(l => ({ color: l.color, color2: l.color2, label: l.name, ref: refByColor[l.color] }))
-                                : [];
-                            const used = new Set(items.filter(it => it.ref).map(it => it.color));
-                            const loneRefs = (ds.refs || []).filter(r => !used.has(r.color) && !r.hideLegend);
-                            const zoneLegends = (ds.zones || []).filter(z => z.legendLabel);
-                            if (!items.length && !loneRefs.length && !zoneLegends.length) return null;
-                            return (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 14px', paddingTop: 8 }}>
-                                {items.map(it => (
-                                  <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#615E83', lineHeight: '14px', whiteSpace: 'nowrap' }}>
-                                    <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(180deg, ${it.color}, ${it.color2 || it.color})` }} />
-                                    {it.label}
-                                    {it.ref && <span style={{ color: '#9291A5' }}>· {it.ref.label}</span>}
-                                  </span>
-                                ))}
-                                {loneRefs.map(r => (
-                                  <span key={r.y} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#8E8E93', lineHeight: '14px', whiteSpace: 'nowrap' }}>
-                                    <svg width="14" height="2" style={{ flexShrink: 0, overflow: 'visible' }} aria-hidden="true">
-                                      <line x1="0" y1="1" x2="14" y2="1" stroke={r.color} strokeOpacity={0.55} strokeWidth="1.5" strokeDasharray="4 3" />
-                                    </svg>
-                                    {r.label}
-                                  </span>
-                                ))}
-                                {/* legend ของโซนช่วงค่า — สี่เหลี่ยมมนสีเดียวกับแถบบนกราฟ */}
-                                {zoneLegends.map((z, zi) => (
-                                  <span key={`zone-${zi}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#615E83', lineHeight: '14px', whiteSpace: 'nowrap' }}>
-                                    <span style={{ width: 14, height: 8, borderRadius: 3, flexShrink: 0, background: `${z.edge}2E`, border: `1px solid ${z.edge}66` }} />
-                                    {z.legendLabel}
-                                  </span>
-                                ))}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        {/* ภาพหุ่น 3D ข้างกราฟ — แบบ artCrop: หน้าต่างครอปชิดมุมขวาล่าง ภาพขยายข้างในให้เห็นเฉพาะโซนสำคัญ
-                            เหมือนภาพโผล่จากมุมการ์ด (ขอบหน้าต่าง + ขอบการ์ดตัดส่วนเกินทิ้ง) */}
-                        {s.art && (s.artCrop ? (
-                          <div style={{
-                            position: 'absolute', right: 0, bottom: 0, width: s.artCrop.w, height: s.artCrop.h,
-                            overflow: 'hidden', pointerEvents: 'none',
-                            /* เฟดขอบล่างให้ภาพกลืนกับการ์ด ไม่ตัดขาดเป็นเส้นตรง */
-                            WebkitMaskImage: 'linear-gradient(180deg, black 62%, transparent 97%)',
-                            maskImage: 'linear-gradient(180deg, black 62%, transparent 97%)',
-                          }}>
-                            <img src={s.art} alt="" style={{ position: 'absolute', width: s.artCrop.imgW, left: s.artCrop.x, top: s.artCrop.y, maxWidth: 'none' }} />
-                          </div>
-                        ) : (
-                          <img src={s.art} alt="" style={{ position: 'absolute', right: 0, bottom: 4, height: (ds.h || 100) + 55, objectFit: 'contain', pointerEvents: 'none' }} />
-                        ))}
-                      </div>
-                    )}
                   </div>
                   );
                 })}
+                </div>
 
-                {/* BMI section — แถว 3 ช่องซ้าย คู่กับ CGM ที่กิน 2 ช่องขวา
-                    โครงหัวการ์ดเหมือนใบ vital อื่น (ไอคอน+ชื่อ / ดูเพิ่มเติม / ค่า / ป้ายสถานะ / อัพเดท)
+                {/* BMI — คอลัมน์ขวาตามแบบ 573:6974 สูงเท่ากริดมินิการ์ด
                     สีค่ากับป้ายมาจากเกณฑ์ BMI จริง ถ้าค่าเปลี่ยนหมวดสีเปลี่ยนตามเอง */}
                 {(() => {
                 const bmiVal = 19.5;
@@ -1456,7 +1436,7 @@ export default function PatientProfile({ patient, onClose }) {
                   style={{
                     background: '#FFFFFF', border: CARD_BORDER, borderRadius: 24,
                     boxShadow: CARD_SHADOW, minWidth: 0,
-                    gridColumn: 1, gridRow: 3, display: 'flex', flexDirection: 'column',
+                    display: 'flex', flexDirection: 'column',
                     position: 'relative', overflow: 'visible', zIndex: bmiHover ? 200 : 1,
                   }}
                 >
@@ -1497,8 +1477,10 @@ export default function PatientProfile({ patient, onClose }) {
                     ];
                     return (
                       <div style={{
-                        position: 'absolute', top: '50%', left: '100%', transform: 'translateY(-50%)',
-                        marginLeft: 10, width: 260, borderRadius: 20, overflow: 'hidden',
+                        /* การ์ด BMI อยู่คอลัมน์ขวาสุด+ชิดขอบบนโซนสกรอลล์ — เปิดไปทางซ้าย ยึดหัวไว้ระดับการ์ด
+                           แล้วปล่อยยาวลงล่าง (ยื่นขึ้นบนจะโดนขอบ overflow ของโซนแท็บตัด) */
+                        position: 'absolute', top: -60, right: '100%',
+                        marginRight: 10, width: 260, borderRadius: 20, overflow: 'hidden',
                         boxShadow: '0 12px 40px rgba(30,27,57,0.22), 0 2px 8px rgba(30,27,57,0.08)',
                         zIndex: 200, fontFamily: font,
                         animation: 'anim-scale-in 0.2s ease-out',
@@ -1580,9 +1562,9 @@ export default function PatientProfile({ patient, onClose }) {
                           </div>
                         </div>
 
-                        {/* Arrow pointing right */}
+                        {/* ลูกศรชี้ขวาเข้าหาเกจ — เลื่อนลงมาระดับกึ่งกลางเกจ (ป๊อปอัพยึดหัวบน ไม่ได้กึ่งกลางแล้ว) */}
                         <div style={{
-                          position: 'absolute', top: '50%', right: -6, transform: 'translateY(-50%) rotate(45deg)',
+                          position: 'absolute', top: 116, right: -6, transform: 'translateY(-50%) rotate(45deg)',
                           width: 12, height: 12, background: 'white',
                           boxShadow: '2px -2px 4px rgba(0,0,0,0.06)',
                         }} />
@@ -1591,8 +1573,8 @@ export default function PatientProfile({ patient, onClose }) {
                   })()}
                   </div>
                   </div>
-                  {/* แถวล่างตาม Figma: น้ำหนัก | เครื่องชั่ง (กลาง เฟดขอบล่าง) | ส่วนสูง */}
-                  <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', padding: '4px 30px 14px', marginTop: 'auto' }}>
+                  {/* แถวล่างตาม Figma: น้ำหนัก | เครื่องชั่ง (กลาง เฟดขอบล่าง) | ส่วนสูง — ขยับสองฝั่งเข้าหากลาง */}
+                  <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', padding: '4px 58px 14px', marginTop: 'auto' }}>
                     {/* ยกเฉพาะข้อความขึ้น — รูปเครื่องชั่งคงชิดขอบล่างตามแบบ */}
                     <div style={{ textAlign: 'center', position: 'relative', zIndex: 1, bottom: 20 }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, justifyContent: 'center' }}>
@@ -1614,6 +1596,651 @@ export default function PatientProfile({ patient, onClose }) {
                 })()}
               </div>
 
+              {/* ── การ์ดรวมตามแบบ 573:6974: แท็บเลือก vital → แถวสถิติ → กราฟใหญ่ + หุ่นจำลอง ── */}
+              <div className="anim-slide-up delay-3" onClick={() => setDatePickerOpen(false)} style={{
+                background: 'white', border: CARD_BORDER, borderRadius: 24, boxShadow: CARD_SHADOW,
+                padding: 16, display: 'flex', flexDirection: 'column', gap: 14, position: 'relative',
+              }}>
+                {/* แถบเลือก vital (fillterDate ตามแบบ) + ปุ่มดูเพิ่มเติมของตัวที่เลือก */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                  <div style={{
+                    position: 'relative', display: 'inline-flex', padding: 4, borderRadius: 100,
+                    background: 'rgba(142,142,147,0.1)', border: '1px solid rgba(120,120,128,0.08)',
+                    boxShadow: 'inset 0 1px 3px rgba(30,27,57,0.06)',
+                  }}>
+                    {/* ตัวไฮไลต์ gradient เลื่อนตามแท็บที่เลือก (ปุ่มกว้าง 106 เท่ากันทุกใบ) */}
+                    <span aria-hidden style={{
+                      position: 'absolute', top: 4, left: 4 + selVital * 106, width: 106, height: 30,
+                      borderRadius: 100, background: 'linear-gradient(160deg, #3FA9FF 0%, #0088FF 55%, #0070E0 100%)',
+                      boxShadow: '0 4px 12px rgba(0,136,255,0.35), inset 0 1px 0 rgba(255,255,255,0.3)',
+                      transition: 'left 0.3s cubic-bezier(0.34, 1.25, 0.64, 1)',
+                    }} />
+                    {['ความดัน', 'การเต้นหัวใจ', 'อุณหภูมิ', 'ออกซิเจน', 'น้ำตาล', 'CGM'].map((t, i) => (
+                      <button key={t} onClick={() => { setSelVital(i); setSelPt(null); }} style={{
+                        position: 'relative', zIndex: 1, width: 106, height: 30,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        borderRadius: 100, border: 'none', cursor: 'pointer', background: 'transparent',
+                        fontSize: 12, fontFamily: font, whiteSpace: 'nowrap',
+                        color: selVital === i ? 'white' : '#615E83',
+                        fontWeight: selVital === i ? 600 : 500,
+                        transition: 'color 0.25s ease',
+                      }}>
+                        {VITAL_ROW_ICONS[statCards[i].label] && (
+                          <img src={VITAL_ROW_ICONS[statCards[i].label]} alt="" style={{
+                            width: 12, height: 12, flexShrink: 0,
+                            filter: selVital === i ? 'brightness(10)' : 'grayscale(1) brightness(0.85)',
+                            opacity: selVital === i ? 1 : 0.75,
+                            transition: 'filter 0.25s ease, opacity 0.25s ease',
+                          }} />
+                        )}
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  {/* ตัวกรองช่วงเวลา — วัน/สัปดาห์/เดือน/ปี + เส้นคั่น + ไอคอนปฏิทินเลือกช่วงเอง (รางเดียวกัน) */}
+                  {(() => {
+                    const spec = detailSpec(selPeriod, { date: selDate, month: selMonth, year: selYear });
+                    /* ไอคอนติดฟ้าเมื่อเปิดอยู่ หรือกำลังดูช่วงย้อนหลังที่เลือกเอง (ไม่ได้จบวันนี้) */
+                    const calActive = datePickerOpen || !spec.anchor;
+                    const TY = DETAIL_TODAY.getFullYear(), TM = DETAIL_TODAY.getMonth();
+                    return (
+                      <div style={{
+                        position: 'relative', display: 'inline-flex', alignItems: 'center', padding: 4, borderRadius: 100, flexShrink: 0,
+                        background: 'rgba(142,142,147,0.1)', border: '1px solid rgba(120,120,128,0.08)',
+                        boxShadow: 'inset 0 1px 3px rgba(30,27,57,0.06)',
+                      }}>
+                        <span aria-hidden style={{
+                          position: 'absolute', top: 4, left: 4 + DETAIL_PERIODS.indexOf(selPeriod) * 66, width: 66, height: 28,
+                          borderRadius: 100, background: 'linear-gradient(160deg, #3FA9FF 0%, #0088FF 55%, #0070E0 100%)',
+                          boxShadow: '0 4px 12px rgba(0,136,255,0.35), inset 0 1px 0 rgba(255,255,255,0.3)',
+                          transition: 'left 0.3s cubic-bezier(0.34, 1.25, 0.64, 1)',
+                        }} />
+                        {DETAIL_PERIODS.map(p => (
+                          <button key={p} onClick={() => { setSelPeriod(p); setSelPt(null); setDatePickerOpen(false); }} style={{
+                            position: 'relative', zIndex: 1, width: 66, height: 28,
+                            borderRadius: 100, border: 'none', cursor: 'pointer', background: 'transparent',
+                            fontSize: 11.5, fontFamily: font, whiteSpace: 'nowrap',
+                            color: selPeriod === p ? 'white' : '#615E83',
+                            fontWeight: selPeriod === p ? 600 : 500,
+                            transition: 'color 0.25s ease',
+                          }}>{p}</button>
+                        ))}
+                        {/* เส้นคั่นก่อนไอคอนปฏิทิน */}
+                        <span aria-hidden style={{ width: 1, height: 16, background: 'rgba(30,27,57,0.14)', margin: '0 5px', flexShrink: 0, position: 'relative', zIndex: 1 }} />
+                        <span style={{ position: 'relative', zIndex: 1, display: 'inline-flex' }} onClick={e => e.stopPropagation()}>
+                          <button className="hover-btn" title={spec.title} onClick={() => {
+                            setDatePickerOpen(o => !o);
+                            setCalView({ y: selDate.getFullYear(), m: selDate.getMonth() });
+                            setCalYear(selMonth.y);
+                          }} style={{
+                            width: 34, height: 28, borderRadius: 100, border: 'none', cursor: 'pointer',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            background: calActive ? 'rgba(0,136,255,0.12)' : 'transparent',
+                            color: calActive ? '#0088FF' : '#615E83', transition: 'all 0.2s ease',
+                          }}>
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <rect x="1" y="2.2" width="12" height="10.8" rx="2.4" stroke="currentColor" strokeWidth="1.4" />
+                              <path d="M1 5.6h12" stroke="currentColor" strokeWidth="1.4" />
+                              <path d="M4.4 0.8v2.6M9.6 0.8v2.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                              {!spec.anchor && <circle cx="7" cy="9.2" r="1.6" fill="currentColor" />}
+                            </svg>
+                          </button>
+                          {datePickerOpen && (
+                            <div className="anim-scale-in" style={{
+                              position: 'absolute', top: 'calc(100% + 10px)', right: 0, zIndex: 60, width: 252,
+                              background: 'white', borderRadius: 16, padding: 10,
+                              border: '1px solid rgba(30,27,57,0.08)', boxShadow: '0 14px 44px rgba(30,27,57,0.2)',
+                            }}>
+                              {/* หัวบอกช่วงที่ดูอยู่ตอนนี้ */}
+                              <div style={{ padding: '0 4px 8px', fontSize: 10.5, color: '#9291A5', borderBottom: '1px solid rgba(30,27,57,0.06)', marginBottom: 8, whiteSpace: 'nowrap' }}>
+                                กำลังดู · <span style={{ color: '#0088FF', fontWeight: 600 }}>{spec.title}</span>
+                              </div>
+                              {selPeriod === 'ปี' ? (
+                                /* ── กริดปี: 3 ปีย้อนหลัง ── */
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                                  {[0, 1, 2].map(i => {
+                                    const y = TY - i; const act = y === selYear;
+                                    return (
+                                      <button key={y} className="hover-btn" onClick={() => { setSelYear(y); setSelPt(null); setDatePickerOpen(false); }} style={{
+                                        height: 36, borderRadius: 10, border: 'none', cursor: 'pointer', fontFamily: font,
+                                        fontSize: 12, fontWeight: act ? 700 : 500,
+                                        background: act ? '#0088FF' : 'rgba(116,116,128,0.06)', color: act ? 'white' : '#1E1B39',
+                                      }}>ปี {beYY(y)}</button>
+                                    );
+                                  })}
+                                </div>
+                              ) : selPeriod === 'เดือน' ? (
+                                /* ── กริดเดือน: เลื่อนปีได้ 2567–2569 · เดือนอนาคตกดไม่ได้ ── */
+                                <>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                    <button className="hover-btn" disabled={calYear <= TY - 2} onClick={() => setCalYear(y => y - 1)} style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(116,116,128,0.08)', color: calYear <= TY - 2 ? '#C7C7CC' : '#1E1B39', fontSize: 12 }}>‹</button>
+                                    <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1E1B39' }}>พ.ศ. {calYear + 543}</span>
+                                    <button className="hover-btn" disabled={calYear >= TY} onClick={() => setCalYear(y => y + 1)} style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(116,116,128,0.08)', color: calYear >= TY ? '#C7C7CC' : '#1E1B39', fontSize: 12 }}>›</button>
+                                  </div>
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                                    {TH_M.map((mn, mi) => {
+                                      const future = calYear > TY || (calYear === TY && mi > TM);
+                                      const act = selMonth.y === calYear && selMonth.m === mi;
+                                      return (
+                                        <button key={mn} className="hover-btn" disabled={future}
+                                          onClick={() => { setSelMonth({ y: calYear, m: mi }); setSelPt(null); setDatePickerOpen(false); }} style={{
+                                            height: 32, borderRadius: 10, border: 'none', cursor: future ? 'default' : 'pointer', fontFamily: font,
+                                            fontSize: 11.5, fontWeight: act ? 700 : 500,
+                                            background: act ? '#0088FF' : 'rgba(116,116,128,0.06)',
+                                            color: act ? 'white' : future ? '#C7C7CC' : '#1E1B39',
+                                          }}>{mn}</button>
+                                      );
+                                    })}
+                                  </div>
+                                </>
+                              ) : (
+                                /* ── ปฏิทินรายวัน: เลื่อนเดือนได้ · วันอนาคตกดไม่ได้ · โหมดสัปดาห์ไฮไลต์ทั้งช่วง 7 วัน ── */
+                                (() => {
+                                  const { y, m } = calView;
+                                  const off = new Date(y, m, 1).getDay();
+                                  const nD = new Date(y, m + 1, 0).getDate();
+                                  const atMax = y === TY && m === TM;
+                                  const atMin = y === TY - 2 && m === 0;
+                                  const wkStart = addDays(selDate, -6);
+                                  const step = dir => setCalView(v => {
+                                    const d = new Date(v.y, v.m + dir, 1);
+                                    return { y: d.getFullYear(), m: d.getMonth() };
+                                  });
+                                  return (
+                                    <>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                        <button className="hover-btn" disabled={atMin} onClick={() => step(-1)} style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(116,116,128,0.08)', color: atMin ? '#C7C7CC' : '#1E1B39', fontSize: 12 }}>‹</button>
+                                        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1E1B39' }}>{TH_M[m]} {beYY(y)}</span>
+                                        <button className="hover-btn" disabled={atMax} onClick={() => step(1)} style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(116,116,128,0.08)', color: atMax ? '#C7C7CC' : '#1E1B39', fontSize: 12 }}>›</button>
+                                      </div>
+                                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 2 }}>
+                                        {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(w => (
+                                          <span key={w} style={{ textAlign: 'center', fontSize: 9.5, fontWeight: 600, color: '#9291A5', padding: '2px 0' }}>{w}</span>
+                                        ))}
+                                      </div>
+                                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+                                        {Array.from({ length: off }, (_, i) => <span key={`b${i}`} />)}
+                                        {Array.from({ length: nD }, (_, i) => {
+                                          const d = new Date(y, m, i + 1);
+                                          const future = d > DETAIL_TODAY;
+                                          const act = sameDay(d, selDate);
+                                          const inWeek = !act && selPeriod === 'สัปดาห์' && d >= wkStart && d <= selDate;
+                                          const today = sameDay(d, DETAIL_TODAY);
+                                          return (
+                                            <button key={i} disabled={future}
+                                              onClick={() => { setSelDate(d); setSelPt(null); setDatePickerOpen(false); }} style={{
+                                                height: 28, borderRadius: inWeek ? 8 : '50%', border: today && !act ? '1.5px solid rgba(0,136,255,0.55)' : 'none',
+                                                cursor: future ? 'default' : 'pointer', fontFamily: font, fontSize: 11, padding: 0,
+                                                fontWeight: act ? 700 : 500,
+                                                background: act ? '#0088FF' : inWeek ? 'rgba(0,136,255,0.1)' : 'transparent',
+                                                color: act ? 'white' : future ? '#C7C7CC' : inWeek ? '#0088FF' : '#1E1B39',
+                                                transition: 'background 0.12s ease',
+                                              }}>{i + 1}</button>
+                                          );
+                                        })}
+                                      </div>
+                                      {selPeriod === 'สัปดาห์' && (
+                                        <div style={{ marginTop: 8, fontSize: 9.5, color: '#9291A5', textAlign: 'center' }}>เลือกวันสิ้นสุด — แสดงย้อนหลัง 7 วันจบวันนั้น</div>
+                                      )}
+                                    </>
+                                  );
+                                })()
+                              )}
+                            </div>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {(() => {
+                  const s = statCards[selVital];
+                  const st = VITAL_STATUS[s.status] || VITAL_STATUS.normal;
+                  const ds = chartDataSets[s.chart];
+                  const isCgm = s.label === 'CGM';
+                  /* ข้อมูลตามช่วงที่เลือก — ช่วง "ดั้งเดิม" ที่จบวันนี้ (CGM = วัน, ที่เหลือ = สัปดาห์) ใช้ชุดข้อมูลจริง
+                     ช่วงอื่น/ช่วงย้อนหลังที่เลือกเอง สร้างจากเครื่องกำเนิดเดียวกับป๊อปอัพเดิม */
+                  const spec = detailSpec(selPeriod, { date: selDate, month: selMonth, year: selYear });
+                  const native = spec.anchor && (isCgm ? selPeriod === 'วัน' : selPeriod === 'สัปดาห์');
+                  const data = native ? ds.data : genDetailData(DETAIL_CFG[s.label], spec);
+                  const dec = s.label === 'อุณหภูมิ';
+                  const f = v => dec ? (+v).toFixed(1) : String(Math.round(v));
+                  const stats = ds.lines.map(l => {
+                    const vs = data.map(d => d[l.key]);
+                    return { color: l.color, color2: l.color2, avg: f(vs.reduce((a, b) => a + b, 0) / vs.length), max: f(Math.max(...vs)), min: f(Math.min(...vs)) };
+                  });
+                  const n = data.length;
+                  const outPts = data.filter(d => ds.lines.some(l => l.range && (d[l.key] < l.range[0] || d[l.key] > l.range[1]))).length;
+                  const l0 = ds.lines[0];
+                  const first = data[0][l0.key], last = data[n - 1][l0.key];
+                  const avg0 = data.reduce((a, d) => a + d[l0.key], 0) / n;
+                  const trend = Math.abs(last - first) <= avg0 * 0.03 ? 'แนวโน้มทรงตัว' : last > first ? 'แนวโน้มสูงขึ้น' : 'แนวโน้มลดลง';
+                  const tir = isCgm ? Math.round(data.filter(d => d[l0.key] >= l0.range[0] && d[l0.key] <= l0.range[1]).length / n * 100) : null;
+                  const outText = isCgm
+                    ? `อยู่ในเกณฑ์ ${tir}% ${selPeriod === 'วัน' ? 'ของ 24 ชม.' : 'ของช่วงที่ดู'}`
+                    : outPts ? `หลุดเกณฑ์ ${outPts} จาก ${n} ครั้ง` : `อยู่ในเกณฑ์ครบทั้ง ${n} ครั้ง`;
+                  /* โฟกัสจุดบนกราฟแบบหน้าป๊อปอัพ — กดจุดแล้วการ์ด "ล่าสุด" เปลี่ยนเป็นค่าจุดนั้น */
+                  const lastIdx = n - 1;
+                  const effIdx = Math.min(selPt != null ? selPt : lastIdx, lastIdx);
+                  const isLatest = effIdx === lastIdx;
+                  /* isLive = จุดท้ายของช่วงปัจจุบันจริงๆ → ใช้ค่า/ป้ายจากการ์ดหลัก · ช่วงย้อนหลังคิดจากข้อมูลช่วงนั้น */
+                  const isLive = isLatest && spec.anchor;
+                  const selRow = !isLive ? data[effIdx] : null;
+                  const dispValue = selRow
+                    ? (ds.lines.length > 1 ? ds.lines.map(l => f(selRow[l.key])).join('/') : String(f(selRow[l0.key])))
+                    : s.value;
+                  const outHigh = selRow && ds.lines.some(l => l.range && selRow[l.key] > l.range[1]);
+                  const outLow = selRow && ds.lines.some(l => l.range && selRow[l.key] < l.range[0]);
+                  const dispStatus = selRow
+                    ? (outHigh ? { text: 'สูงกว่าเกณฑ์', color: '#FF383C' } : outLow ? { text: 'ต่ำกว่าเกณฑ์', color: '#E8802A' } : { text: 'ปกติ', color: '#34C759' })
+                    : { text: s.badge, color: st.badgeBg };
+                  const accent = selRow ? dispStatus.color : st.badgeBg;
+                  /* การ์ดสถิติ: ขาวเรียบไม่มีเงา + ชิปไอคอนสีประจำ · ใบล่าสุดไล่เฉดสีตามสถานะ */
+                  const statCell = {
+                    background: 'white', border: CARD_BORDER, borderRadius: 20, padding: '12px 14px',
+                    display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center', minWidth: 0,
+                  };
+                  const chip = c => ({
+                    width: 22, height: 22, borderRadius: 8, flexShrink: 0,
+                    background: `${c}16`, color: c,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 800, lineHeight: 1,
+                  });
+                  const trendColor = s.status === 'normal' ? '#0F7B37' : '#B45309';
+                  return (
+                    <>
+                      {/* ═ แถวสถิติ 5 ใบตามแบบ: ค่าล่าสุด · เฉลี่ย · สูงสุด · ต่ำสุด · สรุป(กว้าง 2 ส่วน) ═ */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr 1fr 1fr 2fr', gap: 12 }}>
+                        <div className="hover-card" style={{
+                          ...statCell,
+                          background: `linear-gradient(135deg, ${accent}14, rgba(255,255,255,0.95) 70%)`,
+                          border: `1px solid ${accent}2E`,
+                          transition: 'background 0.25s ease, border 0.25s ease',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <span style={chip(accent)}>
+                              {/* จุด live มีวงแหวนเรือง — สื่อว่าเป็นค่าปัจจุบัน/จุดที่เลือก */}
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: accent, boxShadow: `0 0 0 3px ${accent}30` }} />
+                            </span>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: GRAY }}>{isLive ? 'ล่าสุด' : 'จุดที่เลือก'}</span>
+                            {!isLatest && (
+                              <button onClick={() => setSelPt(null)} style={{
+                                marginLeft: 'auto', border: 'none', cursor: 'pointer', borderRadius: 100, padding: '2px 8px',
+                                background: 'rgba(0,136,255,0.1)', color: '#0088FF', fontSize: 9.5, fontWeight: 600, fontFamily: font,
+                                whiteSpace: 'nowrap',
+                              }}>↺ ล่าสุด</button>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                            <span className="num" style={{ fontSize: 20, fontWeight: 800, lineHeight: '22px', color: selRow ? dispStatus.color : st.value, transition: 'color 0.2s ease' }}>{dispValue}</span>
+                            <span style={{ fontSize: 11, color: selRow ? dispStatus.color : st.unit }}>{s.unit}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100,
+                              background: accent, color: '#fff', lineHeight: '14px', transition: 'background 0.25s ease',
+                            }}>
+                              {(selRow ? !(outHigh || outLow) : st.mark === 'info')
+                                ? <img src={ppInfoCircle} alt="" style={{ width: 8, height: 8 }} />
+                                : <span style={{
+                                    width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                                    background: '#fff', color: accent,
+                                    fontSize: 8, fontWeight: 800, lineHeight: '10px', textAlign: 'center',
+                                  }}>!</span>}
+                              {dispStatus.text}
+                            </span>
+                            <span style={{ fontSize: 10, color: 'rgba(0,0,0,0.45)', lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                              {selRow
+                                ? (selPeriod === 'วัน' ? `${fmtDMY(selDate)} · ${selRow.day}` : isLatest ? spec.title : selRow.day)
+                                : s.updated}
+                            </span>
+                          </div>
+                        </div>
+                        {[['เฉลี่ย', 'avg', '≈', '#6658E1'], ['สูงสุด', 'max', '↑', '#FF383C'], ['ต่ำสุด', 'min', '↓', '#0088FF']].map(([lb, key, sym, c]) => (
+                          <div key={lb} className="hover-card" style={statCell}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                              <span style={chip(c)}>{sym}</span>
+                              <span style={{ fontSize: 11, fontWeight: 600, color: GRAY }}>{lb}</span>
+                            </div>
+                            {stats.map((x, xi) => (
+                              <div key={xi} style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                                {stats.length > 1 && <span style={{ width: 7, height: 7, borderRadius: '50%', background: `linear-gradient(180deg, ${x.color}, ${x.color2 || x.color})`, flexShrink: 0, alignSelf: 'center' }} />}
+                                <span className="num" style={{ fontSize: 17, fontWeight: 800, color: '#1E1B39', lineHeight: 1.2 }}>{x[key]}</span>
+                                <span style={{ fontSize: 9, color: '#9291A5' }}>{s.unit}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                        <div className="hover-card" style={statCell}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <span style={chip('#34C759')}>≡</span>
+                            <span style={{ fontSize: 11, fontWeight: 600, color: GRAY }}>สรุป</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6658E1', flexShrink: 0, marginTop: 5 }} />
+                            <span style={{ fontSize: 11, color: '#1E1B39', lineHeight: 1.55 }}>
+                              ค่าเฉลี่ย {stats.map(x => x.avg).join('/')} {s.unit} · {outText}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: trendColor, flexShrink: 0, marginTop: 5 }} />
+                            <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.5, color: trendColor }}>
+                              {trend}{s.status !== 'normal' ? ' · ควรติดตามต่อเนื่อง' : ' · อยู่ในเกณฑ์ที่ดี'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ═ กราฟใหญ่ของ vital ที่เลือก + หุ่นจำลองชิดขวาตามแบบ ═ */}
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {/* แผงกราฟ: พื้นโปร่ง (ไม่มีสีพื้นหลัง) + ชิปหน่วยมุมขวาบน */}
+                          <div style={{ position: 'relative', padding: '14px 6px 2px' }}>
+                          <span style={{
+                            position: 'absolute', top: 10, right: 12, zIndex: 2,
+                            fontSize: 10, fontWeight: 600, color: '#9291A5',
+                            background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(30,27,57,0.06)',
+                            borderRadius: 100, padding: '2px 9px',
+                          }}>หน่วย · {s.unit}</span>
+                          <ResponsiveContainer key={`${selVital}-${selPeriod}-${spec.title}`} className="anim-chart-fade" width="100%" height={220}>
+                            <ComposedChart data={data} margin={{ top: 14, right: 54, left: 2, bottom: 4 }}
+                              onClick={ch => { if (ch && ch.activeTooltipIndex != null) setSelPt(ch.activeTooltipIndex === lastIdx ? null : ch.activeTooltipIndex); }}
+                              style={{ cursor: 'pointer' }}>
+                              <CartesianGrid stroke="rgba(30,27,57,0.03)" vertical={data.length <= 40} />
+                              <XAxis dataKey="day" interval={native && ds.xTicks ? 0 : undefined} ticks={native ? ds.xTicks : undefined} minTickGap={22} tickFormatter={d => (d === '23:55' ? '24:00' : d.split(' ')[0])} tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} axisLine={false} tickLine={false} tickMargin={12} />
+                              <YAxis width={30} tick={{ fontSize: 10, fill: '#9291A5', fontFamily: font }} axisLine={false} tickLine={false} domain={ds.domain} ticks={ds.ticks} tickCount={3} />
+                              <Tooltip content={<Tip unit={s.unit} source={native ? ds.source : 'รวมจากแอพ Atlas HomeCare · My Atlas · อุปกรณ์ IoT'} ranges={Object.fromEntries(ds.lines.filter(l => l.range).map(l => [l.key, l.range]))} />} cursor={{ stroke: 'rgba(30,27,57,0.15)', strokeDasharray: '3 3' }} />
+                              {(ds.zones || []).map((z, zi) => (
+                                <ReferenceArea key={zi} y1={z.y1} y2={z.y2} fill={z.color} stroke="none" />
+                              ))}
+                              {/* กราฟจุดถี่ (CGM): วาดเส้นตั้งของกริดเองตาม xTicks */}
+                              {data.length > 40 && (ds.xTicks || []).map(t => (
+                                <ReferenceLine key={`vgrid-${t}`} x={t} stroke="rgba(30,27,57,0.03)" strokeWidth={1} />
+                              ))}
+                              {(ds.refs || []).map(r => (
+                                <ReferenceLine key={r.y} y={r.y} stroke={r.color} strokeOpacity={0.4} strokeDasharray="4 4" />
+                              ))}
+                              {/* เส้น + วงแหวนโฟกัสจุดที่เลือก (แบบหน้าป๊อปอัพ) — ซ่อนเมื่ออยู่ที่จุดล่าสุดของ CGM รายวัน (จุดถี่เกิน) */}
+                              {data[effIdx] && !(isLatest && data.length > 40) && (
+                                <ReferenceLine x={data[effIdx].day} stroke="#0088FF" strokeWidth={1.5} strokeDasharray="5 4" strokeOpacity={0.7} />
+                              )}
+                              {data[effIdx] && !(isLatest && data.length > 40) && ds.lines.map(l => {
+                                const v = data[effIdx][l.key];
+                                const out = l.range && (v < l.range[0] || v > l.range[1]);
+                                const c = out ? '#FF383C' : l.color;
+                                /* แหวนโฟกัสป๊อปเข้าทุกครั้งที่ย้ายจุด (key ตาม effIdx ให้ remount) */
+                                return (
+                                  <ReferenceDot key={`focus-${l.key}-${effIdx}`} x={data[effIdx].day} y={v} isFront
+                                    shape={p => (
+                                      <g className="pp-focus-pop">
+                                        <circle cx={p.cx} cy={p.cy} r={11} fill={c} fillOpacity={0.15} />
+                                        <circle cx={p.cx} cy={p.cy} r={7} fill="none" stroke={c} strokeWidth={2} />
+                                        <circle cx={p.cx} cy={p.cy} r={4} fill={c} stroke="white" strokeWidth={2} />
+                                      </g>
+                                    )} />
+                                );
+                              })}
+                              {/* splitColor (CGM): ไล่สีเส้นช่วงหลุดเกณฑ์ — สูตรเดียวกับการ์ดเดิม */}
+                              {(() => {
+                                if (!ds.splitColor) return null;
+                                const sc = ds.splitColor;
+                                const vals = data.map(d => d[ds.lines[0].key]);
+                                const mx = Math.max(...vals), mn = Math.min(...vals);
+                                if (mx <= mn) return null;
+                                const clamp = v => Math.max(0, Math.min(1, v));
+                                const offHigh = sc.high != null ? clamp((mx - sc.high) / (mx - mn)) : 0;
+                                const offLow = sc.low != null ? clamp((mx - sc.low) / (mx - mn)) : 1;
+                                const hasHigh = sc.high != null && mx > sc.high;
+                                const hasLow = sc.low != null && mn < sc.low;
+                                if (!hasHigh && !hasLow) return null;
+                                const stops = [];
+                                if (hasHigh) {
+                                  stops.push([0, sc.above], [offHigh, sc.above], [Math.min(1, offHigh + 0.04), ds.lines[0].color]);
+                                } else stops.push([0, ds.lines[0].color]);
+                                if (hasLow) {
+                                  stops.push([Math.max(0, offLow - 0.04), ds.lines[0].color], [offLow, sc.below], [1, sc.below]);
+                                } else stops.push([1, ds.lines[0].color]);
+                                return (
+                                  <defs>
+                                    <linearGradient id="split-sel" x1="0" y1="0" x2="0" y2="1">
+                                      {stops.map(([o, c], si) => <stop key={si} offset={o} stopColor={c} />)}
+                                    </linearGradient>
+                                  </defs>
+                                );
+                              })()}
+                              <defs>
+                                {ds.lines.map(l => (
+                                  <filter key={l.key} id={`glow-sel-${l.key}`} x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor={l.color} floodOpacity="0.22" />
+                                  </filter>
+                                ))}
+                                {/* เส้นไล่เฉดซ้าย→ขวา (เข้ม→สด) + จุดสว่างไหลวนช้าๆ ให้เส้นดูมีชีวิต */}
+                                {ds.lines.map(l => (
+                                  <linearGradient key={`sg-${l.key}`} id={`stroke-sel-${l.key}`} x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="0%" stopColor={l.color2 || l.color} />
+                                    <stop offset="62%" stopColor={l.color}>
+                                      <animate attributeName="offset" values="0.35;0.8;0.35" dur="5s" repeatCount="indefinite" />
+                                    </stop>
+                                    <stop offset="100%" stopColor={l.color} />
+                                  </linearGradient>
+                                ))}
+                                {ds.lines.length === 1 && (
+                                  <linearGradient id="fill-sel" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={ds.lines[0].color} stopOpacity={0.2} />
+                                    <stop offset="45%" stopColor={ds.lines[0].color} stopOpacity={0.06} />
+                                    <stop offset="100%" stopColor={ds.lines[0].color} stopOpacity={0} />
+                                  </linearGradient>
+                                )}
+                                {ds.lines.length === 2 && (
+                                  <linearGradient id="band-sel" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor={ds.lines[0].color} stopOpacity={0.1} />
+                                    <stop offset="100%" stopColor={ds.lines[1].color} stopOpacity={0.05} />
+                                  </linearGradient>
+                                )}
+                              </defs>
+                              {ds.lines.length === 1 && (
+                                <Area type={ds.curve || 'monotone'} dataKey={ds.lines[0].key}
+                                  fill="url(#fill-sel)" stroke="none" tooltipType="none" legendType="none"
+                                  animationDuration={1100} animationBegin={350} animationEasing="ease-out" />
+                              )}
+                              {/* แถบระหว่างสองเส้น (pulse pressure band ของความดัน) — เข้าหลังเส้นวาดเกือบจบ */}
+                              {ds.lines.length === 2 && (
+                                <Area type={ds.curve || 'monotone'}
+                                  dataKey={d => [d[ds.lines[1].key], d[ds.lines[0].key]]}
+                                  fill="url(#band-sel)" stroke="none" tooltipType="none" legendType="none"
+                                  animationDuration={1100} animationBegin={450} animationEasing="ease-out" />
+                              )}
+                              {ds.lines.map(l => (
+                                <Line key={l.key} type={ds.curve || 'monotone'} dataKey={l.key} name={l.name}
+                                  stroke={ds.splitColor && (
+                                    (ds.splitColor.high != null && Math.max(...data.map(d => d[l.key])) > ds.splitColor.high) ||
+                                    (ds.splitColor.low != null && Math.min(...data.map(d => d[l.key])) < ds.splitColor.low)
+                                  ) ? 'url(#split-sel)' : `url(#stroke-sel-${l.key})`}
+                                  strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
+                                  filter={`url(#glow-sel-${l.key})`}
+                                  dot={(ds.dots || !native) && data.length <= 40 ? ({ cx, cy, value, index }) => {
+                                    /* จุดวงแหวนเด้งป๊อปทีละจุดไล่จากซ้ายไปขวา — หลุดเกณฑ์เป็นแดงทึบให้สะดุดตา */
+                                    const base = data.length > 20 ? 2.8 : 4;
+                                    const out = l.range && (value < l.range[0] || value > l.range[1]);
+                                    const stagger = Math.min(70, Math.round(1100 / data.length));
+                                    return (
+                                      <g key={index} className="pp-dot-pop" style={{ animationDelay: `${340 + index * stagger}ms` }}>
+                                        {out
+                                          ? <circle cx={cx} cy={cy} r={base + 0.7} fill="#FF383C" stroke="white" strokeWidth={data.length > 20 ? 1.2 : 2} />
+                                          : <circle cx={cx} cy={cy} r={base} fill="white" stroke={l.color} strokeWidth={data.length > 20 ? 1.4 : 2} />}
+                                      </g>
+                                    );
+                                  } : ({ cx, cy, index }) => (
+                                    index === data.length - 1
+                                      ? <g key={index}>
+                                          <circle cx={cx} cy={cy} r={9} fill={l.color} opacity={0.15} />
+                                          <circle cx={cx} cy={cy} r={4} fill={l.color} stroke="white" strokeWidth={2} />
+                                        </g>
+                                      : <circle key={index} r={0} fill="none" />
+                                  )}
+                                  activeDot={{ r: 5.5, fill: l.color, stroke: 'white', strokeWidth: 2, style: { filter: `drop-shadow(0 2px 5px ${l.color}70)` } }}
+                                  animationDuration={1300} animationBegin={ds.lines.length === 2 && l.key === ds.lines[1].key ? 180 : 0} animationEasing="ease-out"
+                                />
+                              ))}
+                              {/* วงเต้นตุบๆ ที่จุดล่าสุดของช่วงปัจจุบัน — สื่อว่าค่ากำลังอัพเดทสด */}
+                              {spec.anchor && data[lastIdx] && data.length <= 40 && ds.lines.map(l => (
+                                <ReferenceDot key={`live-${l.key}`} x={data[lastIdx].day} y={data[lastIdx][l.key]} isFront
+                                  shape={p => <circle cx={p.cx} cy={p.cy} r={9} fill={l.color} className="pp-live-dot" />} />
+                              ))}
+                              {/* ป้ายค่าปัจจุบันติดขอบขวา (สไตล์กราฟหุ้น) — อ่านค่าท้ายสุดได้ทันทีไม่ต้องเล็ง */}
+                              {data[lastIdx] && ds.lines.map(l => {
+                                const tv = String(f(data[lastIdx][l.key]));
+                                const tw = tv.length * 6.4 + 14;
+                                return (
+                                  <ReferenceDot key={`tag-${l.key}`} x={data[lastIdx].day} y={data[lastIdx][l.key]} isFront
+                                    shape={p => (
+                                      <g transform={`translate(${p.cx + 11}, ${p.cy})`} style={{ pointerEvents: 'none' }}>
+                                        <g className="pp-tag-in">
+                                          <path d={`M0 0 L6 -5 L6 5 Z`} fill={l.color} />
+                                          <rect x={5} y={-10} rx={10} width={tw} height={20} fill={l.color} />
+                                          <text x={5 + tw / 2} y={3.5} textAnchor="middle" fontSize={10.5} fontWeight={700} fill="white" fontFamily={font}>{tv}</text>
+                                        </g>
+                                      </g>
+                                    )} />
+                                );
+                              })}
+                              {/* หมุดสูงสุด ▲ / ต่ำสุด ▼ ของเส้นหลัก — เห็น extreme ของช่วงทันที (ซ่อนถ้าชนจุดล่าสุด) */}
+                              {data.length <= 40 && data.length > 2 && (() => {
+                                const vals = data.map(d => d[l0.key]);
+                                const mxI = vals.indexOf(Math.max(...vals));
+                                const mnI = vals.indexOf(Math.min(...vals));
+                                const mark = (idx, up) => idx !== lastIdx && (
+                                  <ReferenceDot key={`ext-${up}`} x={data[idx].day} y={data[idx][l0.key]} isFront
+                                    shape={p => (
+                                      <text className="pp-ext-in" x={p.cx} y={p.cy + (up ? -11 : 17)} textAnchor="middle" fontSize={9.5} fontWeight={700}
+                                        fill={up ? '#FF383C' : '#0088FF'} fontFamily={font} style={{ pointerEvents: 'none' }}>
+                                        {up ? '▲' : '▼'} {f(data[idx][l0.key])}
+                                      </text>
+                                    )} />
+                                );
+                                return [mark(mxI, true), mark(mnI, false)];
+                              })()}
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                          </div>
+                          {/* เกณฑ์/legend ใต้กราฟ — โครงเดียวกับการ์ดเดิม */}
+                          {(() => {
+                            const refByColor = Object.fromEntries((ds.refs || []).map(r => [r.color, r]));
+                            const items = ds.legend
+                              ? ds.legend.map(g => ({ ...g, ref: refByColor[g.color] }))
+                              : ds.lines.length > 1
+                                ? ds.lines.map(l => ({ color: l.color, color2: l.color2, label: l.name, ref: refByColor[l.color] }))
+                                : [];
+                            const used = new Set(items.filter(it => it.ref).map(it => it.color));
+                            const loneRefs = (ds.refs || []).filter(r => !used.has(r.color) && !r.hideLegend);
+                            const zoneLegends = (ds.zones || []).filter(z => z.legendLabel);
+                            if (!items.length && !loneRefs.length && !zoneLegends.length) return null;
+                            return (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 14px', paddingTop: 8 }}>
+                                {items.map(it => (
+                                  <span key={it.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#615E83', lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(180deg, ${it.color}, ${it.color2 || it.color})` }} />
+                                    {it.label}
+                                    {it.ref && <span style={{ color: '#9291A5' }}>· {it.ref.label}</span>}
+                                  </span>
+                                ))}
+                                {loneRefs.map(r => (
+                                  <span key={r.y} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#8E8E93', lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                                    <svg width="14" height="2" style={{ flexShrink: 0, overflow: 'visible' }} aria-hidden="true">
+                                      <line x1="0" y1="1" x2="14" y2="1" stroke={r.color} strokeOpacity={0.55} strokeWidth="1.5" strokeDasharray="4 3" />
+                                    </svg>
+                                    {r.label}
+                                  </span>
+                                ))}
+                                {zoneLegends.map((z, zi) => (
+                                  <span key={`zone-${zi}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#615E83', lineHeight: '14px', whiteSpace: 'nowrap' }}>
+                                    <span style={{ width: 14, height: 8, borderRadius: 3, flexShrink: 0, background: `${z.edge}2E`, border: `1px solid ${z.edge}66` }} />
+                                    {z.legendLabel}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        {/* ช่องว่างจองที่ให้หุ่น — ตัวภาพจริงวาดในชั้น clip ให้โผล่จากขอบล่างการ์ด */}
+                        <div aria-hidden style={{ width: (VITAL_ART_CFG[selVital] || VITAL_ART_CFG[0]).cw, flexShrink: 0 }} />
+                      </div>
+
+                      {/* ชั้น clip ตามขอบมนการ์ด — หุ่นชิดขอบล่างจริง โดนตัดฐานนิดๆ เหมือนโผล่ขึ้นมา */}
+                      <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: 24, overflow: 'hidden', pointerEvents: 'none' }}>
+                        {(() => {
+                          const c = VITAL_ART_CFG[selVital] || VITAL_ART_CFG[0];
+                          /* วงแหวนจุดจางๆ ไล่กระจายเป็นชั้นหลังหุ่น — สีตามเส้นกราฟของ vital ที่เลือก */
+                          const haloSize = Math.round(c.cw * 1.5);
+                          const haloColor = l0.color2 || l0.color;
+                          return (
+                            <>
+                              <svg key={`halo-${selVital}`} className="anim-chart-fade" width={haloSize} height={haloSize}
+                                viewBox={`0 0 ${haloSize} ${haloSize}`} aria-hidden
+                                onMouseMove={e => {
+                                  const rc = e.currentTarget.getBoundingClientRect();
+                                  setHaloMouse({ x: e.clientX - rc.left, y: e.clientY - rc.top });
+                                }}
+                                onMouseLeave={() => setHaloMouse(null)}
+                                style={{
+                                  position: 'absolute',
+                                  right: c.x + (c.cw - haloSize) / 2,
+                                  bottom: c.y + c.ch * 0.52 - haloSize / 2,
+                                  /* จุดโต้ตอบเมาส์ได้ — เปิด pointer events เฉพาะชั้นนี้ (ชั้นแม่ปิดไว้) */
+                                  pointerEvents: 'auto',
+                                  /* เจาะรูตรงกลาง — จุดไม่ทับตัวหุ่น เหลือเป็นรัศมีรอบนอก */
+                                  WebkitMaskImage: 'radial-gradient(ellipse 42% 52% at 50% 50%, transparent 55%, black 78%)',
+                                  maskImage: 'radial-gradient(ellipse 42% 52% at 50% 50%, transparent 55%, black 78%)',
+                                }}>
+                                {/* วงชิดกัน — เมาส์เข้าใกล้จุดไหน จุดนั้นขยาย+สว่างตามระยะ (แรงสุดที่ σ≈52px) */}
+                                {[0.24, 0.33, 0.42, 0.51, 0.6, 0.69].map((f, ri) => {
+                                  const r = f * haloSize / 2;
+                                  const n = 10 + ri * 7;
+                                  return Array.from({ length: n }, (_, i) => {
+                                    const a = (i / n) * Math.PI * 2 + ri * 0.4;
+                                    const cx = haloSize / 2 + r * Math.cos(a);
+                                    const cy = haloSize / 2 + r * Math.sin(a);
+                                    let dotR = 2.4 - ri * 0.22;
+                                    let dotOp = 0.30 - ri * 0.042;
+                                    if (haloMouse) {
+                                      const dx = cx - haloMouse.x, dy = cy - haloMouse.y;
+                                      const boost = Math.exp(-(dx * dx + dy * dy) / (2 * 52 * 52));
+                                      dotR += boost * 3.4;
+                                      dotOp = Math.min(0.9, dotOp + boost * 0.55);
+                                    }
+                                    return (
+                                      <circle key={`${ri}-${i}`} cx={cx} cy={cy} r={dotR} fill={haloColor} opacity={dotOp}
+                                        style={{ transition: haloMouse ? 'none' : 'r 0.45s ease, opacity 0.45s ease' }} />
+                                    );
+                                  });
+                                })}
+                              </svg>
+                              {/* หน้าต่างครอป — เห็นภาพเฉพาะส่วนที่อยู่ในกรอบ · ซูม/เลื่อนภาพข้างในได้จากแผง ⚙ */}
+                              <div key={`art-${selVital}`} className="anim-chart-fade" style={{
+                                position: 'absolute', right: c.x, bottom: c.y,
+                                width: c.cw, height: c.ch, overflow: 'hidden', opacity: c.opacity,
+                                /* เฟดจางลงถึงขอบล่างของกรอบครอป */
+                                WebkitMaskImage: c.fade >= 97 ? 'none' : `linear-gradient(180deg, black ${c.fade}%, transparent 97%)`,
+                                maskImage: c.fade >= 97 ? 'none' : `linear-gradient(180deg, black ${c.fade}%, transparent 97%)`,
+                              }}>
+                                <img src={(VITAL_ART[selVital] || VITAL_ART[0]).img} alt="" style={{
+                                  position: 'absolute', left: c.ix, bottom: c.iy,
+                                  width: c.w, maxWidth: 'none',
+                                  /* พื้นหลังภาพเป็นขาวทึบ — multiply ทำให้ขาวโปร่ง เห็นจุดด้านหลังทะลุรอบตัวหุ่น */
+                                  mixBlendMode: 'multiply',
+                                }} />
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
               {/* ── ประวัติการวัด Vital Signs ── */}
               <div className="anim-slide-up delay-7" style={{ ...glassCard }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -1626,71 +2253,154 @@ export default function PatientProfile({ patient, onClose }) {
                       <div style={{ fontSize: 11, color: GRAY, marginTop: 2 }}>ประวัติการบันทึกสัญญาณชีพ เพื่อใช้ติดตามและประเมินสุขภาพ</div>
                     </div>
                   </div>
-                  <select style={{
-                    fontSize: 10, color: GRAY, background: 'rgba(0,0,0,0.04)', border: 'none',
-                    borderRadius: 10, padding: '4px 10px', fontFamily: font, cursor: 'pointer',
-                  }}>
-                    <option>เพิ่มเติม</option>
-                  </select>
+                  {/* ตัวกรองเดือนแบบปฏิทิน — pill วงรี + popover กริด 12 เดือน เลื่อนปีได้ (แบบเดียวกับของกราฟ) */}
+                  {(() => {
+                    const TYh = DETAIL_TODAY.getFullYear(), TMh = DETAIL_TODAY.getMonth();
+                    return (
+                      <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                        <button className="hover-btn" onClick={() => { setHistPickerOpen(o => !o); setHistCalYear(histMonth.y); }} style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
+                          height: 30, padding: '0 12px', borderRadius: 100, fontFamily: font,
+                          background: histPickerOpen ? 'rgba(0,136,255,0.1)' : 'rgba(0,0,0,0.04)',
+                          border: `1px solid ${histPickerOpen ? 'rgba(0,136,255,0.35)' : 'rgba(30,27,57,0.08)'}`,
+                          fontSize: 11, fontWeight: 600, color: histPickerOpen ? '#0088FF' : '#1E1B39', transition: 'all 0.15s ease',
+                        }}>
+                          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                            <rect x="1" y="2.2" width="12" height="10.8" rx="2.4" stroke="currentColor" strokeWidth="1.4" />
+                            <path d="M1 5.6h12" stroke="currentColor" strokeWidth="1.4" />
+                            <path d="M4.4 0.8v2.6M9.6 0.8v2.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                          </svg>
+                          {TH_M[histMonth.m]} {beYY(histMonth.y)}
+                          <svg width="9" height="6" viewBox="0 0 10 6" fill="none" style={{ flexShrink: 0, transform: histPickerOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
+                            <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                        {histPickerOpen && (
+                          <div className="anim-scale-in" style={{
+                            position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 60, width: 252,
+                            background: 'white', borderRadius: 16, padding: 10,
+                            border: '1px solid rgba(30,27,57,0.08)', boxShadow: '0 14px 44px rgba(30,27,57,0.2)',
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <button className="hover-btn" disabled={histCalYear <= TYh - 2} onClick={() => setHistCalYear(y => y - 1)} style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(116,116,128,0.08)', color: histCalYear <= TYh - 2 ? '#C7C7CC' : '#1E1B39', fontSize: 12 }}>‹</button>
+                              <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1E1B39' }}>พ.ศ. {histCalYear + 543}</span>
+                              <button className="hover-btn" disabled={histCalYear >= TYh} onClick={() => setHistCalYear(y => y + 1)} style={{ width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(116,116,128,0.08)', color: histCalYear >= TYh ? '#C7C7CC' : '#1E1B39', fontSize: 12 }}>›</button>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                              {TH_M.map((mn, mi) => {
+                                const future = histCalYear > TYh || (histCalYear === TYh && mi > TMh);
+                                const act = histMonth.y === histCalYear && histMonth.m === mi;
+                                return (
+                                  <button key={mn} className="hover-btn" disabled={future}
+                                    onClick={() => { setHistMonth({ y: histCalYear, m: mi }); setHistoryPage(1); setExpandedVisit('0-0'); setHistPickerOpen(false); }} style={{
+                                      height: 32, borderRadius: 10, border: 'none', cursor: future ? 'default' : 'pointer', fontFamily: font,
+                                      fontSize: 11.5, fontWeight: act ? 700 : 500,
+                                      background: act ? '#0088FF' : 'rgba(116,116,128,0.06)',
+                                      color: act ? 'white' : future ? '#C7C7CC' : '#1E1B39',
+                                    }}>{mn}</button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div style={{ marginTop: 14 }}>
-                  {vitalHistory.map((group, gi) => (
-                    <div key={gi} style={{ marginBottom: 16 }}>
-                      {/* Source header */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                        <img
-                          src={group.logo === 'homecare' ? logoHomeCare : logoMyAtlas}
-                          alt={group.source}
-                          style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'contain' }}
-                        />
-                        <span style={{ fontSize: 10, fontWeight: 500, color: GRAY }}>{group.source}</span>
-                      </div>
-
-                      {/* Visit cards */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingLeft: 28 }}>
-                        {group.visits.map((visit, vi) => {
-                          const visitKey = `${gi}-${vi}`;
-                          const isOpen = expandedVisit === visitKey;
-                          return (
-                            <div key={vi} className="hover-card" style={{
-                              background: '#fff', borderRadius: 16,
-                              border: '1px solid rgba(0,0,0,0.04)',
-                              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                              overflow: 'hidden',
-                            }}>
-                              {/* Header - clickable */}
-                              <div onClick={() => setExpandedVisit(isOpen ? null : visitKey)} style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '12px 16px', cursor: 'pointer',
-                                background: isOpen ? 'rgba(139,92,246,0.03)' : 'transparent',
-                                transition: 'background 0.15s ease',
-                              }}>
-                                <div style={{ display: 'flex', gap: 8, fontSize: 12, fontFamily: font }}>
-                                  <span style={{ fontWeight: 600, color: BLACK }}>Visit: {visit.id}</span>
-                                  <span style={{ color: '#8E8E93' }}>({visit.date})</span>
-                                </div>
-                                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}>
-                                  <path d="M1 1L5 5L9 1" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              </div>
-                              {/* Content - collapsible */}
-                              {isOpen && (
-                                <div style={{ padding: '0 16px 16px' }}>
-                                  {visit.vitals.map((v, vii) => (
-                                    <div key={vii}>
-                                      {vii > 0 && <div style={{ height: 1, background: 'rgba(0,0,0,0.04)', margin: '6px 0 6px 24px' }} />}
-                                      <VitalRow label={v.label} value={v.value} unit={v.unit} time={visit.time} />
+                  {(() => {
+                    /* ไทม์ไลน์เรียงวัน/เวลา (ใหม่→เก่า) — แบ่งหน้าแบบรายการ แล้วจัดกลุ่มหัวข้อรายวันในหน้านั้น */
+                    const pageEntries = histEntries.slice(startItem - 1, endItem);
+                    const days = [];
+                    pageEntries.forEach(en => {
+                      const last = days[days.length - 1];
+                      if (!last || last.date !== en.dateLabel) days.push({ date: en.dateLabel, isToday: en.isToday, list: [en] });
+                      else last.list.push(en);
+                    });
+                    const srcChip = (auto) => (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, padding: '1.5px 7px', borderRadius: 100, flexShrink: 0,
+                        background: auto ? 'rgba(52,199,89,0.12)' : 'rgba(116,116,128,0.12)',
+                        color: auto ? '#0F7B37' : '#615E83',
+                      }}>{auto ? 'อัตโนมัติ' : 'กรอกเอง'}</span>
+                    );
+                    return days.map(day => (
+                      <div key={day.date} style={{ marginBottom: 14 }}>
+                        {/* หัวข้อวัน */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0 8px' }}>
+                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: day.isToday ? '#34C759' : 'rgba(30,27,57,0.18)', flexShrink: 0 }} />
+                          <span style={{ fontSize: 11.5, fontWeight: 700, color: BLACK }}>{day.date}{day.isToday ? ' · วันนี้' : ''}</span>
+                          <span style={{ flex: 1, height: 1, background: 'rgba(30,27,57,0.06)' }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 15 }}>
+                          {day.list.map(en => en.kind === 'home' ? (
+                            /* ── การ์ดเยี่ยมบ้าน: บันทึกครบชุดครั้งเดียวโดยเจ้าหน้าที่ ── */
+                            (() => {
+                              const isOpen = expandedVisit === en.id;
+                              return (
+                                <div key={en.id} className="hover-card" style={{
+                                  background: '#fff', borderRadius: 16,
+                                  border: '1px solid rgba(25,165,137,0.25)',
+                                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)', overflow: 'hidden',
+                                }}>
+                                  <div onClick={() => setExpandedVisit(isOpen ? null : en.id)} style={{
+                                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer',
+                                    background: isOpen ? 'rgba(25,165,137,0.05)' : 'transparent', transition: 'background 0.15s ease',
+                                  }}>
+                                    <img src={logoHomeCare} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'contain', flexShrink: 0 }} />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: 12, fontWeight: 700, color: BLACK }}>เยี่ยมบ้าน · วัดครบชุด 8 รายการ</div>
+                                      <div style={{ fontSize: 10, color: GRAY, marginTop: 1 }}>แอพ Atlas HomeCare · บันทึกโดย {en.staff} · กดบันทึกครั้งเดียว</div>
                                     </div>
-                                  ))}
+                                    <span style={{ fontSize: 10.5, color: '#8E8E93', flexShrink: 0 }}>{en.time} น.</span>
+                                    <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ flexShrink: 0, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'none' }}>
+                                      <path d="M1 1L5 5L9 1" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  </div>
+                                  {isOpen && (
+                                    <div style={{ padding: '2px 14px 12px' }}>
+                                      {en.vitals.map((v, vi) => (
+                                        <div key={vi} style={{
+                                          display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0',
+                                          borderTop: vi > 0 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                                        }}>
+                                          {VITAL_ROW_ICONS[v.label] && <img src={VITAL_ROW_ICONS[v.label]} alt="" style={{ width: 13, height: 13, flexShrink: 0, filter: 'grayscale(1) brightness(0.65)' }} />}
+                                          <span style={{ fontSize: 11.5, fontWeight: 600, color: BLACK, width: 118, flexShrink: 0 }}>{v.label}</span>
+                                          <span style={{ fontSize: 10, color: '#9291A5', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.dev}</span>
+                                          {srcChip(v.dev !== 'กรอกเอง')}
+                                          <span className="num" style={{ fontSize: 12.5, fontWeight: 700, color: BLACK, marginLeft: 6, whiteSpace: 'nowrap' }}>{v.value} <span style={{ fontSize: 9.5, fontWeight: 400, color: '#9291A5' }}>{v.unit}</span></span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              );
+                            })()
+                          ) : (
+                            /* ── แถววัดเองผ่าน My Atlas: ทีละค่า ไม่พร้อมกัน ── */
+                            <div key={en.id} style={{
+                              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px',
+                              background: '#fff', borderRadius: 14, border: '1px solid rgba(0,0,0,0.04)',
+                            }}>
+                              <img src={logoMyAtlas} alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'contain', flexShrink: 0 }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  {VITAL_ROW_ICONS[en.metric] && <img src={VITAL_ROW_ICONS[en.metric]} alt="" style={{ width: 12, height: 12, flexShrink: 0, filter: 'grayscale(1) brightness(0.65)' }} />}
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: BLACK }}>{en.metric}</span>
+                                  {en.again && <span style={{ fontSize: 9, fontWeight: 600, color: '#0088FF', background: 'rgba(0,136,255,0.1)', padding: '1px 6px', borderRadius: 100 }}>วัดซ้ำ</span>}
+                                </div>
+                                <div style={{ fontSize: 10, color: '#9291A5', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>แอพ My Atlas · {en.dev}</div>
+                              </div>
+                              {srcChip(en.auto)}
+                              <span className="num" style={{ fontSize: 13, fontWeight: 700, color: BLACK, whiteSpace: 'nowrap' }}>{en.value} <span style={{ fontSize: 9.5, fontWeight: 400, color: '#9291A5' }}>{en.unit}</span></span>
+                              <span style={{ fontSize: 10.5, color: '#8E8E93', flexShrink: 0, width: 46, textAlign: 'right' }}>{en.time} น.</span>
                             </div>
-                          );
-                        })}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
 
                 {/* Pagination */}
@@ -1704,22 +2414,11 @@ export default function PatientProfile({ patient, onClose }) {
                     >
                       {'‹'}
                     </button>
-                    {[1, 2, 3].map(p => (
-                      <button
-                        key={p}
-                        className="hover-btn"
-                        onClick={() => setHistoryPage(p)}
-                        style={{
-                          width: 24, height: 24, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                          fontSize: 11, fontWeight: 600, fontFamily: font,
-                          background: historyPage === p ? '#7C3AED' : 'rgba(0,0,0,0.04)',
-                          color: historyPage === p ? '#fff' : GRAY,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                    <span style={{
+                      minWidth: 52, height: 24, borderRadius: 100, padding: '0 10px',
+                      background: 'rgba(0,0,0,0.04)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 600, fontFamily: font, color: GRAY,
+                    }}>{historyPage} / {totalPages}</span>
                     <button
                       className="hover-btn"
                       onClick={() => setHistoryPage(p => Math.min(totalPages, p + 1))}

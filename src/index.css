@@ -324,6 +324,60 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(30,27,57,0.12);
 }
+/* ชุดแอนิเมชั่นกราฟใหญ่ vital — จุดเด้งป๊อปทีละจุด / ป้ายค่าสไลด์เข้า / หมุดหล่นลง / แหวนโฟกัสป๊อป */
+@keyframes ppDotPop {
+  0%   { transform: scale(0); opacity: 0; }
+  70%  { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pp-dot-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ppDotPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes ppTagIn {
+  0%   { transform: translateX(16px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.pp-tag-in { animation: ppTagIn 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) 1s both; }
+@keyframes ppExtDrop {
+  0%   { transform: translateY(-10px); opacity: 0; }
+  60%  { transform: translateY(2px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.pp-ext-in { animation: ppExtDrop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) 1.25s both; }
+@keyframes ppFocusPop {
+  0%   { transform: scale(0.35); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pp-focus-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ppFocusPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+/* จุดล่าสุดบนกราฟใหญ่ vital — วงแหวนเต้นตุบๆ สื่อว่าเป็นค่าสด */
+.pp-live-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ppLivePing 2.2s ease-out infinite;
+}
+@keyframes ppLivePing {
+  0%   { transform: scale(0.45); opacity: 0.65; }
+  75%  { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+/* ภาพอุปกรณ์บนมินิการ์ด vital — hover แล้วภาพชัดขึ้นเต็มตา + เด้งลอยขึ้นเอียงนิดๆ */
+.pp-vital-mini .pp-mini-art {
+  transition: opacity 0.25s ease, transform 0.4s cubic-bezier(0.34, 1.45, 0.64, 1);
+  transform: translateY(0) scale(1) rotate(0deg);
+  will-change: transform;
+}
+.pp-vital-mini:hover .pp-mini-art {
+  opacity: 0.95 !important;
+  transform: translateY(-9px) scale(1.08) rotate(-5deg);
+  -webkit-mask-image: linear-gradient(135deg, transparent 0%, black 26%) !important;
+  mask-image: linear-gradient(135deg, transparent 0%, black 26%) !important;
+}
 
 .hover-visit-card {
   transition: border-color 0.2s ease;
