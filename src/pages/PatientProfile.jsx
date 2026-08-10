@@ -787,6 +787,12 @@ const buildMonthEntries = (y, m) => {
   return out;
 };
 
+/* ประวัติน้ำหนักรายเดือนตั้งแต่ต้นปี (kg) — ฟื้นฟูหลัง PCI คุมอาหาร น้ำหนักค่อยๆ ลด · ส่วนสูงคงที่ */
+const WEIGHT_HIST = [
+  ['ม.ค.', 63.5], ['ก.พ.', 63.0], ['มี.ค.', 62.4], ['เม.ย.', 61.8],
+  ['พ.ค.', 61.2], ['มิ.ย.', 60.8], ['ก.ค.', 60.4], ['ส.ค.', 60.0],
+];
+
 /* ── Stat card configs ── */
 import imgRobotBp from '../assets/images/vital-robot-bp.png';
 import imgRobotCgm from '../assets/images/vital-robot-cgm.png';
@@ -1162,6 +1168,7 @@ export default function PatientProfile({ patient, onClose }) {
   const [histCalYear, setHistCalYear] = useState(DETAIL_TODAY.getFullYear());
   const histEntries = buildMonthEntries(histMonth.y, histMonth.m);
   const [bmiHover, setBmiHover] = useState(false);
+  const [bmiSub, setBmiSub] = useState(null); // hover น้ำหนัก ('w') / ส่วนสูง ('h') บนการ์ด BMI
   const [metricDetail, setMetricDetail] = useState(null);   // ป๊อปอัพดูเพิ่มเติมของ vital (สัปดาห์/เดือน/ปี)
   const [selVital, setSelVital] = useState(0);              // vital ที่เลือกดูกราฟใหญ่ (แท็บตามแบบ 573:6974)
   const [selPeriod, setSelPeriod] = useState('สัปดาห์');    // ช่วงเวลาของกราฟใหญ่ (วัน/สัปดาห์/เดือน/ปี)
@@ -1575,21 +1582,73 @@ export default function PatientProfile({ patient, onClose }) {
                   </div>
                   {/* แถวล่างตาม Figma: น้ำหนัก | เครื่องชั่ง (กลาง เฟดขอบล่าง) | ส่วนสูง — ขยับสองฝั่งเข้าหากลาง */}
                   <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', padding: '4px 58px 14px', marginTop: 'auto' }}>
-                    {/* ยกเฉพาะข้อความขึ้น — รูปเครื่องชั่งคงชิดขอบล่างตามแบบ */}
-                    <div style={{ textAlign: 'center', position: 'relative', zIndex: 1, bottom: 20 }}>
+                    {/* ยกเฉพาะข้อความขึ้น — รูปเครื่องชั่งคงชิดขอบล่างตามแบบ · hover ดูแนวโน้มขึ้น/ลง
+                        (popover วาดผ่าน portal ที่ body — absolute ในการ์ดโดนชั้น composite ของโซนสกรอลล์กลืน) */}
+                    <div onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setBmiSub({ k: 'w', x: r.left + r.width / 2, y: r.bottom }); }}
+                      onMouseLeave={() => setBmiSub(null)}
+                      style={{ textAlign: 'center', position: 'relative', bottom: 20, cursor: 'pointer' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, justifyContent: 'center' }}>
                         <span style={{ fontSize: 16, fontWeight: 700, color: '#000' }}>60</span>
                         <span style={{ fontSize: 12, color: '#000' }}>kg</span>
                       </div>
-                      <div style={{ fontSize: 10, color: '#000', marginTop: 2 }}>น้ำหนัก</div>
+                      <div style={{ fontSize: 10, color: '#000', marginTop: 2, borderBottom: '1px dashed rgba(30,27,57,0.25)', display: 'inline-block' }}>น้ำหนัก</div>
                     </div>
-                    <div style={{ textAlign: 'center', position: 'relative', zIndex: 1, bottom: 20 }}>
+                    {bmiSub?.k === 'w' && createPortal((() => {
+                      const n = WEIGHT_HIST.length;
+                      const cur = WEIGHT_HIST[n - 1][1], prev = WEIGHT_HIST[n - 2][1], first = WEIGHT_HIST[0][1];
+                      const dM = +(cur - prev).toFixed(1), dY = +(cur - first).toFixed(1);
+                      const arrow = v => v < 0 ? '▼' : v > 0 ? '▲' : '▬';
+                      const col = v => v < 0 ? '#0F7B37' : v > 0 ? '#D9342B' : '#615E83';
+                      return (
+                        <div style={{
+                          position: 'fixed', top: bmiSub.y + 8, left: bmiSub.x - 98, width: 196,
+                          background: 'white', borderRadius: 14, padding: '10px 12px', textAlign: 'left',
+                          border: '1px solid rgba(30,27,57,0.08)', boxShadow: '0 12px 36px rgba(30,27,57,0.25)',
+                          fontFamily: font, zIndex: 3000, pointerEvents: 'none',
+                        }}>
+                          <div style={{ fontSize: 10.5, fontWeight: 700, color: GRAY, marginBottom: 6 }}>น้ำหนัก · แนวโน้ม</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: col(dM), marginBottom: 2 }}>
+                            {arrow(dM)} {Math.abs(dM)} kg <span style={{ fontSize: 10, fontWeight: 500, color: '#615E83' }}>จากเดือนก่อน ({prev} kg)</span>
+                          </div>
+                          <div style={{ fontSize: 10.5, fontWeight: 600, color: col(dY), marginBottom: 8 }}>
+                            รวม {arrow(dY)} {Math.abs(dY)} kg ตั้งแต่ต้นปี ({first} kg)
+                          </div>
+                          {WEIGHT_HIST.slice(-4).map(([mo, w], wi, arr) => {
+                            const d = wi === 0 ? null : +(w - arr[wi - 1][1]).toFixed(1);
+                            return (
+                              <div key={mo} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5, padding: '2.5px 0', borderTop: wi > 0 ? '1px solid rgba(30,27,57,0.05)' : 'none' }}>
+                                <span style={{ color: '#615E83' }}>{mo}</span>
+                                <span className="num" style={{ fontWeight: 700, color: '#1E1B39' }}>{w.toFixed(1)} kg</span>
+                                <span style={{ width: 44, textAlign: 'right', fontWeight: 700, color: d == null ? '#C7C7CC' : col(d) }}>{d == null ? '—' : `${arrow(d)} ${Math.abs(d)}`}</span>
+                              </div>
+                            );
+                          })}
+                          <div style={{ marginTop: 6, fontSize: 9.5, color: '#9291A5', lineHeight: 1.45 }}>ลดต่อเนื่องตามแผนคุมอาหารหลังทำ PCI 💪</div>
+                        </div>
+                      );
+                    })(), document.body)}
+                    <div onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setBmiSub({ k: 'h', x: r.left + r.width / 2, y: r.bottom }); }}
+                      onMouseLeave={() => setBmiSub(null)}
+                      style={{ textAlign: 'center', position: 'relative', bottom: 20, cursor: 'pointer' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, justifyContent: 'center' }}>
                         <span style={{ fontSize: 16, fontWeight: 700, color: '#000' }}>175</span>
                         <span style={{ fontSize: 12, color: '#000' }}>cm</span>
                       </div>
-                      <div style={{ fontSize: 10, color: '#000', marginTop: 2 }}>ส่วนสูง</div>
+                      <div style={{ fontSize: 10, color: '#000', marginTop: 2, borderBottom: '1px dashed rgba(30,27,57,0.25)', display: 'inline-block' }}>ส่วนสูง</div>
                     </div>
+                    {bmiSub?.k === 'h' && createPortal(
+                      <div style={{
+                        position: 'fixed', top: bmiSub.y + 8, left: bmiSub.x - 88, width: 176,
+                        background: 'white', borderRadius: 14, padding: '10px 12px', textAlign: 'left',
+                        border: '1px solid rgba(30,27,57,0.08)', boxShadow: '0 12px 36px rgba(30,27,57,0.25)',
+                        fontFamily: font, zIndex: 3000, pointerEvents: 'none',
+                      }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 700, color: GRAY, marginBottom: 6 }}>ส่วนสูง</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#615E83', marginBottom: 2 }}>▬ คงที่ 175 cm</div>
+                        <div style={{ fontSize: 10.5, color: '#9291A5', lineHeight: 1.5 }}>ไม่เปลี่ยนแปลงตั้งแต่ต้นปี · วัดล่าสุดตอนเยี่ยมบ้าน {histD(0)}</div>
+                      </div>,
+                      document.body
+                    )}
                   </div>
                 </div>
                 );
