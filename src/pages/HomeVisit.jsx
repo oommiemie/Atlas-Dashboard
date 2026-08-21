@@ -755,6 +755,9 @@ function MapSection({ plannedVisits = [], groupFilter = 'all' }) {
 /* ═══════════════════════════════════════════
    4. ทะเบียนรายชื่อผู้ป่วยเยี่ยมบ้าน (แท็บที่ 2)
    ═══════════════════════════════════════════ */
+const REG_HEADERS = ['ผู้ป่วย', 'HN', 'ประเภท', 'ทีมผู้ดูแล', 'วันที่นัดเยี่ยม', 'สถานะ', 'จัดการ'];
+const GRID_COLS = '2.2fr 1.2fr 1.2fr 1fr 1.2fr 1.2fr 1fr';
+
 function RegistryTable({ plannedVisits = [], groupFilter = 'all', query = '', onQueryChange = () => {} }) {
   const { openPatient } = useContext(PatientContext);
   const q = query;
@@ -784,8 +787,7 @@ function RegistryTable({ plannedVisits = [], groupFilter = 'all', query = '', on
   const cur = Math.min(page, totalPages);
   const visible = rows.slice((cur - 1) * perPage, cur * perPage);
 
-  const th = { fontSize: 11, fontWeight: 600, color: GRAY, textAlign: 'left', padding: '0 12px 10px', whiteSpace: 'nowrap' };
-  const td = { fontSize: 12, color: BLACK, padding: '10px 12px', verticalAlign: 'middle' };
+  const cellBase = { fontSize: 12, fontFamily: font, fontWeight: 500, color: BLACK, lineHeight: 'normal' };
 
   return (
     <div className="anim-slide-up" style={{ ...glassCard, marginTop: 16, display: 'flex', flexDirection: 'column' }}>
@@ -852,69 +854,68 @@ function RegistryTable({ plannedVisits = [], groupFilter = 'all', query = '', on
         </div>
       </div>
 
-      {/* ตาราง */}
-      <div className="no-scrollbar" style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
-          <thead>
-            <tr>
-              <th style={th}>ผู้ป่วย</th>
-              <th style={th}>HN</th>
-              <th style={th}>ประเภท</th>
-              <th style={th}>ทีมผู้ดูแล</th>
-              <th style={th}>วันที่นัดเยี่ยม</th>
-              <th style={th}>สถานะ</th>
-              <th style={{ ...th, textAlign: 'right' }}>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((r, i) => {
-              const gm = groupMeta(r.group);
-              return (
-                <tr key={r.hn + i} className="hover-row" style={{ background: 'white', animation: 'countUp 0.25s ease both', animationDelay: `${i * 0.02}s` }}>
-                  <td style={{ ...td, borderRadius: '12px 0 0 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <img src={getAvatar(r.age, r.gender)} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{r.name}</div>
-                        <div style={{ fontSize: 10, color: GRAY }}>{r.age} ปี · {r.gender}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ ...td, color: GRAY, fontSize: 11.5 }}>{r.hn}</td>
-                  <td style={td}>
-                    <span style={{
-                      fontSize: 10.5, fontWeight: 600, padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap',
-                      background: `${gm.color}16`, color: gm.color,
-                    }}>{r.group}</span>
-                  </td>
-                  <td style={{ ...td, color: GRAY, fontSize: 11.5 }}>{r.team}</td>
-                  <td style={{ ...td, color: GRAY, fontSize: 11.5, whiteSpace: 'nowrap' }}>{r.visitDate}</td>
-                  <td style={td}>
-                    <span style={{
-                      fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 100, whiteSpace: 'nowrap',
-                      color: r.cfg.color, backgroundImage: r.cfg.bg,
-                    }}>{r.ds}</span>
-                  </td>
-                  <td style={{ ...td, textAlign: 'right', borderRadius: '0 12px 12px 0' }}>
-                    <button className="hover-btn"
-                      onClick={() => openPatient({ name: r.name, age: r.age, gender: r.gender, hn: r.hn, phone: '', address: r.address || '', group: r.group, disease: '', team: r.team, adl: 0, visits: 0, lastVisit: r.visitDate, outcome: '' })}
-                      style={{
-                        border: '1px solid rgba(0,136,255,0.3)', background: 'rgba(0,136,255,0.08)', color: '#0088FF',
-                        borderRadius: 100, padding: '5px 12px', cursor: 'pointer', fontFamily: font, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-                      }}>ดูข้อมูล</button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {visible.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 40, color: GRAY, fontSize: 13 }}>ไม่พบผู้ป่วยตามเงื่อนไขที่เลือก</div>
-        )}
-      </div>
+      {/* ตาราง — สไตล์เดียวกับตารางหน้ารายละเอียดผู้ป่วย (กริดในกล่องขาว หัวตารางพื้นม่วง) */}
+      <div style={{ background: 'white', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 16, overflow: 'hidden' }}>
+        {/* หัวตาราง */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: GRID_COLS, gap: 10, padding: 16,
+          background: 'rgba(139,92,246,0.1)', fontSize: 12, fontWeight: 700, fontFamily: font, color: BLACK,
+        }}>
+          {REG_HEADERS.map((h, i) => (
+            <span key={h} style={{ textAlign: i === 0 ? 'left' : i === REG_HEADERS.length - 1 ? 'right' : 'center' }}>{h}</span>
+          ))}
+        </div>
+
+        {/* แถวข้อมูล */}
+        {visible.length === 0 ? (
+          <div style={{ padding: 60, textAlign: 'center', color: GRAY, fontFamily: font, fontSize: 14 }}>ไม่พบผู้ป่วยตามเงื่อนไขที่เลือก</div>
+        ) : visible.map((r, i) => {
+          const gm = groupMeta(r.group);
+          const openRow = () => openPatient({ name: r.name, age: r.age, gender: r.gender, hn: r.hn, phone: '', address: r.address || '', group: r.group, disease: '', team: r.team, adl: 0, visits: 0, lastVisit: r.visitDate, outcome: '' });
+          return (
+            <div key={r.hn + i} className="hover-row" style={{
+              display: 'grid', gridTemplateColumns: GRID_COLS, gap: 10, padding: 16,
+              alignItems: 'center', cursor: 'pointer', transition: 'background 0.15s ease',
+            }}
+              onClick={openRow}
+              onMouseEnter={e => e.currentTarget.style.background = '#F5F3FF'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              {/* ผู้ป่วย */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                <img src={getAvatar(r.age, r.gender)} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ ...cellBase, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+                  <div style={{ fontSize: 10, color: GRAY, fontFamily: font }}>{r.age} ปี · {r.gender}</div>
+                </div>
+              </div>
+              <span style={{ ...cellBase, fontWeight: 400, textAlign: 'center' }}>{r.hn}</span>
+              <span style={{ display: 'flex', justifyContent: 'center' }}>
+                <span style={{
+                  fontSize: 10, fontFamily: font, fontWeight: 600, color: gm.color, background: `${gm.color}1F`,
+                  padding: '4px 10px', borderRadius: 100, whiteSpace: 'nowrap', lineHeight: '16px',
+                }}>{r.group}</span>
+              </span>
+              <span style={{ ...cellBase, textAlign: 'center' }}>{r.team}</span>
+              <span style={{ ...cellBase, fontWeight: 400, textAlign: 'center' }}>{r.visitDate}</span>
+              <span style={{ display: 'flex', justifyContent: 'center' }}>
+                <span style={{
+                  fontSize: 10, fontFamily: font, fontWeight: 600, color: r.cfg.color, backgroundImage: r.cfg.bg,
+                  padding: '4px 10px', borderRadius: 100, whiteSpace: 'nowrap', lineHeight: '16px',
+                }}>{r.ds}</span>
+              </span>
+              <span style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="hover-btn" onClick={e => { e.stopPropagation(); openRow(); }} style={{
+                  border: '1px solid rgba(0,136,255,0.3)', background: 'rgba(0,136,255,0.08)', color: '#0088FF',
+                  borderRadius: 100, padding: '5px 12px', cursor: 'pointer', fontFamily: font, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                }}>ดูข้อมูล</button>
+              </span>
+            </div>
+          );
+        })}
 
       {/* แบ่งหน้า */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, marginTop: 4, borderTop: '1px solid rgba(30,27,57,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderTop: '1px solid rgba(30,27,57,0.05)' }}>
         <span style={{ fontSize: 12, color: GRAY }}>
           แสดง {total === 0 ? 0 : (cur - 1) * perPage + 1}-{Math.min(cur * perPage, total)} จาก {total} รายการ
         </span>
@@ -935,6 +936,7 @@ function RegistryTable({ plannedVisits = [], groupFilter = 'all', query = '', on
             width: 24, height: 24, borderRadius: 100, cursor: 'pointer', background: 'rgba(116,116,128,0.08)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: cur >= totalPages ? 0.3 : 1, fontSize: 12, color: GRAY,
           }}>&rsaquo;</span>
+        </div>
         </div>
       </div>
     </div>
