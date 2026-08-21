@@ -11,7 +11,6 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import imgGrid from '../assets/images/grid-bg.png';
 import imgAvatarBlur from '../assets/images/avatar-blur.png';
 import imgHero3d from '../assets/images/homevisit-3d.png';
-import iconRefresh from '../assets/icons/refresh.svg';
 import vsMap from '../assets/icons/vs-map.svg';
 
 /* -- shared styles -- */
@@ -72,6 +71,17 @@ const VISITS = (HOME_VISITS || []).map(v => {
   } catch { return null; }
 }).filter(Boolean);
 
+/* ประเภทผู้ป่วยเยี่ยมบ้าน — ใช้ทั้งตัวกรองใน Hero, แผนที่ และหน้าทะเบียน */
+const PATIENT_GROUPS = [
+  { label: 'ทุกประเภท', value: 'all', color: '#6658E1' },
+  { label: 'NCD', value: 'NCD', color: '#0088FF', desc: 'โรคเรื้อรัง' },
+  { label: 'LTC', value: 'LTC', color: '#34C759', desc: 'ผู้สูงอายุติดเตียง' },
+  { label: 'Palliative', value: 'Palliative', color: '#8B5CF6', desc: 'ประคับประคอง' },
+  { label: 'Intermediate', value: 'Intermediate', color: '#E8802A', desc: 'ระยะกลาง' },
+  { label: 'หญิงตั้งครรภ์', value: 'หญิงตั้งครรภ์', color: '#FF375F', desc: 'ฝากครรภ์' },
+];
+const groupMeta = (g) => PATIENT_GROUPS.find(x => x.value === g) || { label: g, color: GRAY };
+
 /* ══════════════════════════════════════════
    MAP POINTS - patient locations across Thailand
    ══════════════════════════════════════════ */
@@ -111,22 +121,55 @@ const MAP_STATUS_META = {
 };
 
 
+/* ══════════════════════════════════════════
+   ทะเบียนผู้ป่วยเยี่ยมบ้าน — รวมเคสที่มีข้อมูลผู้ป่วยเต็ม (VISITS)
+   กับผู้ป่วยที่ปักหมุดบนแผนที่ (เติม HN/ทีม/นัดหมายแบบ deterministic)
+   ══════════════════════════════════════════ */
+const MAP_TO_STATUS = { visited: 'เยี่ยมแล้ว', notVisited: 'ยังไม่เยี่ยม', pending: 'รอรับงาน' };
+const TEAMS = ['ทีม A', 'ทีม B', 'ทีม C'];
+const REGISTRY = (() => {
+  const rows = VISITS.map(v => ({ ...v, source: 'visit' }));
+  const seen = new Set(rows.map(r => r.name));
+  MAP_POINTS.forEach((pt, i) => {
+    if (seen.has(pt.name)) return;
+    seen.add(pt.name);
+    rows.push({
+      hn: `HN0013${String(10 + i).padStart(2, '0')}`,
+      name: pt.name,
+      age: pt.age,
+      gender: pt.gender,
+      group: (pt.info || '').replace('กลุ่ม ', '') || 'NCD',
+      address: 'ตำแหน่งบ้านผู้ป่วยบนแผนที่',
+      hospital: 'รพ.สต.',
+      visitDate: `2026-04-${String(2 + (i % 24)).padStart(2, '0')}`,
+      status: MAP_TO_STATUS[pt.status] || 'รอรับงาน',
+      team: TEAMS[i % 3],
+      source: 'map',
+    });
+  });
+  return rows;
+})();
+
+/* แท็บใน hero: ภาพรวม / ทะเบียนรายชื่อผู้ป่วย */
+const HERO_TABS = [
+  { label: 'ภาพรวมการเยี่ยมบ้าน' },
+  { label: 'ทะเบียนรายชื่อผู้ป่วย' },
+];
+
 /* ═══════════════════════════════════════════
    1. HERO SECTION
    ═══════════════════════════════════════════ */
-function Hero({ onPlanVisit }) {
-  const [now, setNow] = useState(new Date());
+function Hero({ onPlanVisit, groupFilter, onGroupChange, tab, onTabChange }) {
   const [monthOpen, setMonthOpen] = useState(false);
+  const [groupOpen, setGroupOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
-  const date = now.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-  const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const gm = groupMeta(groupFilter);
 
   return (
     <div className="anim-slide-up" style={{
       borderRadius: 24, position: 'relative', overflow: 'visible',
       boxShadow: '0 4px 4px rgba(0,0,0,0.1)', minHeight: 150,
-      fontFamily: font, zIndex: monthOpen ? 50 : 10,
+      fontFamily: font, zIndex: (monthOpen || groupOpen) ? 50 : 10,
     }}>
       {/* Background layer */}
       <div style={{ position: 'absolute', inset: 0, borderRadius: 24, overflow: 'hidden', pointerEvents: 'none' }}>
@@ -157,7 +200,32 @@ function Hero({ onPlanVisit }) {
         </div>
 
         {/* Controls */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* แท็บหน้า — สไตล์เดียวกับแท็บหน้าอื่น: ปุ่มกว้างเท่ากัน + ไฮไลต์ gradient เลื่อนตาม */}
+          <div style={{
+            position: 'relative', display: 'inline-flex', padding: 4, borderRadius: 100, flexShrink: 0,
+            background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.7)',
+            boxShadow: 'inset 0 1px 3px rgba(30,27,57,0.05)',
+          }}>
+            <span aria-hidden style={{
+              position: 'absolute', top: 4, left: 4 + tab * 158, width: 158, height: 28,
+              borderRadius: 100, background: 'linear-gradient(160deg, #3FA9FF 0%, #0088FF 55%, #0070E0 100%)',
+              boxShadow: '0 4px 12px rgba(0,136,255,0.35), inset 0 1px 0 rgba(255,255,255,0.3)',
+              transition: 'left 0.3s cubic-bezier(0.34, 1.25, 0.64, 1)',
+            }} />
+            {HERO_TABS.map((t, i) => (
+              <button key={t.label} onClick={() => onTabChange(i)} style={{
+                position: 'relative', zIndex: 1, width: 158, height: 28,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 100, border: 'none', cursor: 'pointer', background: 'transparent',
+                fontSize: 12, fontFamily: font, whiteSpace: 'nowrap',
+                color: tab === i ? '#fff' : '#615E83',
+                fontWeight: tab === i ? 600 : 500,
+                transition: 'color 0.25s ease',
+              }}>{t.label}</button>
+            ))}
+          </div>
+
           {/* Month dropdown */}
           <div style={{ position: 'relative', zIndex: monthOpen ? 100 : 1 }}>
             <div onClick={() => setMonthOpen(!monthOpen)} style={{
@@ -186,24 +254,42 @@ function Hero({ onPlanVisit }) {
             )}
           </div>
 
-          {/* Date + Time + Refresh */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 16, height: 36,
-            padding: '8px 10px', borderRadius: 100,
-            backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
-            border: '1px solid white',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontFamily: font }}>
-              <span style={{ color: 'rgba(60,60,67,0.6)' }}>{date}</span>
-              <span style={{ color: 'black', fontWeight: 600 }}>{time}</span>
-            </div>
-            <button onClick={() => setNow(new Date())} style={{
-              width: 20, height: 20, borderRadius: 8, border: 'none', padding: 0,
-              background: 'transparent', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+          {/* ตัวกรองประเภทผู้ป่วย — มีผลทั้งการ์ดสรุป แผนที่ รายชื่อ และหน้าทะเบียน */}
+          <div style={{ position: 'relative', zIndex: groupOpen ? 100 : 1 }}>
+            <div onClick={() => setGroupOpen(!groupOpen)} style={{
+              height: 36, display: 'flex', alignItems: 'center', gap: 8,
+              padding: '4px 14px', borderRadius: 100, cursor: 'pointer',
+              backdropFilter: 'blur(2px)', background: 'rgba(255,255,255,0.8)',
+              border: '1px solid white', boxSizing: 'border-box', whiteSpace: 'nowrap',
             }}>
-              <img src={iconRefresh} alt="" style={{ width: 16, height: 19 }} />
-            </button>
+              {/* จุดสีบอกกลุ่มที่เลือก — ตัวปุ่มคงพื้นขาวเสมอ */}
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: gm.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: 'black', fontFamily: font, lineHeight: '20px' }}>
+                {groupFilter === 'all' ? 'ประเภทผู้ป่วย' : gm.label}
+              </span>
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ transform: groupOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            {groupOpen && (
+              <>
+                <div className="dropdown-backdrop" onClick={() => setGroupOpen(false)} />
+                <div className="dropdown-menu" style={{ minWidth: 210, padding: 6 }}>
+                  {PATIENT_GROUPS.map(g => {
+                    const n = g.value === 'all' ? REGISTRY.length : REGISTRY.filter(r => r.group === g.value).length;
+                    return (
+                      <div key={g.value} className={`dropdown-item${groupFilter === g.value ? ' active' : ''}`}
+                        onClick={() => { onGroupChange(g.value); setGroupOpen(false); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, flexShrink: 0 }} />
+                        <span style={{ flex: 1 }}>{g.label}{g.desc && <span style={{ color: GRAY, fontSize: 10 }}> · {g.desc}</span>}</span>
+                        <span style={{ fontSize: 10, color: GRAY, background: 'rgba(116,116,128,0.1)', borderRadius: 100, padding: '1px 7px' }}>{n}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Plan visit CTA */}
@@ -221,6 +307,7 @@ function Hero({ onPlanVisit }) {
             วางแผนเยี่ยมบ้าน
           </button>
         </div>
+
       </div>
     </div>
   );
@@ -229,13 +316,15 @@ function Hero({ onPlanVisit }) {
 /* ═══════════════════════════════════════════
    2. STAT CARDS
    ═══════════════════════════════════════════ */
-function StatCards({ plannedVisits = [] }) {
+function StatCards({ plannedVisits = [], groupFilter = 'all' }) {
   // Derive counts from the actual map data so cards stay in sync with the map legend.
   // Newly planned visits count toward the total and the "not visited yet" bucket.
-  const total = MAP_POINTS.length + plannedVisits.length;
-  const notVisited = MAP_POINTS.filter(p => p.status === 'notVisited').length + plannedVisits.length;
-  const visited = MAP_POINTS.filter(p => p.status === 'visited').length;
-  const pending = MAP_POINTS.filter(p => p.status === 'pending').length;
+  const pts = groupFilter === 'all' ? MAP_POINTS : MAP_POINTS.filter(p => (p.info || '').includes(groupFilter));
+  const planned = groupFilter === 'all' ? plannedVisits : plannedVisits.filter(p => p.group === groupFilter);
+  const total = pts.length + planned.length;
+  const notVisited = pts.filter(p => p.status === 'notVisited').length + planned.length;
+  const visited = pts.filter(p => p.status === 'visited').length;
+  const pending = pts.filter(p => p.status === 'pending').length;
   const cards = [
     { label: 'เคสส่งเยี่ยมทั้งหมด', value: String(total), growth: '+4.1%', bg: 'linear-gradient(154deg, #19A589 0%, #0D7C66 100%)', shadow: '0 4px 14px rgba(59,130,246,0.3)', iconBg: 'rgba(255,255,255,0.2)',
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5a1 1 0 00-1-1h-4a1 1 0 00-1 1v5a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="18" cy="6" r="4" fill="white" fillOpacity="0.3"/></svg> },
@@ -282,7 +371,7 @@ function StatCards({ plannedVisits = [] }) {
 /* ═══════════════════════════════════════════
    3. MAP SECTION
    ═══════════════════════════════════════════ */
-function MapSection({ plannedVisits = [] }) {
+function MapSection({ plannedVisits = [], groupFilter = 'all' }) {
   const { openPatient } = useContext(PatientContext);
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
@@ -310,7 +399,8 @@ function MapSection({ plannedVisits = [] }) {
 
   const getFilteredPoints = () => {
     const f = filters[activeFilter].value;
-    return f === 'all' ? MAP_POINTS : MAP_POINTS.filter(pt => pt.status === f);
+    const byGroup = groupFilter === 'all' ? MAP_POINTS : MAP_POINTS.filter(pt => (pt.info || '').includes(groupFilter));
+    return f === 'all' ? byGroup : byGroup.filter(pt => pt.status === f);
   };
 
   /* Build GeoJSON source */
@@ -343,11 +433,7 @@ function MapSection({ plannedVisits = [] }) {
         '<circle cx="15" cy="14" r="6" fill="white" opacity="0.9"/>' +
         '<circle cx="15" cy="14" r="3.5" fill="' + pc.darker + '" opacity="0.8"/>' +
       '</svg>';
-      el.onmouseenter = () => { el.style.transform = 'scale(1.25)'; };
-      el.onmouseleave = () => { el.style.transform = 'scale(1)'; };
-
-      const popup = new maplibregl.Popup({ offset: 20, closeButton: false, maxWidth: '280px' })
-        .setHTML(
+      const popupHtml =
           '<div style="font-family:Sarabun,sans-serif;padding:10px;min-width:220px">' +
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
               '<div style="display:flex;align-items:center;gap:6px">' +
@@ -368,12 +454,23 @@ function MapSection({ plannedVisits = [] }) {
                 '<div style="font-size:10px;color:#8E8E93;margin-top:2px">ตำแหน่งบ้านผู้ป่วย</div>' +
               '</div>' +
             '</div>' +
-          '</div>'
-        );
+          '</div>';
+
+      /* popup แสดงตอน hover (ไม่ต้องคลิก) */
+      let hoverPopup = null;
+      el.onmouseenter = () => {
+        el.style.transform = 'scale(1.25)';
+        if (hoverPopup) hoverPopup.remove();
+        hoverPopup = new maplibregl.Popup({ offset: [0, -42], closeButton: false, maxWidth: '280px' })
+          .setLngLat([pt.lng, pt.lat]).setHTML(popupHtml).addTo(map);
+      };
+      el.onmouseleave = () => {
+        el.style.transform = 'scale(1)';
+        if (hoverPopup) { hoverPopup.remove(); hoverPopup = null; }
+      };
 
       const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([pt.lng, pt.lat])
-        .setPopup(popup)
         .addTo(map);
       markersRef.current.push(marker);
     });
@@ -393,53 +490,10 @@ function MapSection({ plannedVisits = [] }) {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
     mapRef.current = map;
 
-    // Add markers directly after map is ready
+    // หมุดทั้งหมดสร้างผ่าน addPinMarkers เพื่อให้ลบ/สร้างใหม่ตามตัวกรองได้
     map.on('load', function() {
       if (cancelled) return;
-      MAP_POINTS.forEach(function(pt, i) {
-        var pc = PIN_COLORS[pt.status] || PIN_COLORS.pending;
-        var meta = MAP_STATUS_META[pt.status] || MAP_STATUS_META.pending;
-        var el = document.createElement('div');
-        el.style.cssText = 'width:22px;height:32px;cursor:pointer;';
-        el.innerHTML = '<svg width="22" height="32" viewBox="0 0 22 32" style="filter:drop-shadow(0 2px 3px rgba(0,0,0,0.3));transition:transform 0.15s ease;transform-origin:bottom center;">' +
-          '<path d="M11 0C4.9 0 0 4.9 0 11c0 8.3 11 21 11 21s11-12.7 11-21C22 4.9 17.1 0 11 0z" fill="' + pc.color + '"/>' +
-          '<circle cx="11" cy="10" r="4" fill="white" opacity="0.85"/>' +
-        '</svg>';
-        var svgEl = el.querySelector('svg');
-        var avatarUrl = getAvatar(pt.age || 45, pt.gender || 'ชาย');
-        var popupHtml = '<div style="font-family:Sarabun,sans-serif;padding:10px;min-width:200px">' +
-          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">' +
-            '<span style="width:8px;height:8px;border-radius:50%;background:' + meta.color + ';box-shadow:0 0 6px ' + meta.color + '60"></span>' +
-            '<span style="font-size:10px;font-weight:500;color:' + meta.color + '">' + meta.label + '</span>' +
-            '<span style="font-size:9px;color:#8E8E93;margin-left:auto">' + (pt.info || '') + '</span>' +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:10px">' +
-            '<img src="' + avatarUrl + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid ' + meta.color + '30;flex-shrink:0" />' +
-            '<div>' +
-              '<div style="font-size:13px;font-weight:600;color:#1E1B39">' + pt.name + '</div>' +
-              '<div style="font-size:10px;color:#8E8E93;margin-top:1px">ตำแหน่งบ้านผู้ป่วย</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-
-        var hoverPopup = null;
-        el.onmouseenter = function() {
-          svgEl.style.transform = 'scale(1.2)';
-          if (hoverPopup) hoverPopup.remove();
-          hoverPopup = new maplibregl.Popup({ offset: [0, -42], closeButton: false, maxWidth: '280px' })
-            .setLngLat([pt.lng, pt.lat])
-            .setHTML(popupHtml)
-            .addTo(map);
-        };
-        el.onmouseleave = function() {
-          svgEl.style.transform = 'scale(1)';
-          if (hoverPopup) { hoverPopup.remove(); hoverPopup = null; }
-        };
-
-        new maplibregl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat([pt.lng, pt.lat])
-          .addTo(map);
-      });
+      addPinMarkers(map, getFilteredPoints());
     });
     return () => {
       cancelled = true;
@@ -459,15 +513,24 @@ function MapSection({ plannedVisits = [] }) {
     });
   };
 
+  /* หมุดบนแผนที่ตามตัวกรองสถานะ + ประเภทผู้ป่วย */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    addPinMarkers(map, getFilteredPoints());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter, groupFilter]);
+
   /* Patient list data — newly planned visits appear first */
   const patientList = [...plannedVisits, ...VISITS].map(v => ({
     ...v,
     displayStatus: displayStatus(v.status),
     cfg: getStatusCfg(v.status),
   }));
+  const byGroupList = groupFilter === 'all' ? patientList : patientList.filter(p => p.group === groupFilter);
   const filteredList = activeFilter === 0
-    ? patientList
-    : patientList.filter(p => {
+    ? byGroupList
+    : byGroupList.filter(p => {
         const fv = filters[activeFilter].value;
         if (fv === 'visited') return p.status === 'เยี่ยมแล้ว';
         if (fv === 'notVisited') return p.status === 'รอเยี่ยม' || p.status === 'ยังไม่เยี่ยม';
@@ -690,12 +753,204 @@ function MapSection({ plannedVisits = [] }) {
 }
 
 /* ═══════════════════════════════════════════
+   4. ทะเบียนรายชื่อผู้ป่วยเยี่ยมบ้าน (แท็บที่ 2)
+   ═══════════════════════════════════════════ */
+function RegistryTable({ plannedVisits = [], groupFilter = 'all', query = '', onQueryChange = () => {} }) {
+  const { openPatient } = useContext(PatientContext);
+  const q = query;
+  const [statusF, setStatusF] = useState('all');
+  /* หน้าปัจจุบันผูกกับเงื่อนไขกรอง — เปลี่ยนตัวกรอง/คำค้นแล้วกลับหน้าแรกเองโดยไม่ต้อง setState ใน effect */
+  const filterKey = `${query}|${groupFilter}|${statusF}`;
+  const [pageState, setPageState] = useState({ key: filterKey, page: 1 });
+  const page = pageState.key === filterKey ? pageState.page : 1;
+  const setPage = (n) => setPageState({ key: filterKey, page: n });
+  const perPage = 12;
+
+  const statusTabs = [
+    { label: 'ทั้งหมด', value: 'all' },
+    { label: 'รอรับงาน', value: 'รอรับงาน' },
+    { label: 'ยังไม่เยี่ยม', value: 'ยังไม่เยี่ยม' },
+    { label: 'เยี่ยมแล้ว', value: 'เยี่ยมแล้ว' },
+  ];
+
+  const rows = [...plannedVisits.map(v => ({ ...v, source: 'plan' })), ...REGISTRY]
+    .map(r => ({ ...r, ds: displayStatus(r.status), cfg: getStatusCfg(r.status) }))
+    .filter(r => groupFilter === 'all' || r.group === groupFilter)
+    .filter(r => statusF === 'all' || r.ds === statusF)
+    .filter(r => !q.trim() || `${r.name} ${r.hn} ${r.group} ${r.team}`.toLowerCase().includes(q.trim().toLowerCase()));
+
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const cur = Math.min(page, totalPages);
+  const visible = rows.slice((cur - 1) * perPage, cur * perPage);
+
+  const th = { fontSize: 11, fontWeight: 600, color: GRAY, textAlign: 'left', padding: '0 12px 10px', whiteSpace: 'nowrap' };
+  const td = { fontSize: 12, color: BLACK, padding: '10px 12px', verticalAlign: 'middle' };
+
+  return (
+    <div className="anim-slide-up" style={{ ...glassCard, marginTop: 16, display: 'flex', flexDirection: 'column' }}>
+      {/* หัวข้อ */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 14, flexShrink: 0, background: 'rgba(102,88,225,0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="4" y="3" width="16" height="18" rx="3" stroke="#6658E1" strokeWidth="1.6" />
+            <path d="M8 8h8M8 12h8M8 16h5" stroke="#6658E1" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: BLACK, margin: 0 }}>ทะเบียนรายชื่อผู้ป่วยเยี่ยมบ้าน</p>
+          <p style={{ fontSize: 12, color: GRAY, margin: 0, lineHeight: '16px' }}>
+            รายชื่อผู้ป่วยในความดูแล {groupFilter === 'all' ? 'ทุกประเภท' : `กลุ่ม ${groupFilter}`} · ทั้งหมด {total} ราย
+          </p>
+        </div>
+      </div>
+
+      {/* แถบสถานะ (ซ้าย) + ค้นหา (ขวา) อยู่แถวเดียวกัน */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+        <div style={{
+          display: 'inline-flex', gap: 4, padding: 4, borderRadius: 100, flexShrink: 0,
+          background: 'rgba(116,116,128,0.08)', border: '1px solid rgba(255,255,255,0.5)',
+        }}>
+          {statusTabs.map(t => {
+            const n = t.value === 'all'
+              ? [...plannedVisits, ...REGISTRY].filter(r => groupFilter === 'all' || r.group === groupFilter).length
+              : [...plannedVisits, ...REGISTRY].filter(r => (groupFilter === 'all' || r.group === groupFilter) && displayStatus(r.status) === t.value).length;
+            const on = statusF === t.value;
+            return (
+              <button key={t.value} onClick={() => { setStatusF(t.value); setPage(1); }} style={{
+                border: 'none', borderRadius: 100, padding: '5px 14px', cursor: 'pointer',
+                fontSize: 12, fontFamily: font, fontWeight: on ? 600 : 400,
+                background: on ? '#0088FF' : 'transparent', color: on ? 'white' : BLACK,
+                display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+              }}>
+                {t.label}
+                <span style={{
+                  fontSize: 10, borderRadius: 100, padding: '0 6px', fontWeight: 600,
+                  background: on ? 'rgba(255,255,255,0.25)' : 'rgba(116,116,128,0.12)', color: on ? 'white' : GRAY,
+                }}>{n}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ช่องค้นหา */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, height: 36, padding: '0 14px', marginLeft: 'auto',
+          borderRadius: 100, background: 'white', border: '1px solid rgba(30,27,57,0.08)', minWidth: 220,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="7" stroke="#9291A5" strokeWidth="1.8" />
+            <path d="M16.5 16.5L21 21" stroke="#9291A5" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          <input value={query} onChange={e => onQueryChange(e.target.value)}
+            placeholder="ค้นหาชื่อ / HN / ทีม"
+            style={{ border: 'none', outline: 'none', background: 'transparent', fontFamily: font, fontSize: 12, color: BLACK, width: '100%' }} />
+          {query && <span onClick={() => onQueryChange('')} style={{ cursor: 'pointer', color: '#9291A5', fontSize: 13 }}>✕</span>}
+        </div>
+      </div>
+
+      {/* ตาราง */}
+      <div className="no-scrollbar" style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
+          <thead>
+            <tr>
+              <th style={th}>ผู้ป่วย</th>
+              <th style={th}>HN</th>
+              <th style={th}>ประเภท</th>
+              <th style={th}>ทีมผู้ดูแล</th>
+              <th style={th}>วันที่นัดเยี่ยม</th>
+              <th style={th}>สถานะ</th>
+              <th style={{ ...th, textAlign: 'right' }}>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map((r, i) => {
+              const gm = groupMeta(r.group);
+              return (
+                <tr key={r.hn + i} className="hover-row" style={{ background: 'white', animation: 'countUp 0.25s ease both', animationDelay: `${i * 0.02}s` }}>
+                  <td style={{ ...td, borderRadius: '12px 0 0 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <img src={getAvatar(r.age, r.gender)} alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{r.name}</div>
+                        <div style={{ fontSize: 10, color: GRAY }}>{r.age} ปี · {r.gender}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ ...td, color: GRAY, fontSize: 11.5 }}>{r.hn}</td>
+                  <td style={td}>
+                    <span style={{
+                      fontSize: 10.5, fontWeight: 600, padding: '3px 10px', borderRadius: 100, whiteSpace: 'nowrap',
+                      background: `${gm.color}16`, color: gm.color,
+                    }}>{r.group}</span>
+                  </td>
+                  <td style={{ ...td, color: GRAY, fontSize: 11.5 }}>{r.team}</td>
+                  <td style={{ ...td, color: GRAY, fontSize: 11.5, whiteSpace: 'nowrap' }}>{r.visitDate}</td>
+                  <td style={td}>
+                    <span style={{
+                      fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 100, whiteSpace: 'nowrap',
+                      color: r.cfg.color, backgroundImage: r.cfg.bg,
+                    }}>{r.ds}</span>
+                  </td>
+                  <td style={{ ...td, textAlign: 'right', borderRadius: '0 12px 12px 0' }}>
+                    <button className="hover-btn"
+                      onClick={() => openPatient({ name: r.name, age: r.age, gender: r.gender, hn: r.hn, phone: '', address: r.address || '', group: r.group, disease: '', team: r.team, adl: 0, visits: 0, lastVisit: r.visitDate, outcome: '' })}
+                      style={{
+                        border: '1px solid rgba(0,136,255,0.3)', background: 'rgba(0,136,255,0.08)', color: '#0088FF',
+                        borderRadius: 100, padding: '5px 12px', cursor: 'pointer', fontFamily: font, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                      }}>ดูข้อมูล</button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {visible.length === 0 && (
+          <div style={{ textAlign: 'center', padding: 40, color: GRAY, fontSize: 13 }}>ไม่พบผู้ป่วยตามเงื่อนไขที่เลือก</div>
+        )}
+      </div>
+
+      {/* แบ่งหน้า */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 14, marginTop: 4, borderTop: '1px solid rgba(30,27,57,0.06)' }}>
+        <span style={{ fontSize: 12, color: GRAY }}>
+          แสดง {total === 0 ? 0 : (cur - 1) * perPage + 1}-{Math.min(cur * perPage, total)} จาก {total} รายการ
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span onClick={() => setPage(Math.max(1, cur - 1))} style={{
+            width: 24, height: 24, borderRadius: 100, cursor: 'pointer', background: 'rgba(116,116,128,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: cur <= 1 ? 0.3 : 1, fontSize: 12, color: GRAY,
+          }}>&lsaquo;</span>
+          {pageWindow(cur, totalPages).map(n => (
+            <span key={n} onClick={() => setPage(n)} style={{
+              width: 24, height: 24, borderRadius: 100, cursor: 'pointer',
+              background: cur === n ? '#7C3AED' : 'rgba(116,116,128,0.08)',
+              color: cur === n ? 'white' : '#8E8E93',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 500,
+            }}>{n}</span>
+          ))}
+          <span onClick={() => setPage(Math.min(totalPages, cur + 1))} style={{
+            width: 24, height: 24, borderRadius: 100, cursor: 'pointer', background: 'rgba(116,116,128,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: cur >= totalPages ? 0.3 : 1, fontSize: 12, color: GRAY,
+          }}>&rsaquo;</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════ */
 export default function HomeVisit() {
   const [plannedVisits, setPlannedVisits] = useState([]);
   const [toast, setToast] = useState(null);
   const [planning, setPlanning] = useState(false);
+  const [tab, setTab] = useState(0);                 // 0 = ภาพรวม · 1 = ทะเบียนผู้ป่วย
+  const [groupFilter, setGroupFilter] = useState('all'); // ตัวกรองประเภทผู้ป่วยจาก Hero
+  const [query, setQuery] = useState('');                // คำค้นหาผู้ป่วย (แถบใน hero)
 
   const handlePlanVisit = (visit) => {
     setPlannedVisits(prev => [visit, ...prev]);
@@ -715,9 +970,17 @@ export default function HomeVisit() {
 
   return (
     <div style={{ fontFamily: font }}>
-      <Hero onPlanVisit={() => setPlanning(true)} />
-      <StatCards plannedVisits={plannedVisits} />
-      <MapSection plannedVisits={plannedVisits} />
+      <Hero onPlanVisit={() => setPlanning(true)} groupFilter={groupFilter} onGroupChange={setGroupFilter}
+        tab={tab} onTabChange={setTab} />
+
+      {tab === 0 ? (
+        <>
+          <StatCards plannedVisits={plannedVisits} groupFilter={groupFilter} />
+          <MapSection plannedVisits={plannedVisits} groupFilter={groupFilter} />
+        </>
+      ) : (
+        <RegistryTable plannedVisits={plannedVisits} groupFilter={groupFilter} query={query} onQueryChange={setQuery} />
+      )}
 
       {/* Success toast — portaled to body so it sits at the true viewport bottom */}
       {toast && createPortal(
